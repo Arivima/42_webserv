@@ -1,2 +1,2 @@
 # 42_webserv
-simple HTTP server made from scratch
+<i>Simple HTTP server made from scratch</i>
