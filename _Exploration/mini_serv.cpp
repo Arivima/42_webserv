@@ -6,7 +6,7 @@
 int main (){
 
     // Creating socket file descriptor
-    // int server_fd = socket(domain, type, protocol)
+    // int server_fd = socket(domain (AF_INET = internet IP4), type (SOCK_STREAM = TCP), protocol)
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd == -1){
         perror("socket_fd");
