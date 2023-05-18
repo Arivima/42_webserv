@@ -86,7 +86,7 @@ int main (){
         close(server_fd);
         ftError("listen() failed");
     }
-    // //! Non blocking socket
+    //! Non blocking socket
     // int flags = fcntl(server_fd, F_GETFL, 0);
     // if (flags == ERR){
     //     ftError("fcntl() failed");
@@ -95,9 +95,10 @@ int main (){
     // if (fcntl(server_fd, F_SETFL, flags) == ERR){
     //     ftError("fcntl() failed");
     // }
-    //! Loop in (while(true)) for more than 5 communications
+    //! Loop in for cycles of request / response
     int cli_socket;
-    for (int i = 5; i >= 0; i--){ 
+    while(true){
+    // for (int i = 5; i >= 0; i--){ 
         //! 5.Accept
         std::cout << "---------------accept()" << std::endl;
         // int cli_socket= accept(int server_fd, struct sockaddr *addr, socklen_t *addrlen);
@@ -118,7 +119,8 @@ int main (){
         }
         else if (bytes_received == 0){
             std::cout << "Received message from client." << std::endl;
-            std::cout << "Reached EOF" << std::endl;
+            std::cout << "Reached EOF OR client left" << std::endl;
+            break;
         }
         else if (bytes_received == ERR){
             close(cli_socket);
