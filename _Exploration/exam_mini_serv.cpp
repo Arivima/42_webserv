@@ -66,7 +66,6 @@ int main (){
         ftError("fcntl() failed");
     }
 
-    fcntl(server.sockfd, F_SETFL, O_NONBLOCK);
     //! 2.Set up server address
     std::memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;

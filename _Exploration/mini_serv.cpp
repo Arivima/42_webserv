@@ -35,8 +35,8 @@
 // uint32_t       s_addr;     /* host interface address - address in network byte order */
 // }; in_addr should be assigned one of the INADDR_* values (e.g., INADDR_LOOPBACK) using htonl(3)
 
-void ftError(char * msg){
-    perror(msg);
+void ftError(std::string msg){
+    perror(msg.c_str());
     std::cout << "Exiting mini-serv with failure" << std::endl;
     exit(EXIT_FAILURE);
 }
@@ -56,17 +56,11 @@ int main (){
     if (server_fd == ERR){
         ftError("socket() failed");
     }
-    //! Non blocking socket
-    int flags = fcntl(server_fd, F_GETFL, 0);
-    if (flags == ERR){
-        ftError("fcntl() failed");
+    //! Set up option to reuse the socket address
+    int reuse = 1;
+    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) == ERR){
+        ftError("setsockopt");
     }
-    flags |= O_NONBLOCK;
-    if (fcntl(server_fd, F_SETFL, flags) == ERR){
-        ftError("fcntl() failed");
-    }
-
-    fcntl(server.sockfd, F_SETFL, O_NONBLOCK);
     //! 2.Set up server address
     std::memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
@@ -92,7 +86,15 @@ int main (){
         close(server_fd);
         ftError("listen() failed");
     }
-    
+    // //! Non blocking socket
+    // int flags = fcntl(server_fd, F_GETFL, 0);
+    // if (flags == ERR){
+    //     ftError("fcntl() failed");
+    // }
+    // flags |= O_NONBLOCK;
+    // if (fcntl(server_fd, F_SETFL, flags) == ERR){
+    //     ftError("fcntl() failed");
+    // }
     //! Loop in (while(true)) for more than 5 communications
     int cli_socket;
     for (int i = 5; i >= 0; i--){ 
