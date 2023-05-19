@@ -113,6 +113,7 @@ int main (){
         char buffer[BUFFER_SIZE];
         ssize_t bytes_received = recv(cli_socket, &buffer, sizeof(buffer), 0);
         if (bytes_received > 0){
+            //! process request
             std::cout << "Received message from client." << std::endl;
             std::cout << "bytes_received : " << bytes_received << std::endl;
             std::cout << "message_received : " << std::endl << buffer << std::endl;
@@ -120,6 +121,7 @@ int main (){
         else if (bytes_received == 0){
             std::cout << "Received message from client." << std::endl;
             std::cout << "Reached EOF OR client left" << std::endl;
+            //TODO what behavior here ?
             break;
         }
         else if (bytes_received == ERR){
@@ -133,6 +135,7 @@ int main (){
         std::string message_sent("Hello from server\n");
         ssize_t bytes_sent = send(cli_socket, &message_sent, sizeof(message_sent), 0);
         if (bytes_sent > 0){
+            //! send response
             std::cout << "Response sent to the client." << std::endl;
             std::cout << "bytes_sent : " << bytes_sent << std::endl;
             std::cout << "message_sent : " << std::endl << message_sent << std::endl;
@@ -151,12 +154,6 @@ int main (){
     return 0;
 }
 
-    //! make IP reusable quickly
-    // int setsockopt(server_fd, int level, int optname,  const void *optval, socklen_t optlen);
-    // if (setsockopt(server_fd, int level, int optname,  const void *optval, socklen_t optlen) == ERR){
-    //     ftError("setsockopt");
-    // }
-
     //! set up concurrency option
 
     //! retrieving sock info
@@ -164,7 +161,7 @@ int main (){
     //     ftError("getsockname() failed");
     // }
 
-    // AFTER Printing the current address info
+    //! Printing the current address info
     // char ip[INET_ADDRSTRLEN];
     // inet_ntop(AF_INET, &(server_addr.sin_addr), ip, INET_ADDRSTRLEN);
     // printf("Local fam\t: %d\n", server_addr.sin_family);
