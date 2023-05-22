@@ -56,7 +56,7 @@ int main (){
     if (server_fd == ERR){
         ftError("socket() failed");
     }
-    //! Set up option to reuse the socket address
+    //! Set up option to reuse quickly the socket address
     int reuse = 1;
     if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) == ERR){
         ftError("setsockopt");
