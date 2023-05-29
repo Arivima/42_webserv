@@ -35,135 +35,203 @@
 // uint32_t       s_addr;     /* host interface address - address in network byte order */
 // }; in_addr should be assigned one of the INADDR_* values (e.g., INADDR_LOOPBACK) using htonl(3)
 
+void ftError(std::string msg);
+void reuse_socket(int & server_fd);
+void make_non_blocking(int & server_fd);
+void print_ip(struct sockaddr_in & server_addr);
+void set_ip(struct sockaddr_in & server_addr);
+void create_server_socket(int & server_fd);
+void handle_new_connection(int & server_fd, int & fd_max);
+void handle_read_request(int & server_fd);
+
+
+int main (){
+
+    int                     server_fd;
+    int                     fd_max;
+    fd_set                  fds, fd_read, fd_write;
+
+    
+    std::cout << "Welcome to mini-serv" << std::endl;
+    create_server_socket(server_fd);
+    make_non_blocking(server_fd);
+
+    FD_ZERO(&fds);
+    FD_SET(server_fd, &fds);
+    fd_max = server_fd;
+
+    while(true){
+        fd_read = fds;
+        fd_write = fds;
+        //! select
+        if (-1 == select(fd_max + 1, &fd_read, &fd_write, NULL, NULL)){
+            close(server_fd);
+            ftError("accept() failed");
+        }
+        //! handdle new connection
+        handle_new_connection(server_fd, fds, fd_read, fd_max);
+        //! handle read request
+
+        //! 6.Receive communication
+        handle_read_request(fds, fd_read, fd_max);
+    }
+    //! 8.Closing connection
+    std::cout << "Closing connection" << std::endl;
+    close(server_fd);
+    std::cout << "Exiting successfully mini-serv" << std::endl;
+    return 0;
+}
+
+
 void ftError(std::string msg){
     perror(msg.c_str());
     std::cout << "Exiting mini-serv with failure" << std::endl;
     exit(EXIT_FAILURE);
 }
 
+void reuse_socket(int & server_fd){
+    int reuse = 1;
+    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) == ERR){
+        ftError("setsockopt");
+    }
+}
 
-int main (){
+void print_ip(struct sockaddr_in & server_addr){
+    char ip[INET_ADDRSTRLEN];
 
-    int                     server_fd;
+    inet_ntop(AF_INET, &(server_addr.sin_addr), ip, INET_ADDRSTRLEN);
+    std::cout << "Local fam\t: " << server_addr.sin_family << std::endl;
+    std::cout << "Local address\t: " << ip << std::endl;
+    std::cout << "Local port\t: " << ntohs(server_addr.sin_port) << std::endl;  
+}
+
+void set_ip(struct sockaddr_in & server_addr){
+    std::memset(&server_addr, 0, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(PORT);
+    server_addr.sin_addr.s_addr = INADDR_ANY; // bind to any local available address
+}
+
+void make_non_blocking(int & server_fd){
+    int flags = fcntl(server_fd, F_GETFL, 0);
+    if (flags == ERR){
+        ftError("fcntl() failed");
+    }
+    flags |= O_NONBLOCK;
+    if (fcntl(server_fd, F_SETFL, flags) == ERR){
+        ftError("fcntl() failed");
+    }
+}
+
+void create_server_socket(int & server_fd){
     struct sockaddr_in      server_addr;
     socklen_t               server_addr_len = sizeof(server_addr);
-    
-    std::cout << "Welcome to mini-serv" << std::endl;
+
     //! 1.Creating socket file descriptor
     std::cout << "---------------socket()" << std::endl;
-    // int server_fd = socket(domain (AF_INET = internet IP4), type (SOCK_STREAM = TCP), protocol)
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd == ERR){
         ftError("socket() failed");
     }
     //! Set up option to reuse quickly the socket address
-    int reuse = 1;
-    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) == ERR){
-        ftError("setsockopt");
-    }
+    reuse_socket(server_fd);
+
     //! 2.Set up server address
-    std::memset(&server_addr, 0, sizeof(server_addr));
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(PORT);
-    server_addr.sin_addr.s_addr = INADDR_ANY; // bind to any local available address
+    set_ip(server_addr);
+
     //! Printing the current address info
-    char ip[INET_ADDRSTRLEN];
-    inet_ntop(AF_INET, &(server_addr.sin_addr), ip, INET_ADDRSTRLEN);
-    printf("Local fam\t: %d\n", server_addr.sin_family);
-    printf("Local address\t: %s\n", ip);
-    printf("Local port\t: %d\n", ntohs(server_addr.sin_port));
+    print_ip(server_addr);
+
     //! 3.Bind 
     std::cout << "---------------bind()" << std::endl;
-    // int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
     if (bind(server_fd, (struct sockaddr *)&server_addr, server_addr_len) == ERR){
         close(server_fd);
         ftError("socket() failed");
     }
     //! 4.Listen
     std::cout << "---------------listen()" << std::endl;
-    // int listen(int server_fd, int backlog);
     if (listen(server_fd, 3) == ERR){
         close(server_fd);
         ftError("listen() failed");
     }
-    //! Non blocking socket
-    // int flags = fcntl(server_fd, F_GETFL, 0);
-    // if (flags == ERR){
-    //     ftError("fcntl() failed");
-    // }
-    // flags |= O_NONBLOCK;
-    // if (fcntl(server_fd, F_SETFL, flags) == ERR){
-    //     ftError("fcntl() failed");
-    // }
-    //! Loop in for cycles of request / response
-    int cli_socket;
-    while(true){
-    // for (int i = 5; i >= 0; i--){ 
-        //! 5.Accept
+}
+
+void handle_new_connection(int & server_fd, fd_set & fds, fd_set & fd_read, int & fd_max)
+{
+    struct sockaddr_in      server_addr;
+    socklen_t               server_addr_len = sizeof(server_addr);
+    int                     cli_socket;
+   
+    //* 1. checks if server_fd is set into read_fds
+    if (FD_ISSET(server_fd, &fd_read)){
+        //* 2. if so, accept and add new connection socket into fds, updating max if necessary (carry current max with us)
         std::cout << "---------------accept()" << std::endl;
-        // int cli_socket= accept(int server_fd, struct sockaddr *addr, socklen_t *addrlen);
         std::cout << "Waiting for connection with client" << std::endl;
         cli_socket = accept(server_fd, (struct sockaddr *)&server_addr, &server_addr_len);
         if (cli_socket == ERR){
             close(server_fd);
             ftError("accept() failed");
         }
-        //! 6.Receive communication
-        // ssize_t recv(int sockfd, void *buf, size_t len, int flags);
-        char buffer[BUFFER_SIZE];
-        ssize_t bytes_received = recv(cli_socket, &buffer, sizeof(buffer), 0);
-        if (bytes_received > 0){
-            //! process request
-            std::cout << "Received message from client." << std::endl;
-            std::cout << "bytes_received : " << bytes_received << std::endl;
-            std::cout << "message_received : " << std::endl << buffer << std::endl;
-        }
-        else if (bytes_received == 0){
-            std::cout << "Received message from client." << std::endl;
-            std::cout << "Reached EOF OR client left" << std::endl;
-            //TODO what behavior here ?
-            break;
-        }
-        else if (bytes_received == ERR){
-            close(cli_socket);
-            close(server_fd);
-            ftError("recv() failed");
-        }
-        std::cout << "End of message from client." << std::endl;
-        //! 7.Send communication
-        // ssize_t recv(int sockfd, void *buf, size_t len, int flags);
-        std::string message_sent("Hello from server\n");
-        ssize_t bytes_sent = send(cli_socket, &message_sent, sizeof(message_sent), 0);
-        if (bytes_sent > 0){
-            //! send response
-            std::cout << "Response sent to the client." << std::endl;
-            std::cout << "bytes_sent : " << bytes_sent << std::endl;
-            std::cout << "message_sent : " << std::endl << message_sent << std::endl;
-        }
-        else if (bytes_sent == ERR){
-            close(cli_socket);
-            close(server_fd);
-            ftError("send() failed");
-        }
+        if (cli_socket > fd_max)
+            fd_max = cli_socket;
+
+        FD_SET(cli_socket, &fds);        
     }
-    //! 8.Closing connection
-    std::cout << "Closing connection" << std::endl;
-    close(cli_socket);
-    close(server_fd);
-    std::cout << "Exiting successfully mini-serv" << std::endl;
-    return 0;
 }
 
-    //! set up concurrency option
+void handle_read_request(fd_set & fds, fd_set & fd_read, int & fd_max){
+    char buffer[BUFFER_SIZE];
+
+//*1.   loop thorugh 0 to fd_max
+    for (int fd_i = 0; fd_i <= fd_max; fd_i++){
+///*1.2    for each, check if it is set inside fd_read (we may need to skip server fd)
+        if (FD_ISSET(fd_i, &fd_read)){
+//* 1.3   if it is set, read into buffer
+            ssize_t bytes_received = recv(fd_i, &buffer, sizeof(buffer), 0);
+            if (bytes_received > 0){
+                //! process request
+                std::cout << "Received message from client.";
+                std::cout << "| bytes_received : " << bytes_received;
+                std::cout << "| message_received : " << std::endl << buffer << std::endl;
+            }
+            else if (bytes_received == 0){
+                //! process end of request
+                std::cout << "Received message from client." << std::endl;
+                std::cout << "Reached EOF OR client left" << std::endl;
+                close(fd_i);
+                FD_CLR(fd_i, &fds);
+            }
+            else if (bytes_received == ERR){
+                close(fd_i);
+                FD_CLR(fd_i, &fds);
+                ftError("recv() failed");
+            }
+        }
+    }
+//*1.4      if itś available for writing, echo back  
+}
+
+
+
+
+        // //! 7.Send communication
+        // // ssize_t recv(int sockfd, void *buf, size_t len, int flags);
+        // std::string message_sent("Hello from server\n");
+        // ssize_t bytes_sent = send(cli_socket, &message_sent, sizeof(message_sent), 0);
+        // if (bytes_sent > 0){
+        //     //! send response
+        //     std::cout << "Response sent to the client." << std::endl;
+        //     std::cout << "bytes_sent : " << bytes_sent << std::endl;
+        //     std::cout << "message_sent : " << std::endl << message_sent << std::endl;
+        // }
+        // else if (bytes_sent == ERR){
+        //     close(cli_socket);
+        //     close(server_fd);
+        //     ftError("send() failed");
+        // }
+
 
     //! retrieving sock info
     // if (getsockname(server_fd, (struct sockaddr *)&server_addr, &server_addr_len) == ERR) {
     //     ftError("getsockname() failed");
     // }
-
-    //! Printing the current address info
-    // char ip[INET_ADDRSTRLEN];
-    // inet_ntop(AF_INET, &(server_addr.sin_addr), ip, INET_ADDRSTRLEN);
-    // printf("Local fam\t: %d\n", server_addr.sin_family);
-    // printf("Local address\t: %s\n", ip);
-    // printf("Local port\t: %d\n", ntohs(server_addr.sin_port));
