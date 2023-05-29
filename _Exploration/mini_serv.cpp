@@ -41,9 +41,8 @@ void make_non_blocking(int & server_fd);
 void print_ip(struct sockaddr_in & server_addr);
 void set_ip(struct sockaddr_in & server_addr);
 void create_server_socket(int & server_fd);
-void handle_new_connection(int & server_fd, int & fd_max);
-void handle_read_request(int & server_fd);
-
+void handle_new_connection(int & server_fd, fd_set & fds, fd_set & fd_read, int & fd_max);
+void handle_read_request(int server_fd, fd_set & fds, fd_set & fd_read, int & fd_max);
 
 int main (){
 
@@ -63,17 +62,19 @@ int main (){
     while(true){
         fd_read = fds;
         fd_write = fds;
+
         //! select
         if (-1 == select(fd_max + 1, &fd_read, &fd_write, NULL, NULL)){
             close(server_fd);
             ftError("accept() failed");
         }
+
         //! handdle new connection
         handle_new_connection(server_fd, fds, fd_read, fd_max);
         //! handle read request
 
         //! 6.Receive communication
-        handle_read_request(fds, fd_read, fd_max);
+        handle_read_request(server_fd, fds, fd_read, fd_max);
     }
     //! 8.Closing connection
     std::cout << "Closing connection" << std::endl;
@@ -166,8 +167,8 @@ void handle_new_connection(int & server_fd, fd_set & fds, fd_set & fd_read, int 
     if (FD_ISSET(server_fd, &fd_read)){
         //* 2. if so, accept and add new connection socket into fds, updating max if necessary (carry current max with us)
         std::cout << "---------------accept()" << std::endl;
-        std::cout << "Waiting for connection with client" << std::endl;
         cli_socket = accept(server_fd, (struct sockaddr *)&server_addr, &server_addr_len);
+		std::cout << "new connection socket : " << cli_socket << std::endl;
         if (cli_socket == ERR){
             close(server_fd);
             ftError("accept() failed");
@@ -179,20 +180,58 @@ void handle_new_connection(int & server_fd, fd_set & fds, fd_set & fd_read, int 
     }
 }
 
-void handle_read_request(fd_set & fds, fd_set & fd_read, int & fd_max){
+void handle_read_request(int server_fd, fd_set & fds, fd_set & fd_read, int & fd_max){
     char buffer[BUFFER_SIZE];
 
 //*1.   loop thorugh 0 to fd_max
     for (int fd_i = 0; fd_i <= fd_max; fd_i++){
 ///*1.2    for each, check if it is set inside fd_read (we may need to skip server fd)
-        if (FD_ISSET(fd_i, &fd_read)){
+		// std::cout << "fd_i : " << fd_i << std::endl;
+        if (FD_ISSET(fd_i, &fd_read) && fd_i != server_fd){
 //* 1.3   if it is set, read into buffer
-            ssize_t bytes_received = recv(fd_i, &buffer, sizeof(buffer), 0);
+        	// std::cout << "---------------recv() fd_i : " << fd_i << std::endl;
+			memset(buffer, '\0', BUFFER_SIZE);
+            ssize_t bytes_received = recv(fd_i, buffer, BUFFER_SIZE, 0);
             if (bytes_received > 0){
                 //! process request
                 std::cout << "Received message from client.";
                 std::cout << "| bytes_received : " << bytes_received;
                 std::cout << "| message_received : " << std::endl << buffer << std::endl;
+				if (0 == strcmp("\r\n\r\n", buffer))
+					send(
+						fd_i,
+						"HTTP/1.1 200 OK\
+Content-Type: text/html\
+Content-Length: 146\
+\
+<!DOCTYPE html>\
+<html>\
+<head>\
+  <title>Example HTTP Response</title>\
+</head>\
+<body>\
+  <h1>Hello, World!</h1>\
+  <p>This is an example HTTP response.</p>\
+</body>\
+</html>",
+						sizeof("HTTP/1.1 200 OK\
+Content-Type: text/html\
+Content-Length: 146\
+\
+<!DOCTYPE html>\
+<html>\
+<head>\
+  <title>Example HTTP Response</title>\
+</head>\
+<body>\
+  <h1>Hello, World!</h1>\
+  <p>This is an example HTTP response.</p>\
+</body>\
+</html>"),
+						0
+						);
+                close(fd_i);
+                FD_CLR(fd_i, &fds);
             }
             else if (bytes_received == 0){
                 //! process end of request
@@ -200,6 +239,7 @@ void handle_read_request(fd_set & fds, fd_set & fd_read, int & fd_max){
                 std::cout << "Reached EOF OR client left" << std::endl;
                 close(fd_i);
                 FD_CLR(fd_i, &fds);
+				//TODO	update fd_max !
             }
             else if (bytes_received == ERR){
                 close(fd_i);
