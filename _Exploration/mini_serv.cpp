@@ -10,9 +10,27 @@
 #include <unistd.h>         // close
 #include <fcntl.h>          // fcntl
 
-# define    ERR         (-1)
 # define    PORT        8080
 # define    BUFFER_SIZE 1024
+
+# define	MSG_HTML	\
+"HTTP/1.1 200 OK\r\n\
+Content-Type: text/html\r\n\
+Content-Length: 146\r\n\
+Connection: close\r\n\
+\r\n\
+<!DOCTYPE html> \
+<html> \
+<head> \
+  <title>Example HTTP Response</title> \
+</head> \
+<body> \
+  <h1>Hello, World!</h1> \
+  <p>This is an example HTTP response.</p> \
+</body> \
+</html>"
+# define MSG_SIZE	(sizeof(MSG_HTML))
+
 
 //! STEPS
 // 1. socket
@@ -92,7 +110,7 @@ void ftError(std::string msg){
 
 void reuse_socket(int & server_fd){
     int reuse = 1;
-    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) == ERR){
+    if (-1 == setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse))){
         ftError("setsockopt");
     }
 }
@@ -115,11 +133,11 @@ void set_ip(struct sockaddr_in & server_addr){
 
 void make_non_blocking(int & server_fd){
     int flags = fcntl(server_fd, F_GETFL, 0);
-    if (flags == ERR){
+    if (-1 == flags){
         ftError("fcntl() failed");
     }
     flags |= O_NONBLOCK;
-    if (fcntl(server_fd, F_SETFL, flags) == ERR){
+    if (-1 == fcntl(server_fd, F_SETFL, flags)){
         ftError("fcntl() failed");
     }
 }
@@ -131,7 +149,7 @@ void create_server_socket(int & server_fd){
     //! 1.Creating socket file descriptor
     std::cout << "---------------socket()" << std::endl;
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (server_fd == ERR){
+    if (-1 == server_fd){
         ftError("socket() failed");
     }
     //! Set up option to reuse quickly the socket address
@@ -145,13 +163,13 @@ void create_server_socket(int & server_fd){
 
     //! 3.Bind 
     std::cout << "---------------bind()" << std::endl;
-    if (bind(server_fd, (struct sockaddr *)&server_addr, server_addr_len) == ERR){
+    if (-1 == bind(server_fd, (struct sockaddr *)&server_addr, server_addr_len)){
         close(server_fd);
         ftError("socket() failed");
     }
     //! 4.Listen
     std::cout << "---------------listen()" << std::endl;
-    if (listen(server_fd, 3) == ERR){
+    if (-1 == listen(server_fd, 3)){
         close(server_fd);
         ftError("listen() failed");
     }
@@ -159,23 +177,22 @@ void create_server_socket(int & server_fd){
 
 void handle_new_connection(int & server_fd, fd_set & fds, fd_set & fd_read, int & fd_max)
 {
-    struct sockaddr_in      server_addr;
-    socklen_t               server_addr_len = sizeof(server_addr);
     int                     cli_socket;
+    struct sockaddr_in      cli_addr;
+    socklen_t               cli_addr_len = sizeof(cli_addr);
    
     //* 1. checks if server_fd is set into read_fds
     if (FD_ISSET(server_fd, &fd_read)){
         //* 2. if so, accept and add new connection socket into fds, updating max if necessary (carry current max with us)
         std::cout << "---------------accept()" << std::endl;
-        cli_socket = accept(server_fd, (struct sockaddr *)&server_addr, &server_addr_len);
+        cli_socket = accept(server_fd, (struct sockaddr *)&cli_addr, &cli_addr_len);
 		std::cout << "new connection socket : " << cli_socket << std::endl;
-        if (cli_socket == ERR){
+        if (-1 == cli_socket){
             close(server_fd);
             ftError("accept() failed");
         }
         if (cli_socket > fd_max)
             fd_max = cli_socket;
-
         FD_SET(cli_socket, &fds);        
     }
 }
@@ -189,51 +206,29 @@ void handle_read_request(int server_fd, fd_set & fds, fd_set & fd_read, int & fd
 		// std::cout << "fd_i : " << fd_i << std::endl;
         if (FD_ISSET(fd_i, &fd_read) && fd_i != server_fd){
 //* 1.3   if it is set, read into buffer
-        	// std::cout << "---------------recv() fd_i : " << fd_i << std::endl;
+        	std::cout << "---------------recv() fd_i : " << fd_i << std::endl;
 			memset(buffer, '\0', BUFFER_SIZE);
             ssize_t bytes_received = recv(fd_i, buffer, BUFFER_SIZE, 0);
             if (bytes_received > 0){
-                //! process request
                 std::cout << "Received message from client.";
                 std::cout << "| bytes_received : " << bytes_received;
                 std::cout << "| message_received : " << std::endl << buffer << std::endl;
-				if (0 == strcmp("\r\n\r\n", buffer))
-					send(
-						fd_i,
-						"HTTP/1.1 200 OK\
-Content-Type: text/html\
-Content-Length: 146\
-\
-<!DOCTYPE html>\
-<html>\
-<head>\
-  <title>Example HTTP Response</title>\
-</head>\
-<body>\
-  <h1>Hello, World!</h1>\
-  <p>This is an example HTTP response.</p>\
-</body>\
-</html>",
-						sizeof("HTTP/1.1 200 OK\
-Content-Type: text/html\
-Content-Length: 146\
-\
-<!DOCTYPE html>\
-<html>\
-<head>\
-  <title>Example HTTP Response</title>\
-</head>\
-<body>\
-  <h1>Hello, World!</h1>\
-  <p>This is an example HTTP response.</p>\
-</body>\
-</html>"),
-						0
-						);
-                close(fd_i);
-                FD_CLR(fd_i, &fds);
             }
-            else if (bytes_received == 0){
+            // else if (bytes_received == 0){
+            if (0 == bytes_received || '\n' == buffer[bytes_received - 1]){
+                //! process request
+				//! 7.Send communication
+				// if (FD_ISSET(fd_i, fd_write)) {}
+				ssize_t bytes_sent = send(fd_i, MSG_HTML, MSG_SIZE, 0);
+				if (bytes_sent > 0){
+                	std::cout << "Response sent to the client.";
+                	std::cout << "| bytes_sent : " << bytes_sent << std::endl;					
+				}
+				else if (-1 == bytes_sent){
+					close(fd_i);
+					FD_CLR(fd_i, &fds);
+					ftError("send() failed");
+				}
                 //! process end of request
                 std::cout << "Received message from client." << std::endl;
                 std::cout << "Reached EOF OR client left" << std::endl;
@@ -241,7 +236,7 @@ Content-Length: 146\
                 FD_CLR(fd_i, &fds);
 				//TODO	update fd_max !
             }
-            else if (bytes_received == ERR){
+            else if (-1 == bytes_received){
                 close(fd_i);
                 FD_CLR(fd_i, &fds);
                 ftError("recv() failed");
@@ -254,21 +249,7 @@ Content-Length: 146\
 
 
 
-        // //! 7.Send communication
-        // // ssize_t recv(int sockfd, void *buf, size_t len, int flags);
-        // std::string message_sent("Hello from server\n");
-        // ssize_t bytes_sent = send(cli_socket, &message_sent, sizeof(message_sent), 0);
-        // if (bytes_sent > 0){
-        //     //! send response
-        //     std::cout << "Response sent to the client." << std::endl;
-        //     std::cout << "bytes_sent : " << bytes_sent << std::endl;
-        //     std::cout << "message_sent : " << std::endl << message_sent << std::endl;
-        // }
-        // else if (bytes_sent == ERR){
-        //     close(cli_socket);
-        //     close(server_fd);
-        //     ftError("send() failed");
-        // }
+
 
 
     //! retrieving sock info
