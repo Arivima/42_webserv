@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 18:07:39 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/05/30 14:06:02 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/05/30 17:24:33 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,26 +27,31 @@ void	ConnectionSocket::parse_line( void )
 {
 	t_PARSE_RET			parse_ret;
 	
-	parse_ret = read_line();
-	if (e_OK_PARSE == parse_ret)
-	{
-		std::stringstream	str_stream(this->cur_line);
-		std::string			header, value;
+	try {
+		parse_ret = read_line();
+		if (e_OK_PARSE == parse_ret)
+		{
+			std::stringstream	str_stream(this->cur_line);
+			std::string			header, value;
 
-		if (
-			("\r\n" == this->cur_line && false == this->_parse_body) ||
-			(0 >= this->cur_body_size && true == this->_parse_body))
-		{
-			this->_cur_req_parsed = true;
+			if (
+				("\r\n" == this->cur_line && false == this->_parse_body) ||
+				(0 >= this->cur_body_size && true == this->_parse_body))
+			{
+				this->_cur_req_parsed = true;
+			}
+			else if (false == this->_parse_body)
+			{
+				// if (std::string::npos == this->cur_line.find(":"))
+				// 	throw (ParseError());
+				std::getline(str_stream, header, ':');
+				std::getline(str_stream, value);
+				this->headers[header] = value;
+			}
+			this->cur_line.erase(0);
 		}
-		else if (false == this->_parse_body)
-		{
-			// if (std::string::npos == this->cur_line.find(":"))
-			// 	throw (ParseError());
-			std::getline(str_stream, header, ':');
-			std::getline(str_stream, value);
-			this->headers[header] = value;
-		}
+	}
+	catch (const ParseError& e) {
 		this->cur_line.erase(0);
 	}
 }
@@ -55,7 +60,6 @@ ConnectionSocket::t_PARSE_RET	ConnectionSocket::read_line( void )
 {
 	std::string						line_read;
 	size_t							cr_pos;
-	std::streamsize					bytes_read;
 	const size_t					buffer_size = std::min((size_t)1024, this->cur_body_size);
 	char							buf[buffer_size];
 
@@ -65,7 +69,7 @@ ConnectionSocket::t_PARSE_RET	ConnectionSocket::read_line( void )
 		this->stream.read(buf, buffer_size);
 		this->body += buf;
 		this->cur_body_size -= this->stream.gcount();
-	
+
 		if (this->cur_body_size <= 0)
 			return (e_OK_PARSE);
 		else
@@ -79,8 +83,22 @@ ConnectionSocket::t_PARSE_RET	ConnectionSocket::read_line( void )
 		cr_pos = line_read.find("\r\n");
 		if (std::string::npos == cr_pos)
 		{
-			return (e_CONTINUE_PARSE);
+			if (std::string::npos == line_read.find("\n"))
+				return (e_CONTINUE_PARSE);
+			else
+				throw (ParseError());
 		}
 		return (e_OK_PARSE);
 	}
+}
+
+const char*	ConnectionSocket::ParseError::what( void ) const throw()
+{
+	return ("err: http req line not valid");
+}
+
+//*	CANONICAL FORM
+
+ConnectionSocket::~ConnectionSocket( void )
+{
 }

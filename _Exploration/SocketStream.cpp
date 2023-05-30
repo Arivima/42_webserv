@@ -6,13 +6,13 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 18:49:33 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/05/29 18:52:55 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/05/30 17:08:46 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "SocketStream.hpp"
 
-explicit SocketStreamBuf::SocketStreamBuf(int sock_fd) : socketFd(socketFd) {}
+SocketStreamBuf::SocketStreamBuf(int sock_fd) : socketFd(sock_fd) {}
 
 SocketStreamBuf::int_type	SocketStreamBuf::underflow( void )
 {

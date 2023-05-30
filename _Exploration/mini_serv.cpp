@@ -1,5 +1,7 @@
 //! MINI_SERVER EXAMPLE
 
+#include <vector>
+
 #include <iostream>         // cin cout cerr
 #include <stdio.h>          // perror
 #include <stdlib.h>         // exit, EXIT_FAILURE
@@ -9,6 +11,8 @@
 #include <arpa/inet.h>      // inet_addr
 #include <unistd.h>         // close
 #include <fcntl.h>          // fcntl
+
+#include "ConnectionSocket.hpp"
 
 # define    PORT        8080
 # define    BUFFER_SIZE 1024
@@ -62,11 +66,13 @@ void create_server_socket(int & server_fd);
 void handle_new_connection(int & server_fd, fd_set & fds, fd_set & fd_read, int & fd_max);
 void handle_read_request(int server_fd, fd_set & fds, fd_set & fd_read, int & fd_max);
 
-int main (){
+std::vector<ConnectionSocket>	clients;
 
-    int                     server_fd;
-    int                     fd_max;
-    fd_set                  fds, fd_read, fd_write;
+int main (){ (void)clients;
+
+    int                     		server_fd;
+    int                     		fd_max;
+    fd_set                  		fds, fd_read, fd_write;
 
     
     std::cout << "Welcome to mini-serv" << std::endl;
@@ -186,11 +192,12 @@ void handle_new_connection(int & server_fd, fd_set & fds, fd_set & fd_read, int 
         //* 2. if so, accept and add new connection socket into fds, updating max if necessary (carry current max with us)
         std::cout << "---------------accept()" << std::endl;
         cli_socket = accept(server_fd, (struct sockaddr *)&cli_addr, &cli_addr_len);
-		std::cout << "new connection socket : " << cli_socket << std::endl;
         if (-1 == cli_socket){
             close(server_fd);
             ftError("accept() failed");
         }
+		std::cout << "new connection socket : " << cli_socket << std::endl;
+		clients.push_back(ConnectionSocket(cli_socket));
         if (cli_socket > fd_max)
             fd_max = cli_socket;
         FD_SET(cli_socket, &fds);        

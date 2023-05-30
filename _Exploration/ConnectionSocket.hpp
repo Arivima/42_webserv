@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 17:56:31 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/05/30 13:45:19 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/05/30 17:24:08 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,11 +69,13 @@ public:
 
 
 	//*		CANONICAL FORM
-						ConnectionSocket( void );
 						~ConnectionSocket();
+private:
+						ConnectionSocket( void );
 						ConnectionSocket( const ConnectionSocket & sock );
 	ConnectionSocket&	operator=(const ConnectionSocket& sock);
 
+public:
 	class				ParseError : public std::exception {
 		public:
 			virtual const char*	what( void ) const throw();
