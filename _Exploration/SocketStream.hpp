@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   SocketStream.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 18:42:21 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/05/29 18:53:17 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/05/31 11:51:56 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,12 @@ private:
 
 public:
 	explicit SocketStreamBuf(int socketFd);
+
+	class	SockEof : public std::exception
+	{
+		public:
+			virtual const char*	what( void ) const throw();
+	};
 
 protected:
 	int_type underflow( void );

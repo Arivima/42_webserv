@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ClientConnection.hpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: avilla-m <avilla-m@student.42.fr>          +#+  +:+       +#+        */
+/*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/30 11:29:56 by avilla-m          #+#    #+#             */
-/*   Updated: 2023/05/30 14:12:14 by avilla-m         ###   ########.fr       */
+/*   Updated: 2023/05/31 10:17:58 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,28 +36,26 @@ class ClientConnection{
         struct sockaddr_in      cli_addr;
         socklen_t               cli_addr_len = sizeof(cli_addr);
 
-        ClientConnection() : _client_socket() {}
+        ClientConnection() : _client_socket(-1) {}
+
         ~ClientConnection(){
             std::cout << "Closing connection | client: " << getClientSocket() << std::endl;
             close(getClientSocket());
         }
 
-        int &   getClientSocket(){return this->_client_socket;}
+        int     getClientSocket(){return this->_client_socket;}
         void    setClientSocket(const int & newSocket){this->_client_socket = newSocket;}
 
         void    handle_new_connection(t_server_fd_list & fds){
-            //* 1. checks if server_fd is set into read_fds
-            if (FD_ISSET(fds.server, &fds.read_set)){
-                //* 2. if so, accept and add new connection socket into fds, updating max if necessary (carry current max with us)
-                std::cout << "---------------accept()" << std::endl;
-                setClientSocket(accept(fds.server, (struct sockaddr *)&cli_addr, &cli_addr_len));
-                std::cout << "new connection socket : " << getClientSocket() << std::endl;
-                if (-1 == getClientSocket())
-                    throw SystemCallException("accept()");
-                if (getClientSocket() > fds.max)
-                    fds.max = getClientSocket();
-                FD_SET(getClientSocket(), &fds.all_set);
-            }
+            //* 2. if so, accept and add new connection socket into fds, updating max if necessary (carry current max with us)
+            std::cout << "---------------accept()" << std::endl;
+            setClientSocket(accept(fds.server, (struct sockaddr *)&cli_addr, &cli_addr_len));
+            std::cout << "new connection socket : " << getClientSocket() << std::endl;
+            if (-1 == getClientSocket())
+                throw SystemCallException("accept()");
+            if (getClientSocket() > fds.max)
+                fds.max = getClientSocket();
+            FD_SET(getClientSocket(), &fds.all_set);
         }
 };
 

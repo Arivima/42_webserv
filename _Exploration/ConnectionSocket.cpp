@@ -3,26 +3,42 @@
 /*                                                        :::      ::::::::   */
 /*   ConnectionSocket.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 18:07:39 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/05/30 17:24:33 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/05/31 16:25:19 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ConnectionSocket.hpp"
 #include "SocketStream.hpp"
 
+// #include <sys/socket.h>     // socket, AF_INET, SOCK_STREAM, recv
+// #include <netinet/in.h>     // sockaddr_in struct, INADDR_ANY
+// #include <arpa/inet.h>      // inet_addr
+// #include <fcntl.h>          // fcntl
+
+//*		Main Constructor
 ConnectionSocket::ConnectionSocket(int sock_fd) :
 	stream_buf(SocketStreamBuf(sock_fd)),
-	stream(std::istream(&this->stream_buf))
+	stream(&this->stream_buf)
 {
 	this->sock_fd = sock_fd;
+    // int flags = fcntl(sock_fd, F_GETFL, 0);
+    // // if (-1 == flags){
+    // //     // ftError("fcntl() failed");
+    // // }
+    // flags |= O_NONBLOCK;
+    // // if (-1 == fcntl(sock_fd, F_SETFL, flags)){
+    // //     // ftError("fcntl() failed");
+    // // }
 	this->_cur_req_parsed = false;
 	this->_parse_body = false;
 	this->cur_body_size = 0;
+	flag = 0;
 }
 
+//*		Main Functions
 void	ConnectionSocket::parse_line( void )
 {
 	t_PARSE_RET			parse_ret;
@@ -36,7 +52,7 @@ void	ConnectionSocket::parse_line( void )
 
 			if (
 				("\r\n" == this->cur_line && false == this->_parse_body) ||
-				(0 >= this->cur_body_size && true == this->_parse_body))
+				(0 == this->cur_body_size && true == this->_parse_body))
 			{
 				this->_cur_req_parsed = true;
 			}
@@ -52,6 +68,7 @@ void	ConnectionSocket::parse_line( void )
 		}
 	}
 	catch (const ParseError& e) {
+		std::cout << e.what() << std::endl;
 		this->cur_line.erase(0);
 	}
 }
@@ -92,12 +109,18 @@ ConnectionSocket::t_PARSE_RET	ConnectionSocket::read_line( void )
 	}
 }
 
+//*		Utilities
+
+int	ConnectionSocket::getSockFD( void ) {
+	return (this->sock_fd);
+}
+
 const char*	ConnectionSocket::ParseError::what( void ) const throw()
 {
 	return ("err: http req line not valid");
 }
 
-//*	CANONICAL FORM
+//*		CANONICAL FORM
 
 ConnectionSocket::~ConnectionSocket( void )
 {

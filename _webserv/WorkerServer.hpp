@@ -3,20 +3,20 @@
 /*                                                        :::      ::::::::   */
 /*   WorkerServer.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: avilla-m <avilla-m@student.42.fr>          +#+  +:+       +#+        */
+/*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/30 12:35:54 by avilla-m          #+#    #+#             */
-/*   Updated: 2023/05/30 14:23:20 by avilla-m         ###   ########.fr       */
+/*   Updated: 2023/05/31 10:18:00 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef WORKERSERVER_HPP
 #define WORKERSERVER_HPP
 
+// INCLUDES
 #include <iostream>         // cin cout cerr
 #include <string>           // strings, c_str()
 #include <cstring>          // memset
-
 
 #include <sys/socket.h>     // socket, AF_INET, SOCK_STREAM, recv, bind, socklen_t
 #include <netinet/in.h>     // sockaddr_in struct, INADDR_ANY
@@ -33,7 +33,7 @@
 #include "Exceptions.hpp"
 #include "ClientConnection.hpp"
 
-
+// DEFINES
 # define    PORT        8080
 # define    BUFFER_SIZE 1024
 
@@ -55,6 +55,7 @@ Connection: close\r\n\
 </html>"
 # define MSG_SIZE	(sizeof(MSG_HTML))
 
+// STRUCTS
 typedef struct s_server_fd_list{
         int     server;
         int     max;
@@ -62,6 +63,7 @@ typedef struct s_server_fd_list{
         fd_set  read_set;
         fd_set  write_set;
 }               t_server_fd_list;
+
 
 class WorkerServer{
     private:
@@ -103,7 +105,7 @@ class WorkerServer{
         void _make_server_listening(){
             std::cout << "---------------listen()" << std::endl;
             if (-1 == listen(this->fds.server, 3))
-                throw SystemCallException("bind()");
+                throw SystemCallException("listen()");
         }
 
         void _make_server_non_blocking(){
@@ -158,6 +160,7 @@ class WorkerServer{
         }
 
     public:
+        typedef  std::vector<ClientConnection *> VectorCli;
         std::vector<ClientConnection *> clients;
         t_server_fd_list                fds;
         struct sockaddr_in              server_addr;
@@ -168,9 +171,10 @@ class WorkerServer{
         }
 
         ~WorkerServer(){
-            // delete each element of vector + clear the whole vector
-            // this->clients.clear();
-            
+            // test
+            for (VectorCli::iterator cli_it = this->clients.begin(); cli_it != this->clients.end(); cli_it++)
+                this->clients.erase(cli_it);
+            this->clients.clear();
             std::cout << "Closing connection | worker: " << this->fds.server << std::endl;
             close(this->fds.server);
         }
@@ -178,7 +182,12 @@ class WorkerServer{
         void serverLoop(){
             while (true){
                 _io_multiplexing_using_select();
-                _handle_new_connection();
+
+                //* 1. checks if server_fd is set into read_fds
+                if (FD_ISSET(fds.server, &fds.read_set)){
+                    _handle_new_connection();
+                }
+
                 // _handle_read_request();
             }
         }

@@ -65,8 +65,9 @@ void set_ip(struct sockaddr_in & server_addr);
 void create_server_socket(int & server_fd);
 void handle_new_connection(int & server_fd, fd_set & fds, fd_set & fd_read, int & fd_max);
 void handle_read_request(int server_fd, fd_set & fds, fd_set & fd_read, int & fd_max);
+int ft_close(int fd);
 
-std::vector<ConnectionSocket>	clients;
+std::vector<ConnectionSocket *>	clients;
 
 int main (){ (void)clients;
 
@@ -89,24 +90,27 @@ int main (){ (void)clients;
 
         //! select
         if (-1 == select(fd_max + 1, &fd_read, &fd_write, NULL, NULL)){
-            close(server_fd);
+            ft_close(server_fd);
             ftError("accept() failed");
         }
 
         //! handdle new connection
         handle_new_connection(server_fd, fds, fd_read, fd_max);
-        //! handle read request
 
-        //! 6.Receive communication
+        //! handle read request
         handle_read_request(server_fd, fds, fd_read, fd_max);
     }
     //! 8.Closing connection
     std::cout << "Closing connection" << std::endl;
-    close(server_fd);
+    ft_close(server_fd);
     std::cout << "Exiting successfully mini-serv" << std::endl;
     return 0;
 }
 
+int ft_close(int fd) {
+    std::cout << "Closing fd: " << fd << std::endl;
+    return (close(fd));
+}
 
 void ftError(std::string msg){
     perror(msg.c_str());
@@ -170,13 +174,13 @@ void create_server_socket(int & server_fd){
     //! 3.Bind 
     std::cout << "---------------bind()" << std::endl;
     if (-1 == bind(server_fd, (struct sockaddr *)&server_addr, server_addr_len)){
-        close(server_fd);
+        ft_close(server_fd);
         ftError("socket() failed");
     }
     //! 4.Listen
     std::cout << "---------------listen()" << std::endl;
     if (-1 == listen(server_fd, 3)){
-        close(server_fd);
+        ft_close(server_fd);
         ftError("listen() failed");
     }
 }
@@ -189,67 +193,115 @@ void handle_new_connection(int & server_fd, fd_set & fds, fd_set & fd_read, int 
    
     //* 1. checks if server_fd is set into read_fds
     if (FD_ISSET(server_fd, &fd_read)){
+        std::cout << "handling new connection" << std::endl;
         //* 2. if so, accept and add new connection socket into fds, updating max if necessary (carry current max with us)
         std::cout << "---------------accept()" << std::endl;
         cli_socket = accept(server_fd, (struct sockaddr *)&cli_addr, &cli_addr_len);
         if (-1 == cli_socket){
-            close(server_fd);
+            ft_close(server_fd);
             ftError("accept() failed");
         }
+        make_non_blocking(cli_socket);
 		std::cout << "new connection socket : " << cli_socket << std::endl;
-		clients.push_back(ConnectionSocket(cli_socket));
+		clients.push_back(new ConnectionSocket(cli_socket));
         if (cli_socket > fd_max)
             fd_max = cli_socket;
-        FD_SET(cli_socket, &fds);        
+        FD_SET(cli_socket, &fds);
+        FD_CLR(server_fd, &fd_read);
     }
 }
 
 void handle_read_request(int server_fd, fd_set & fds, fd_set & fd_read, int & fd_max){
-    char buffer[BUFFER_SIZE];
+    // char buffer[BUFFER_SIZE];
+(void)server_fd; (void)fds; (void)fd_read; (void) fd_max;
 
-//*1.   loop thorugh 0 to fd_max
-    for (int fd_i = 0; fd_i <= fd_max; fd_i++){
-///*1.2    for each, check if it is set inside fd_read (we may need to skip server fd)
-		// std::cout << "fd_i : " << fd_i << std::endl;
-        if (FD_ISSET(fd_i, &fd_read) && fd_i != server_fd){
-//* 1.3   if it is set, read into buffer
-        	std::cout << "---------------recv() fd_i : " << fd_i << std::endl;
-			memset(buffer, '\0', BUFFER_SIZE);
-            ssize_t bytes_received = recv(fd_i, buffer, BUFFER_SIZE, 0);
-            if (bytes_received > 0){
-                std::cout << "Received message from client.";
-                std::cout << "| bytes_received : " << bytes_received;
-                std::cout << "| message_received : " << std::endl << buffer << std::endl;
+    for (std::vector<ConnectionSocket *>::iterator it = clients.begin(); it != clients.end(); it++)
+    {
+        // std::cout << "client n°: " << (*it)->getSockFD() << std::endl;
+
+        if (FD_ISSET((*it)->getSockFD(), &fd_read)) {
+            std::cout << "handling read req" << std::endl;
+            try {
+                (*it)->parse_line();
+                std::cout << "parse line done" << std::endl;
+
+                if (0 == (*it)->flag) {
+				    ssize_t bytes_sent = send((*it)->getSockFD(), MSG_HTML, MSG_SIZE, 0);
+                    std::cout << "send done" << std::endl;
+				    if (bytes_sent > 0){
+                    	std::cout << "Response sent to the client.";
+                    	std::cout << "| bytes_sent : " << bytes_sent << std::endl;					
+				    }
+				    else if (-1 == bytes_sent){
+                        std::cout << "HERE" << std::endl;
+                        ft_close((*it)->getSockFD());//TODO    forse la metto dentro il distruttore del client
+                        FD_CLR((*it)->getSockFD(), &fds);
+                        it = clients.erase(it);
+				    }
+                    else {
+                        std::cout << "Maremma li mortacci" << std::endl;
+                    }
+                    (*it)->flag = 1;
+                }
+                
             }
-            // else if (bytes_received == 0){
-            if (0 == bytes_received || '\n' == buffer[bytes_received - 1]){
-                //! process request
-				//! 7.Send communication
-				// if (FD_ISSET(fd_i, fd_write)) {}
-				ssize_t bytes_sent = send(fd_i, MSG_HTML, MSG_SIZE, 0);
-				if (bytes_sent > 0){
-                	std::cout << "Response sent to the client.";
-                	std::cout << "| bytes_sent : " << bytes_sent << std::endl;					
-				}
-				else if (-1 == bytes_sent){
-					close(fd_i);
-					FD_CLR(fd_i, &fds);
-					ftError("send() failed");
-				}
-                //! process end of request
-                std::cout << "Received message from client." << std::endl;
-                std::cout << "Reached EOF OR client left" << std::endl;
-                close(fd_i);
-                FD_CLR(fd_i, &fds);
-				//TODO	update fd_max !
+            catch (const std::exception& e) {
+                std::cout << "li mortacci" << std::endl;
+                std::cout << e.what() << std::endl;
+                ft_close((*it)->getSockFD());//TODO    forse la metto dentro il distruttore del client
+                // FD_CLR((*it)->getSockFD(), &fds);
+                it = clients.erase(it);
             }
-            else if (-1 == bytes_received){
-                close(fd_i);
-                FD_CLR(fd_i, &fds);
-                ftError("recv() failed");
-            }
+                FD_CLR((*it)->getSockFD(), &fd_read);
+                std::cout << std::endl;
         }
     }
+
+
+
+// //*1.   loop thorugh 0 to fd_max
+//     for (int fd_i = 0; fd_i <= fd_max; fd_i++){
+// ///*1.2    for each, check if it is set inside fd_read (we may need to skip server fd)
+// 		// std::cout << "fd_i : " << fd_i << std::endl;
+//         if (FD_ISSET(fd_i, &fd_read) && fd_i != server_fd){
+// //* 1.3   if it is set, read into buffer
+//         	std::cout << "---------------recv() fd_i : " << fd_i << std::endl;
+// 			memset(buffer, '\0', BUFFER_SIZE);
+//             ssize_t bytes_received = recv(fd_i, buffer, BUFFER_SIZE, 0);
+//             if (bytes_received > 0){
+//                 std::cout << "Received message from client.";
+//                 std::cout << "| bytes_received : " << bytes_received;
+//                 std::cout << "| message_received : " << std::endl << buffer << std::endl;
+//             }
+//             // else if (bytes_received == 0){
+//             if (0 == bytes_received || '\n' == buffer[bytes_received - 1]){
+//                 //! process request
+// 				//! 7.Send communication
+// 				// if (FD_ISSET(fd_i, fd_write)) {}
+// 				ssize_t bytes_sent = send(fd_i, MSG_HTML, MSG_SIZE, 0);
+// 				if (bytes_sent > 0){
+//                 	std::cout << "Response sent to the client.";
+//                 	std::cout << "| bytes_sent : " << bytes_sent << std::endl;					
+// 				}
+// 				else if (-1 == bytes_sent){
+// 					ft_close(fd_i);
+// 					FD_CLR(fd_i, &fds);
+// 					ftError("send() failed");
+// 				}
+//                 //! process end of request
+//                 std::cout << "Received message from client." << std::endl;
+//                 std::cout << "Reached EOF OR client left" << std::endl;
+//                 ft_close(fd_i);
+//                 FD_CLR(fd_i, &fds);
+// 				//TODO	update fd_max !
+//             }
+//             else if (-1 == bytes_received){
+//                 ft_close(fd_i);
+//                 FD_CLR(fd_i, &fds);
+//                 ftError("recv() failed");
+//             }
+//         }
+//     }
 //*1.4      if itś available for writing, echo back  
 }
 

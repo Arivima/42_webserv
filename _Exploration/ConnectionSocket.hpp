@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConnectionSocket.hpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 17:56:31 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/05/30 17:24:08 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/05/31 12:36:36 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,7 +45,12 @@ public:
 		e_DELETE
 	}	t_HTTP_METHOD;
 
+	//!	DEBUG
+	int	flag;
+	//!
 private:
+
+	
 	int										sock_fd;			//* connetction socket fd
 	std::map<std::string, std::string>		headers;			//*	dictionary holding http req headers
 	// std::filebuf							stream_buf;
