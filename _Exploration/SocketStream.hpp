@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 18:42:21 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/05/31 11:51:56 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/01 19:27:46 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,10 +14,8 @@
 # define SOCKETSTREAM_HPP
 
 # include <fstream>
-
-#include <sys/socket.h>     // socket, AF_INET, SOCK_STREAM, recv
-#include <netinet/in.h>     // sockaddr_in struct, INADDR_ANY
-#include <arpa/inet.h>      // inet_addr
+# include <sys/socket.h>     // socket, AF_INET, SOCK_STREAM, recv
+# include <iostream>
 
 class SocketStreamBuf : public std::streambuf {
 private:
@@ -26,14 +24,10 @@ private:
 	char					buffer[bufferSize];
 
 public:
+	//*		constructor
 	explicit SocketStreamBuf(int socketFd);
-
-	class	SockEof : public std::exception
-	{
-		public:
-			virtual const char*	what( void ) const throw();
-	};
-
+	//*		main functionalities
+	bool	has_eol( void );
 protected:
 	int_type underflow( void );
 };

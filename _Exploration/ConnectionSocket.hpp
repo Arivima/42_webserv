@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 17:56:31 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/05/31 12:36:36 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/01 19:44:54 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,55 +23,53 @@
 # include <string>
 # include <map>
 
+# include "EpollData.hpp"
 # include "SocketStream.hpp"
 
 class ConnectionSocket
 {
 public:
-	//*		Typedefs
-	typedef enum e_PARSE_RET
-	{
-		e_ERR_PARSE,
-		e_OK_PARSE,
-		e_CONTINUE_PARSE
-	}	t_PARSE_RET;
-
-	typedef enum e_HTTP_METHOD
-	{
-		e_GET,
-		e_POST,
-		e_UPDATE,
-		e_PUT,
-		e_DELETE
-	}	t_HTTP_METHOD;
-
 	//!	DEBUG
 	int	flag;
 	//!
-private:
-
+	//*		Typedefs
+	typedef enum e_CLIENT_STATUS
+	{
+		e_READ_MODE,
+		e_RESP_MODE,
+	}	t_CLIENT_STATUS;
 	
-	int										sock_fd;			//* connetction socket fd
-	std::map<std::string, std::string>		headers;			//*	dictionary holding http req headers
-	// std::filebuf							stream_buf;
-	// FILE*									file;
-	SocketStreamBuf							stream_buf;			//*	streambuf object needed by the istream object
+	typedef enum e_PARSER_MODE
+	{
+		e_READ_HEADS,
+		e_READ_BODY,
+	}	t_PARSER_MODE;
+	
+private:
+	int										sock_fd;			//*	connetction socket fd
+	const t_epoll_data&						edata;				//*	epoll data reference
+	t_CLIENT_STATUS							status;				//*	REQUEST or RESPONSE
+	t_PARSER_MODE							parse_mode;			//*	HEADERS or BODY
+	std::map<std::string, std::string>		req;				//*	dictionary holding http req headers
+	SocketStreamBuf							stream_buf;			//*	stream_buf object for the input stream
 	std::istream							stream;				//*	stream for handling socket reads
-	std::string								cur_line;			//* current req line
-	std::string								body;				//* current body
-	bool									_cur_req_parsed;	//* flag which tells us if the current req parsing is done
-	bool									_parse_body;		//*	flag which tells us if we have to parse the body (in which case,  we must read the next cur_body_size bytes)
-	size_t									cur_body_size;
+	std::string								cur_line;			//*	current req line
+	int										cur_body_size;
 
 public:
 	//*		main Constructors and Destructors
-						ConnectionSocket( int sock_fd );
-
+						ConnectionSocket( int sock_fd, const t_epoll_data& edata );
 	//*		main Functions
 	void				parse_line( void );
 	void				send_response(const std::string& res);
 	int					getSockFD( void );
+	bool				req_done( void );
 
+	//*		Exceptions
+	class SockEof : public std::exception {
+		public:
+			virtual const char*	what( void ) const throw();
+	};
 
 	//*		CANONICAL FORM
 						~ConnectionSocket();
@@ -79,16 +77,10 @@ private:
 						ConnectionSocket( void );
 						ConnectionSocket( const ConnectionSocket & sock );
 	ConnectionSocket&	operator=(const ConnectionSocket& sock);
-
-public:
-	class				ParseError : public std::exception {
-		public:
-			virtual const char*	what( void ) const throw();
-	};
-
+	
 private:
-	t_PARSE_RET			read_line( void );
-	// t_PARSE_RET			parse_body( void );
+	//*		helper functions
+	void			read_line( void );
 };
 
 

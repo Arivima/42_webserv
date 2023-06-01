@@ -11,9 +11,8 @@
 #include <arpa/inet.h>      // inet_addr
 #include <unistd.h>         // close
 #include <fcntl.h>          // fcntl
-#include <sys/epoll.h>      // epoll//!remove since it's inside epoll_data.hpp
+#include <sys/epoll.h>      // epoll
 
-#include "EpollData.hpp"
 #include "ConnectionSocket.hpp"
 
 # define    PORT        8080
@@ -66,11 +65,10 @@ void make_non_blocking(int & server_fd);
 void print_ip(struct sockaddr_in & server_addr);
 void set_ip(struct sockaddr_in & server_addr);
 void create_server_socket(int & server_fd);
-void handle_new_connection(int & server_fd, int epoll_fd, struct epoll_event* eevent);// fd_set & fds, fd_set & fd_read, int & fd_max);
+void handle_new_connection(int & server_fd, int epoll_fd);// fd_set & fds, fd_set & fd_read, int & fd_max);
 void handle_read_request(struct epoll_event& eevent);// fd_set & fds, fd_set & fd_read, int & fd_max);
 int ft_close(int fd);
-struct epoll_event*	getEpollEvent(int sock_fd, struct epoll_event* eeventS, size_t n_events);
-void				serve_client(ConnectionSocket& client, struct epoll_event* eevent);
+struct epoll_event* getEpollEvent(int sock_fd, struct epoll_event* eeventS, size_t n_events);
 
 struct epoll_event* getEpollEvent(int sock_fd, struct epoll_event* eeventS, size_t n_events)
 {
@@ -141,26 +139,25 @@ int main (){ (void)clients;
 			);
 		for (it = clients.begin(); it != clients.end(); it++)
 			serve_client(
-				*(*it),
+				(*it),
 				getEpollEvent((*it)->getSockFD(), eeventS, n_events)
 				);
-	}
-	//! 8.Closing connection
-	std::cout << "Closing connection" << std::endl;
-	ft_close(server_fd);
-	std::cout << "Exiting successfully mini-serv" << std::endl;
-	return 0;
-}
+		
+        // for (int i = 0; i < n_events; i++) {
+        //     if (server_fd == eeventS[i].data.fd)
+        //         //! handdle new connection
+        //         handle_new_connection(server_fd, epoll_fd);// fds, fd_read, fd_max);
+        //     else
+        //         //! handle read request
+        //         handle_read_request(eeventS[i]);// fds, fd_read, fd_max);
+        // }
 
-void	serve_client(ConnectionSocket& client, struct epoll_event* eevent)
-{
-	if (false == client.req_done())
-	{
-		client.parse_line();
-	}
-	else
-	{
-	}
+    }
+    //! 8.Closing connection
+    std::cout << "Closing connection" << std::endl;
+    ft_close(server_fd);
+    std::cout << "Exiting successfully mini-serv" << std::endl;
+    return 0;
 }
 
 int ft_close(int fd) {
@@ -241,36 +238,44 @@ void create_server_socket(int & server_fd){
     }
 }
 
-void handle_new_connection(int & server_fd, int epoll_fd, struct epoll_event* eevent)
+void handle_new_connection(int & server_fd, int epoll_fd)
 {
-    int						cli_socket;
-    struct sockaddr_in		cli_addr;
-    const socklen_t			cli_addr_len = sizeof(cli_addr);
-	struct epoll_event		cli_epoll_evt_opt;
+    int                     cli_socket;
+    struct sockaddr_in      cli_addr;
+    socklen_t               cli_addr_len = sizeof(cli_addr);
+    struct epoll_event      eevent;
 
-	if (eevent)
-	{
-    	//*     new socket creation
-    	std::cout << "handling new connection" << std::endl;
-    	std::cout << "---------------accept()" << std::endl;
-    	cli_socket = accept(server_fd, (struct sockaddr *)&cli_addr, &cli_addr_len);
-    	if (-1 == cli_socket){
-    	    ft_close(server_fd);
-    	    ftError("accept() failed");
-    	}
-    	make_non_blocking(cli_socket);
-		std::cout << "new connection socket : " << cli_socket << std::endl;
+    //*     new socket creation
+    std::cout << "handling new connection" << std::endl;
+    std::cout << "---------------accept()" << std::endl;
+    cli_socket = accept(server_fd, (struct sockaddr *)&cli_addr, &cli_addr_len);
+    if (-1 == cli_socket){
+        ft_close(server_fd);
+        ftError("accept() failed");
+    }
+    make_non_blocking(cli_socket);
+	std::cout << "new connection socket : " << cli_socket << std::endl;
 
-    	//*     epoll
-    	cli_epoll_evt_opt.events = EPOLLIN | EPOLLOUT;
-    	cli_epoll_evt_opt.data.fd = cli_socket;
-    	if (-1 == epoll_ctl(epoll_fd, EPOLL_CTL_ADD, cli_socket, &eevent)) {
-    	    ft_close(server_fd);
-    	    ftError("epoll_ctl() failed");
-    	}
-    	//*     adding to list of clients
-		clients.push_back(new ConnectionSocket(cli_socket));
-	}
+    //*     epoll
+    eevent.events = EPOLLIN ;//| EPOLLOUT;
+    eevent.data.fd = cli_socket;
+    if (-1 == epoll_ctl(epoll_fd, EPOLL_CTL_ADD, cli_socket, &eevent)) {
+        ft_close(server_fd);
+        ftError("epoll_ctl() failed");
+    }
+    
+    //*     adding to list of clients
+	clients.push_back(new ConnectionSocket(cli_socket));
+
+
+    //* 1. checks if server_fd is set into read_fds
+    // if (FD_ISSET(server_fd, &fd_read)){
+    //     //* 2. if so, accept and add new connection socket into fds, updating max if necessary (carry current max with us)
+    //     if (cli_socket > fd_max)
+    //         fd_max = cli_socket;
+    //     FD_SET(cli_socket, &fds);
+    //     FD_CLR(server_fd, &fd_read);
+    // }
 }
 
 void handle_read_request(struct epoll_event& eevent){//, fd_set & fds, fd_set & fd_read, int & fd_max){
