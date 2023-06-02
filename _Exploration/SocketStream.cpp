@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 18:49:33 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/01 20:02:03 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/02 12:10:04 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,21 @@ SocketStreamBuf::int_type	SocketStreamBuf::underflow( void )
 	}
 	return traits_type::to_int_type(*gptr());
 }
+
+// std::streamsize	SocketStreamBuf::xsgetn(char* s, std::streamsize n) {
+// 	if (gptr() == egptr())
+// 		return (0);
+	
+// 	const std::streamsize	availble = egptr() - gptr();
+// 	const std::streamsize	to_read = std::min(availble, n);
+
+// 	std::copy(gptr(), gptr() + to_read, s);
+// 	gbump(static_cast<int>(to_read));
+
+// 	if (to_read < n && underflow() != traits_type::eof())
+// 		return (to_read + xsgetn(s + to_read, n - to_read));
+// 	return (to_read);
+// }
 
 bool	SocketStreamBuf::has_eol( void )
 {

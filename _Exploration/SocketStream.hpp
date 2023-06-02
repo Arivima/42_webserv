@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 18:42:21 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/01 19:27:46 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/02 12:10:09 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,7 @@ public:
 	bool	has_eol( void );
 protected:
 	int_type underflow( void );
+	// virtual std::streamsize	xsgetn(char* s, std::streamsize n);
 };
 
 #endif
