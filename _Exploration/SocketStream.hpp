@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 18:42:21 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/02 12:10:09 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/04 15:10:37 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,13 @@
 
 class SocketStreamBuf : public std::streambuf {
 private:
-	static const int		bufferSize = 1024;
+	//*	HTTP/1.1 specification (RFC 7230)
+	//*
+	//*	max request line (Method url protocol version)
+	//*		8000 bytes
+	//*	max header line	(user-agent, etc.)
+	//*		4096 bytes
+	static const int		bufferSize = 8001;
 	int						socketFd;
 	char					buffer[bufferSize];
 
@@ -30,7 +36,6 @@ public:
 	bool	has_eol( void );
 protected:
 	int_type underflow( void );
-	// virtual std::streamsize	xsgetn(char* s, std::streamsize n);
 };
 
 #endif

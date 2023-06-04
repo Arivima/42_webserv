@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 17:56:31 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/02 11:05:41 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/04 15:30:54 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,10 @@
 
 # include "EpollData.hpp"
 # include "SocketStream.hpp"
+
+//TODO : mettere nel header globale
+# define MAX_HTTP_REQ_LINE_LEN 8000
+# define MAX_HTTP_HEADER_LINE_LEN 4096
 
 class ConnectionSocket
 {
@@ -62,12 +66,16 @@ public:
 						ConnectionSocket( int sock_fd, const t_epoll_data& edata );
 	//*		main Functions
 	void				parse_line( void );
-	void				send_response(const std::string& res);
+	// void				send_response(const std::string& res);
 	int					getSockFD( void );
-	bool				req_done( void );
+	t_CLIENT_STATUS		getStatus( void );
 
 	//*		Exceptions
 	class SockEof : public std::exception {
+		public:
+			virtual const char*	what( void ) const throw();
+	};
+	class LongHeader : public std::exception {
 		public:
 			virtual const char*	what( void ) const throw();
 	};
@@ -82,6 +90,10 @@ private:
 private:
 	//*		helper functions
 	void			read_line( void );
+	void			parse_header( void );
+	void			parse_body( void );
+	void			read_header( void );
+	void			read_body( void );
 };
 
 
