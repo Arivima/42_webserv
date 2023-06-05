@@ -16,7 +16,7 @@
 #include "EpollData.hpp"
 #include "ConnectionSocket.hpp"
 
-# define    PORT        8080
+# define    PORT        8084
 # define    BUFFER_SIZE 1024
 
 # define	MSG_HTML	\
@@ -271,7 +271,7 @@ void create_server_socket(int & server_fd){
     std::cout << "---------------bind()" << std::endl;
     if (-1 == bind(server_fd, (struct sockaddr *)&server_addr, server_addr_len)){
         ft_close(server_fd);
-        ftError("socket() failed");
+        ftError("bind() failed");
     }
     //! 4.Listen
     std::cout << "---------------listen()" << std::endl;

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConnectionSocket.hpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 17:56:31 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/04 15:30:54 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/05 17:11:53 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,13 +19,14 @@
 # include <iostream>
 # include <fstream>
 # include <istream>
+# include <sys/socket.h>
 
 # include <algorithm>
 # include <string>
 # include <map>
 
+# include "../include/webserv.hpp"
 # include "EpollData.hpp"
-# include "SocketStream.hpp"
 
 //TODO : mettere nel header globale
 # define MAX_HTTP_REQ_LINE_LEN 8000
@@ -51,14 +52,15 @@ public:
 	}	t_PARSER_MODE;
 	
 private:
-	int										sock_fd;			//*	connetction socket fd
-	const t_epoll_data&						edata;				//*	epoll data reference
-	t_CLIENT_STATUS							status;				//*	REQUEST or RESPONSE
-	t_PARSER_MODE							parse_mode;			//*	HEADERS or BODY
-	std::map<std::string, std::string>		req;				//*	dictionary holding http req headers
-	SocketStreamBuf							stream_buf;			//*	stream_buf object for the input stream
-	std::istream							stream;				//*	stream for handling socket reads
-	std::string								cur_line;			//*	current req line
+	int										sock_fd;					//*	connetction socket fd
+	const t_epoll_data&						edata;						//*	epoll data reference
+	t_CLIENT_STATUS							status;						//*	REQUEST or RESPONSE
+	t_PARSER_MODE							parse_mode;					//*	HEADERS or BODY
+	std::map<std::string, std::string>		req;						//*	dictionary holding http req headers and body
+	char									rcv_buf[RCV_BUF_SIZE + 1];	//*	
+	std::stringstream						sock_stream;
+	std::string								cur_line;					//*	current req line
+	// std::string								left_over;
 	int										cur_body_size;
 
 public:
