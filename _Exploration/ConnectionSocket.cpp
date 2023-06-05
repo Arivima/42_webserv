@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 18:07:39 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/05 17:26:40 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/06/05 19:30:42 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,7 +92,7 @@ void	ConnectionSocket::read_line( void ) { //std::cout  << std::endl << "\033[1m
 
 	const struct epoll_event*	eevent = edata.getEpollEvent(this->sock_fd);
 
-	if (NULL != eevent && eevent->events & EPOLLIN) {
+	if (NULL != eevent && (eevent->events & EPOLLIN)) {
 		memset(rcv_buf, '\0', RCV_BUF_SIZE + 1);
 		if (recv(sock_fd, rcv_buf, RCV_BUF_SIZE, 0) <= 0)
 			throw (SockEof());

@@ -16,7 +16,7 @@
 #include "EpollData.hpp"
 #include "ConnectionSocket.hpp"
 
-# define    PORT        8084
+# define    PORT        8080
 # define    BUFFER_SIZE 1024
 
 # define	MSG_HTML	\
@@ -160,23 +160,16 @@ void	serve_client(std::vector<ConnectionSocket *>::iterator& clit, struct epoll_
 {//(void)eevent;std::cout  << std::endl << "\033[1m\033[32m""serve_client() called()""\033[0m" << std::endl;
 
     ConnectionSocket&   client = *(*clit);
-    static int  bo = 0;
 
 	if (ConnectionSocket::e_READ_MODE == client.getStatus())
-	{(void)eevent;//std::cout  << std::endl << "\033[1m\033[32m""serve_client()--req mode-- called()""\033[0m" << std::endl;
-        // std::cout << "reading request" << std::endl;
-        // try {
-		    client.parse_line();
-        // }
-        // catch (const ConnectionSocket::SockEof& e) {
-        //     std::cout << e.what();
-        //     clit = clients.erase(clit);
-        //     return ;
-        // }
-        //TODO  la prima volta che entra non passa l'if dentro parse_line() (quindi non chiamar readline()) e viene subito inviata la risposta
-        //TODO  quando entra per la prima volta dentro parse_line, da' subito eof()
-
-        if (0 == client.flag) {
+	{
+		client.parse_line();
+    }
+    else {
+		if (0 == client.flag) {
+			if (!eevent || !(eevent->events & EPOLLOUT))
+				return ;
+            std::cout << "response mode" << std::endl;
             ssize_t bytes_sent = send(client.getSockFD(), MSG_HTML, MSG_SIZE, 0);
             std::cout << "send done" << std::endl;
 			if (bytes_sent > 0){
@@ -185,20 +178,14 @@ void	serve_client(std::vector<ConnectionSocket *>::iterator& clit, struct epoll_
 			}
 			else if (-1 == bytes_sent){
                 std::cout << "HERE" << std::endl;
-                ft_close(client.getSockFD());//TODO    forse la metto dentro il distruttore del client
+                ft_close(client.getSockFD());//TODO		forse la metto dentro il distruttore del client
                 // clit = clients.erase(clit);
 			}
             else {
                 std::cout << "Maremma li mortacci" << std::endl;
             }
             client.flag = 1;
-        }
-        // std::cout << std::endl;
-    }
-    else {
-        if (bo < 2)
-            std::cout << "response mode" << std::endl;
-        bo ++;
+		}
     }
     // std::cout << std::endl;
 }
@@ -311,12 +298,12 @@ void handle_new_connection(int & server_fd, int epoll_fd, struct epoll_event* ee
     	}
 
         //*     modifying rcv buffer
-        int buffer_size = 8001;
-        if (-1 == setsockopt(cli_socket, SOL_SOCKET, SO_RCVBUF, &buffer_size, sizeof(buffer_size)))
-        {
-            ft_close(server_fd);
-            ftError("setsockopt() failed : setting rcv buffer size");
-        }
+        // int buffer_size = 8001;
+        // if (-1 == setsockopt(cli_socket, SOL_SOCKET, SO_RCVBUF, &buffer_size, sizeof(buffer_size)))
+        // {
+        //     ft_close(server_fd);
+        //     ftError("setsockopt() failed : setting rcv buffer size");
+        // }
 
     	//*     adding to list of clients
 		clients.push_back(new ConnectionSocket(cli_socket, edata));
