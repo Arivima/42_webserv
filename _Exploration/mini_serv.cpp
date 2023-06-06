@@ -169,6 +169,8 @@ void	serve_client(std::vector<ConnectionSocket *>::iterator& clit, struct epoll_
 		if (0 == client.flag) {
 			if (!eevent || !(eevent->events & EPOLLOUT))
 				return ;
+            std::cout << "end of request" << std::endl;
+            client.print_req();
             std::cout << "response mode" << std::endl;
             ssize_t bytes_sent = send(client.getSockFD(), MSG_HTML, MSG_SIZE, 0);
             std::cout << "send done" << std::endl;

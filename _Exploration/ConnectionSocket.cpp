@@ -48,13 +48,13 @@ void	ConnectionSocket::parse_line( void ) { //std::cout  << std::endl << "\033[1
 void	ConnectionSocket::parse_body( void ) {
 	if (0 == cur_body_size) {
 		status = e_RESP_MODE;
-		std::cout << "\033[1m\033[31m""cur_line(body): ""\033[0m" << cur_line << std::endl;
+		// std::cout << "\033[1m\033[31m""cur_line(body): ""\033[0m" << cur_line << std::endl;
 		req["body"] = cur_line;
 		cur_line.erase(0);
 	}
 }
 
-void	ConnectionSocket::parse_header( void ) { std::cout << "reading headers" << std::endl;
+void	ConnectionSocket::parse_header( void ) { //std::cout << "reading headers" << std::endl;
 	
 	if (std::string::npos != cur_line.find("\r\n")) {
 		if ("\r\n" == cur_line) {
@@ -64,11 +64,13 @@ void	ConnectionSocket::parse_header( void ) { std::cout << "reading headers" << 
 				cur_body_size = std::atol(req["Content-Length"].c_str());
 			}
 			else {
-				std::cout << "end of request" << std::endl;
+				// std::cout << "end of request" << std::endl;
 				status = e_RESP_MODE;
 			}
 		}
 		else {
+			cur_line.erase(std::remove(cur_line.begin(), cur_line.end(), '\r'),  cur_line.end());
+			cur_line.erase(std::remove(cur_line.begin(), cur_line.end(), '\n'),  cur_line.end());
 			if (req.empty()) {
 				req["req_line"] = cur_line;
 			}
@@ -77,7 +79,7 @@ void	ConnectionSocket::parse_header( void ) { std::cout << "reading headers" << 
 				std::string			key;
 				std::string			value;
 						
-				std::cout << "\033[1m\033[31m""cur_line: ""\033[0m" << cur_line << std::endl;
+				// std::cout << "\033[1m\033[31m""cur_line: ""\033[0m" << cur_line << std::endl;
 				std::getline(str_stream, key, ':');
 				std::getline(str_stream, value);
 				req[key] = value;
@@ -85,7 +87,7 @@ void	ConnectionSocket::parse_header( void ) { std::cout << "reading headers" << 
 		}
 		cur_line.erase(0);
 	}
-	std::cout << "reading headers---END" << std::endl;
+	// std::cout << "reading headers---END" << std::endl;
 }
 
 void	ConnectionSocket::read_line( void ) { //std::cout  << std::endl << "\033[1m\033[32m""read_line() called()""\033[0m" << std::endl;
@@ -137,7 +139,15 @@ void	ConnectionSocket::read_header( void ) {
 	//*		debug
 	std::string	debug_string = line_read;
 	debug_string.erase(std::remove(debug_string.begin(), debug_string.end(), '\r'), debug_string.end());
-	std::cout << "line_read: " << debug_string << " has_eol: " << has_eol << std::endl;
+	// std::cout << "line_read: " << debug_string << " has_eol: " << has_eol << std::endl;
+}
+
+void	ConnectionSocket::print_req( void ) {
+	std::cout << "| START print_req |" << std::endl;
+	for (std::map<std::string, std::string>::iterator it = req.begin(); it != req.end(); it++) {
+		std::cout << "|" << it->first << " : " << it->second << "|" << std::endl;
+	}
+	std::cout << "| END print_req |" << std::endl;
 }
 
 //*		Exceptions

@@ -71,6 +71,7 @@ public:
 	// void				send_response(const std::string& res);
 	int					getSockFD( void );
 	t_CLIENT_STATUS		getStatus( void );
+	void				print_req( void );
 
 	//*		Exceptions
 	class SockEof : public std::exception {
