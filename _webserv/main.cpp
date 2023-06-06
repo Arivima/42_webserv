@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: avilla-m <avilla-m@student.42.fr>          +#+  +:+       +#+        */
+/*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/30 13:20:37 by avilla-m          #+#    #+#             */
-/*   Updated: 2023/05/30 14:17:08 by avilla-m         ###   ########.fr       */
+/*   Updated: 2023/06/06 21:38:47 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,6 @@
 
 #include "Colors.hpp"
 #include "Exceptions.hpp"
-#include "ClientConnection.hpp"
 #include "WorkerServer.hpp"
 
 
