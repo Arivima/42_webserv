@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConnectionSocket.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 18:07:39 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/05 19:30:42 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/06/06 18:20:17 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -99,7 +99,6 @@ void	ConnectionSocket::read_line( void ) { //std::cout  << std::endl << "\033[1m
 		if (recv(sock_fd, rcv_buf, RCV_BUF_SIZE, 0) <= 0)
 			throw (SockEof());
 		sock_stream << rcv_buf;
-		// left_over += rcv_buf;
 	}
 	if (e_READ_HEADS == parse_mode) {
 		read_header();
@@ -126,11 +125,9 @@ void	ConnectionSocket::read_body( void ) {
 
 void	ConnectionSocket::read_header( void ) {
 	
-	// std::stringstream	left_over_stream(left_over);
 	std::string			line_read;
 	bool				has_eol = (std::string::npos != sock_stream.str().find("\r\n"));
 
-	// std::getline(left_over_stream, line_read);//line_read += '\0';
 	std::getline(sock_stream, line_read);//line_read += '\0';
 	cur_line += line_read;
 	if (has_eol)

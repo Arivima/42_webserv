@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConnectionSocket.hpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 17:56:31 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/05 19:28:29 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/06/06 17:03:08 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,7 +60,6 @@ private:
 	char									rcv_buf[RCV_BUF_SIZE + 1];	//*	
 	std::stringstream						sock_stream;
 	std::string								cur_line;					//*	current req line
-	// std::string								left_over;
 	int										cur_body_size;
 
 public:
