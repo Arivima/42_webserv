@@ -1,17 +1,17 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   WorkerServer.hpp                                   :+:      :+:    :+:   */
+/*   Server.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/30 12:35:54 by avilla-m          #+#    #+#             */
-/*   Updated: 2023/06/06 21:37:54 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/07 11:56:23 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef WORKERSERVER_HPP
-#define WORKERSERVER_HPP
+#ifndef SERVER_HPP
+#define SERVER_HPP
 
 // INCLUDES
 #include <iostream>         // cin cout cerr
@@ -35,36 +35,20 @@
 #include "EpollData.hpp"
 #include "Exceptions.hpp"
 
-class WorkerServer{
-
-	//*		TYPEDEFS
+class Server{
 private:
-	typedef  std::vector<ConnectionSocket *>	VectorCli;
-
 	//*		Member variables
-private:
-	int											server_fd;
-	size_t										workerPort;
-	t_epoll_data								edata;
-	std::vector<ConnectionSocket *>				clients;
-	struct sockaddr_in							server_addr;
-	socklen_t									server_addr_len;
+		int					server_fd;
+		int					server_port;
+		struct sockaddr_in	server_addr;
+		socklen_t			server_addr_len;
 
 public:
-	WorkerServer();
-	~WorkerServer();
-
-	void serverLoop();
+	Server();
+	~Server();
 
 private:
-	//*		private helper functions
-	
-	void _io_multiplexing_using_epoll();
-	void _handle_new_connection();
-	void	_serve_client( ConnectionSocket& client );
-
 	//*		private initialization functions
-	
 	void _server_init();
 	void _create_server_socket();
 	void _set_socket_as_reusable();
@@ -73,13 +57,10 @@ private:
 	void _bind_server_socket_to_ip();
 	void _make_server_listening();
 	void _make_socket_non_blocking(int sock_fd);
-	void _init_io_multiplexing();
 
 	//*		Canonical Form
-	WorkerServer(const WorkerServer & cpy);
-	WorkerServer& operator=(const WorkerServer & cpy);
-
+	Server(const Server & cpy);
+	Server& operator=(const Server & cpy);
 };
-
 
 #endif

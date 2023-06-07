@@ -1,0 +1,97 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Worker.hpp                                   :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2023/05/30 12:35:54 by avilla-m          #+#    #+#             */
+/*   Updated: 2023/06/07 12:57:14 by earendil         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#ifndef Worker_HPP
+# define Worker_HPP
+
+// INCLUDES
+#include <iostream>         // cin cout cerr
+#include <string>           // strings, c_str()
+#include <cstring>          // memset
+
+#include <sys/socket.h>     // socket, AF_INET, SOCK_STREAM, recv, bind, socklen_t
+#include <netinet/in.h>     // sockaddr_in struct, INADDR_ANY
+#include <arpa/inet.h>      // inet_ntop
+#include <fcntl.h>          // fcntl
+#include <limits.h>			// MAX INT
+
+#include <sys/select.h>     // select, FT_ISSET, FT_CLR, etc
+
+#include <vector>           // vector
+
+#include <unistd.h>         // close
+#include <stdlib.h>         // exit, EXIT_FAILURE
+
+#include "include/webserv.hpp"
+#include "ConnectionSocket.hpp"
+#include "EpollData.hpp"
+#include "Exceptions.hpp"
+
+class Worker{
+
+	//*		TYPEDEFS
+private:
+	typedef  std::vector<ConnectionSocket *>	VectorCli;
+
+	typedef struct s_server {
+		int					server_fd;
+		int					server_port;
+		struct sockaddr_in	server_addr;
+		socklen_t			server_addr_len;
+		//TODO				config server block
+
+		VectorCli			clients;
+	}	t_server;
+
+	typedef std::vector<t_server>				VectorServ;
+
+	//*		Member variables
+private:
+	size_t					server_num;
+	VectorServ				servers;
+	t_epoll_data			edata;
+
+	//*		Member functions
+public:
+	Worker();
+	~Worker();
+	
+	void workerLoop();
+
+private:
+	//*		private helper functions
+	void	_io_multiplexing_using_epoll();
+	void	_serve_clientS( void );
+	void	_serve_client( ConnectionSocket& client );
+	void	_handle_new_connectionS( void );
+	void	_handle_new_connection();
+
+	//*		private initialization functions
+	void	_server_init();
+	void	_create_server_socket();
+	int		_create_ConnectionSocket(t_server server);	
+	void	_epoll_register_ConnectionSocket(int cli_socket);
+	void	_set_socket_as_reusable();
+	void	_init_server_addr();
+	void	_print_server_ip_info();
+	void	_bind_server_socket_to_ip();
+	void	_make_server_listening();
+	void	_make_socket_non_blocking(int sock_fd);
+	void	_init_io_multiplexing();
+
+	//*		Canonical Form
+	Worker(const Worker & cpy);
+	Worker& operator=(const Worker & cpy);
+
+};
+
+#endif

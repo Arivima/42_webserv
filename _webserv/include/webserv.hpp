@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/05 15:27:54 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/06 21:09:03 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/07 17:28:19 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 
 # include "Colors.hpp"
 
-# define PORT_BASE_NUM 8080
+# define DEFAULT_PORT_NUM 8080
 
 # define	SIMPLE_HTML_RESP	\
 "HTTP/1.1 200 OK\r\n\

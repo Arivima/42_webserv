@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 17:56:31 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/06 17:03:08 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/07 17:05:07 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@
 # include <string>
 # include <map>
 
-# include "../include/webserv.hpp"
+# include "include/webserv.hpp"
 # include "EpollData.hpp"
 
 //TODO : mettere nel header globale

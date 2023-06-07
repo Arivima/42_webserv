@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/06 21:05:02 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/06 21:11:41 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/07 13:57:08 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,17 @@ int main ()
 	try
 	{
 		std::cout << "Welcome to mini-serv" << std::endl;
-		WorkerServer server;
+
+		config_server obj[3];
+		Server Server[3]
+		for (int i = 0; i <= 3; i++)
+			server.init(obj[i]);
+
+		Worker_process worker[2];
+		worker.init(Server);
+		worker.init_multiplexing();
+		worker.loop();
+
 		server.serverLoop();
 	}
 	catch (std::exception& e)

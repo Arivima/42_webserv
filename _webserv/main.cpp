@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/30 13:20:37 by avilla-m          #+#    #+#             */
-/*   Updated: 2023/06/06 21:38:47 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/07 17:39:00 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 #include "Colors.hpp"
 #include "Exceptions.hpp"
-#include "WorkerServer.hpp"
+#include "Worker.hpp"
 
 
 int main(){
@@ -22,12 +22,12 @@ int main(){
     try
     {
         std::cout << "Welcome to mini-serv" << std::endl;
-        WorkerServer server;
+        Worker server;
 
-        server.serverLoop();
+        server.workerLoop();
     }
 	catch (std::exception& e){
-		std::cerr << std::endl << BOLDRED ">>" << e.what() << RESET << std::endl;
+		std::cout << std::endl << BOLDRED "Exception >>" << e.what() << RESET << std::endl;
     }
 
 }
