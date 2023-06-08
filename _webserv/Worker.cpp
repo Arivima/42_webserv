@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/06 21:15:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/07 17:38:50 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/08 20:10:50 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,12 +14,10 @@
 
 //*		main constructors and destructor
 
-Worker::Worker() : servers(), edata()
+Worker::Worker(const t_conf_enclosing_block& conf_enclosing_block) : servers(), edata()
 {
-	this->server_num = 1; //!configuration file
-
-	for (size_t i = 0; i < server_num; i++)
-		this->_server_init();
+	for (size_t i = 0; i < conf_enclosing_block.http.servers.size(); i++)
+		this->_server_init(conf_enclosing_block.http.servers[i]);
 	_init_io_multiplexing();
 }
 
@@ -117,7 +115,7 @@ void	Worker::_handle_new_connectionS() {
 		    // }
 						
 			//*     adding to list of clients
-			(*serv_it).clients.push_back(new ConnectionSocket(cli_socket, edata));
+			(*serv_it).clients.push_back(new ConnectionSocket(cli_socket, (*serv_it).conf_server_block, edata));
 		}
 	}
 	// std::cout << std::endl;
@@ -191,8 +189,8 @@ void	Worker::_serve_client( ConnectionSocket& client ) {
 
 //*		private initialization functions
 
-void	Worker::_server_init() {
-	this->servers.push_back(t_server());
+void	Worker::_server_init(const t_server_block& conf_server_block) {
+	this->servers.push_back(t_server(conf_server_block));
 	this->servers.back().server_port = DEFAULT_PORT_NUM;
 	_create_server_socket();
 	_set_socket_as_reusable();

@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/05 15:27:54 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/07 20:30:33 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/08 17:51:41 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,8 @@
 # define WEBSERV_HPP
 
 # include "Colors.hpp"
-# include "../../_Exploration/tmp.hpp"//! TOGLIERE !!!
+# include "types.hpp"
+# include "../config_types.hpp"
 
 # define DEFAULT_PORT_NUM 8080
 

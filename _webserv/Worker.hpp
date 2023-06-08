@@ -26,6 +26,7 @@
 
 #include <sys/select.h>     // select, FT_ISSET, FT_CLR, etc
 
+#include <map>
 #include <vector>           // vector
 
 #include <unistd.h>         // close
@@ -39,30 +40,16 @@
 class Worker{
 
 	//*		TYPEDEFS
-private:
-	typedef  std::vector<ConnectionSocket *>	VectorCli;
-
-	typedef struct s_server {
-		int					server_fd;
-		int					server_port;
-		struct sockaddr_in	server_addr;
-		socklen_t			server_addr_len;
-		//TODO				config server block
-
-		VectorCli			clients;
-	}	t_server;
-
-	typedef std::vector<t_server>				VectorServ;
+public:
 
 	//*		Member variables
 private:
-	size_t					server_num;
 	VectorServ				servers;
 	t_epoll_data			edata;
 
 	//*		Member functions
 public:
-	Worker();
+	Worker(const t_conf_enclosing_block& conf_enclosing_block);
 	~Worker();
 	
 	void workerLoop();
@@ -76,7 +63,7 @@ private:
 	void	_handle_new_connection();
 
 	//*		private initialization functions
-	void	_server_init();
+	void	_server_init(const t_server_block& conf_server_block);
 	void	_create_server_socket();
 	int		_create_ConnectionSocket(t_server server);	
 	void	_epoll_register_ConnectionSocket(int cli_socket);
