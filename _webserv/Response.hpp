@@ -13,32 +13,48 @@
 #ifndef Response_HPP
 # define Response_HPP
 
-# include "include/webserv.hpp"
-# include "ConnectionSocket.hpp"
+# include <string>
 
-//*	this class should be responsible for generating the response of a http Response.
+# include "include/webserv.hpp"
+# include "EpollData.hpp"
+
+//*	this class should be responsible for generating the response of a http request.
 class Response
 {
 private:
-	const t_conf_block&			matching_directives;
-	const ConnectionSocket&		connection;
-	std::string					response;
+	const t_conf_block&							matching_directives;
+	const std::map<std::string, std::string>&	req;
+	const t_server&								assigned_server;
+	const int									sock_fd;
+	const t_epoll_data&							edata;
+	std::string									response;
 public:
 	//*		main constructors and destructors
-						Response(
-							const ConnectionSocket& connection,
-							const t_conf_enclosing_block& enclosing_conf_block);
+							Response(
+								const std::map<std::string, std::string>& req,
+								const t_server& assigned_server,
+								int sock_fd,
+								const t_epoll_data& edata);
 
 	//*		main functionalities
-	void				generateResponse( void );
-	const std::string&	getResponse( void );
+	void					send_line( void );
+	void					generateResponse( void );
+	const std::string&		getResponse( void );
 
 	//*		Canonical Form Shit
-						~Response();
+							~Response();
 
 private:
 	//*		Helper functions
-	const t_conf_block&			takeMatchingDirectives(const t_conf_enclosing_block& http_block);
+	bool							locationMatch(
+		const t_location_block& location, const std::string& req_url
+		);
+	const t_conf_block&				takeMatchingDirectives(
+		const t_server_block& conf_server_block
+		);
+	const t_virtual_server_block&	takeMatchingServer(
+		const std::vector<t_virtual_server_block>&	virtual_servers
+		);
 };
 
 

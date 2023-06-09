@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 17:56:31 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/08 20:11:03 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/09 16:31:56 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,13 +27,13 @@
 
 # include "include/webserv.hpp"
 # include "EpollData.hpp"
+# include "Response.hpp"
 
-//TODO : mettere nel header globale
-# define MAX_HTTP_REQ_LINE_LEN 8000
-# define MAX_HTTP_HEADER_LINE_LEN 4096
+//*	TBA: make both Request and Response classes here (We already have Response class)
 
-//*	this class should be responsible for holding a connection data (client, assigned server, request data)
-//*	and should supply the received request in a parsed, easily-accessible and efficient format.
+//*	this class should be responsible for holding a connection data (client, assigned server, request data, response data)
+//*	It should provide methods for both receiving connection data and sending response data
+//*	in a transparent way.
 class ConnectionSocket
 {
 public:
@@ -41,26 +41,25 @@ public:
 	int	flag;
 	//!
 	//*		Typedefs
-	typedef enum e_CLIENT_STATUS
+	typedef enum e_REQUEST_STATUS
 	{
-		e_READ_MODE,
-		e_RESP_MODE,
-	}	t_CLIENT_STATUS;
+		e_READING_REQ,
+		e_SENDING_RESP,
+	}	t_REQUEST_STATUS;
 	
 	typedef enum e_PARSER_MODE
 	{
-		e_READ_HEADS,
-		e_READ_BODY,
+		e_READING_HEADS,
+		e_READING_BODY,
 	}	t_PARSER_MODE;
 	
 private:
-	const t_server_block&					assigned_server;
+	const t_server&							assigned_server;
 	int										sock_fd;					//*	connetction socket fd
 	const t_epoll_data&						edata;						//*	epoll data reference
-	t_CLIENT_STATUS							status;						//*	REQUEST or RESPONSE
+	t_REQUEST_STATUS						status;						//*	REQUEST or RESPONSE
 	t_PARSER_MODE							parse_mode;					//*	HEADERS or BODY
-	//TODO make it a local variable inside send_response
-	// t_block&					req_directives;				//*	matching block of conf directives for current req
+	Response*								response;					//*	response data of current request
 	std::map<std::string, std::string>		req;						//*	dictionary holding http req headers and body
 	char									rcv_buf[RCV_BUF_SIZE + 1];	//*	
 	std::stringstream						sock_stream;
@@ -71,15 +70,16 @@ public:
 	//*		main Constructors and Destructors
 							ConnectionSocket(
 								int sock_fd,
-								const t_server_block& conf_server_block,
+								const t_server& assigned_server,
 								const t_epoll_data& edata);
 	//*		main Functions
-	void					parse_line( void );
-	// void					send_response( void );
-	int						getSockFD( void );
-	t_CLIENT_STATUS			getStatus( void );
-	const t_server_block&	getAssignedServer( void ) const;
-	void					print_req( void );
+	void										parse_line( void );
+	// void										send_response( void );
+	int											getSockFD( void );
+	t_REQUEST_STATUS							getStatus( void );
+	const std::map<std::string, std::string>&	getRequest( void );
+	const t_server&								getAssignedServer( void ) const;
+	void										print_req( void );
 
 	//*		Exceptions
 	class SockEof : public std::exception {
@@ -101,13 +101,14 @@ private:
 private:
 	//*		helper functions
 	void			read_line( void );
+	void			parse_req_line( std::string& req_line );
 	void			parse_header( void );
 	void			parse_body( void );
 	void			read_header( void );
 	void			read_body( void );
 
 	// void			req_mode_switch( void );
-	// void			resp_mode_switch( void );
+	void			resp_mode_switch( void );
 	// void			set_directives( void );
 };
 

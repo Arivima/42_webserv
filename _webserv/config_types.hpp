@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/08 11:02:02 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/08 20:06:44 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/09 15:36:53 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,15 +27,23 @@ typedef struct s_location_block : public t_conf_block {
 	}
 }	t_location_block;
 
-typedef struct s_server_block : public t_conf_block {
+typedef struct s_virtual_server_block : public t_conf_block {
 
 	std::vector<t_location_block> locations;
 
-	s_server_block(const std::map<std::string, std::string>& dir) : locations() {
+	s_virtual_server_block(const std::map<std::string, std::string>& dir) : locations() {
+		this->directives = dir;
+	}
+}	t_virtual_server_block;
+
+typedef struct s_server_block : public t_conf_block {
+
+	std::vector<t_virtual_server_block> virtual_servers;
+
+	s_server_block(const std::map<std::string, std::string>& dir) : virtual_servers() {
 		this->directives = dir;
 	}
 }	t_server_block;
-
 
 typedef struct s_http_block : public t_conf_block {
 
@@ -47,11 +55,11 @@ typedef struct s_http_block : public t_conf_block {
 
 }	t_http_block;
 
-typedef struct s_conf_enclosing_block : public t_conf_block {
+typedef struct s_conf_root_block : public t_conf_block {
 	
 	t_http_block	http;
 	
-}	t_conf_enclosing_block;
+}	t_conf_root_block;
 
 
 

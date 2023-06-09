@@ -49,7 +49,7 @@ private:
 
 	//*		Member functions
 public:
-	Worker(const t_conf_enclosing_block& conf_enclosing_block);
+	Worker(const t_conf_root_block& conf_enclosing_block);
 	~Worker();
 	
 	void workerLoop();
@@ -58,7 +58,7 @@ private:
 	//*		private helper functions
 	void	_io_multiplexing_using_epoll();
 	void	_serve_clientS( void );
-	void	_serve_client( ConnectionSocket& client );
+	void	_serve_client( ConnectionSocket& request );
 	void	_handle_new_connectionS( void );
 	void	_handle_new_connection();
 

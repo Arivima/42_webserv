@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/06 21:15:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/08 20:10:50 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/09 16:58:07 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 //*		main constructors and destructor
 
-Worker::Worker(const t_conf_enclosing_block& conf_enclosing_block) : servers(), edata()
+Worker::Worker(const t_conf_root_block& conf_enclosing_block) : servers(), edata()
 {
 	for (size_t i = 0; i < conf_enclosing_block.http.servers.size(); i++)
 		this->_server_init(conf_enclosing_block.http.servers[i]);
@@ -28,13 +28,13 @@ Worker::~Worker() {
 		serv_it++)
 	{
 		for (
-			VectorCli::iterator cli_it = (*serv_it).clients.begin();
-			cli_it != (*serv_it).clients.end();
+			VectorCli::iterator cli_it = (*serv_it).requests.begin();
+			cli_it != (*serv_it).requests.end();
 			cli_it++)
 		{
-			(*serv_it).clients.erase(cli_it);
+			(*serv_it).requests.erase(cli_it);
 		}
-		(*serv_it).clients.clear();
+		(*serv_it).requests.clear();
 		std::cout << "Closing server: " << (*serv_it).server_fd << std::endl;
 		close((*serv_it).server_fd);
 	}
@@ -67,8 +67,8 @@ void	Worker::_serve_clientS( void ) {
 		serv_it++)
 	{
 		for (
-			VectorCli::iterator cli_it = (*serv_it).clients.begin();
-			cli_it != (*serv_it).clients.end();
+			VectorCli::iterator cli_it = (*serv_it).requests.begin();
+			cli_it != (*serv_it).requests.end();
 			)
 		{
 			try {
@@ -77,7 +77,7 @@ void	Worker::_serve_clientS( void ) {
 			}
 			catch (const ConnectionSocket::SockEof& e) {
 				std::cout << std::endl << BOLDRED "Exception >>" << e.what() << RESET << std::endl;
-				cli_it = (*serv_it).clients.erase(cli_it);
+				cli_it = (*serv_it).requests.erase(cli_it);
 			}
 		}
 	}
@@ -115,7 +115,7 @@ void	Worker::_handle_new_connectionS() {
 		    // }
 						
 			//*     adding to list of clients
-			(*serv_it).clients.push_back(new ConnectionSocket(cli_socket, (*serv_it).conf_server_block, edata));
+			(*serv_it).requests.push_back(new ConnectionSocket(cli_socket, *serv_it, edata));
 		}
 	}
 	// std::cout << std::endl;
@@ -151,22 +151,22 @@ void	Worker::_epoll_register_ConnectionSocket(int cli_socket) {
 	}
 }
 
-void	Worker::_serve_client( ConnectionSocket& client ) {
+void	Worker::_serve_client( ConnectionSocket& request ) {
 	
-	const struct epoll_event*	eevent = edata.getEpollEvent(client.getSockFD());
+	const struct epoll_event*	eevent = edata.getEpollEvent(request.getSockFD());
 	
-	if (ConnectionSocket::e_READ_MODE == client.getStatus())
+	if (ConnectionSocket::e_READING_REQ == request.getStatus())
 	{
-		client.parse_line();
+		request.parse_line();
 	}
 	else {
-		if (0 == client.flag) {
+		if (0 == request.flag) {
 			if (!eevent || !(eevent->events & EPOLLOUT))
 				return ;
 	        std::cout << "end of request" << std::endl;
-	        client.print_req();
+	        request.print_req();
 	        std::cout << "response mode" << std::endl;
-	        ssize_t bytes_sent = send(client.getSockFD(), SIMPLE_HTML_RESP, SIMPLE_HTML_RESP_SIZE, 0);
+	        ssize_t bytes_sent = send(request.getSockFD(), SIMPLE_HTML_RESP, SIMPLE_HTML_RESP_SIZE, 0);
 	        std::cout << "send done" << std::endl;
 			if (bytes_sent > 0){
 	        	std::cout << "Response sent to the client.";
@@ -174,13 +174,13 @@ void	Worker::_serve_client( ConnectionSocket& client ) {
 			}
 			else if (-1 == bytes_sent){
 	            std::cout << "HERE" << std::endl;
-	            close(client.getSockFD());//TODO		forse la metto dentro il distruttore del client
+	            close(request.getSockFD());//TODO		forse la metto dentro il distruttore del client
 	            // clit = clients.erase(clit);
 			}
 	        else {
 	            std::cout << "Maremma li mortacci" << std::endl;
 	        }
-	        client.flag = 1;
+	        request.flag = 1;
 		}
 	}
 }
@@ -191,6 +191,7 @@ void	Worker::_serve_client( ConnectionSocket& client ) {
 
 void	Worker::_server_init(const t_server_block& conf_server_block) {
 	this->servers.push_back(t_server(conf_server_block));
+	//TODO	use conf block to set server data
 	this->servers.back().server_port = DEFAULT_PORT_NUM;
 	_create_server_socket();
 	_set_socket_as_reusable();

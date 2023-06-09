@@ -84,11 +84,3 @@ void    remove_comments(std::string * line){
     if (DEBUG) std::cout << * line << std::endl;    
 }
 
-// void parse_configuration_file(std::string config_file)[
-//     if (config_file.find("server", 0))
-//         std::map<string, string> directives = parse_bloc();
-// ]
-
-// std::map<string, string> parse_bloc(){
-
-// }

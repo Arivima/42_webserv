@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/08 17:43:27 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/08 20:12:56 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/09 10:43:01 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,12 +26,12 @@ typedef std::vector<ConnectionSocket* >		VectorCli;
 
 typedef struct s_server {
 	const t_server_block&		conf_server_block;
-	int						server_fd;
-	int						server_port;
-	struct sockaddr_in		server_addr;
-	socklen_t				server_addr_len;
+	int							server_fd;
+	int							server_port;
+	struct sockaddr_in			server_addr;
+	socklen_t					server_addr_len;
 
-	VectorCli			clients;
+	VectorCli					requests;
 	
 	s_server(const t_server_block& server_block) : conf_server_block(server_block) {}
 }	t_server;
