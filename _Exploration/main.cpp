@@ -2,19 +2,20 @@
 
 // throw ConfigFileException("");
     // check for bloc validity
-        // wrong implementation of scope
-        // server block missing
-        // syntax error {} ; space
+        //OK    // wrong implementation of scope
+        //NOK    // server block missing
+        //OK    // syntax error ; missing
+        //NOK    // syntax error {} ; space
     // check for directive validity
-        // directive missing, mandatory default values
-        // directive unknown, syntax error
-        // directive out of scope
-        // directive duplicate
-        // directive conflict
+        //OK    // directive missing, mandatory default values
+        //OK    // directive unknown, syntax error
+        //OK    // directive out of scope
+        //OK    // directive duplicate
+        //OK    // directive conflict
     // check for value validity
-        // value invalid, syntax error
-        // value invalid, file not found
-        // value invalid, file unauthorized access
+        //OK    // value invalid, syntax error
+        //OK    // value invalid, file not found
+        //OK    // value invalid, file unauthorized access
 
 // mandatory directives
     // "listen", "location", "server_name", "index", "body_size", "error_page", 
@@ -33,8 +34,8 @@
 # include <string>
 # include <unistd.h>
 # include <fcntl.h>
-# include <sstream>          // std::getline
-# include <utility>          // std::pair
+# include <sstream>         // std::getline
+# include <utility>         // std::pair
 # include <limits>          // numeric limits
 
 # include <vector>
