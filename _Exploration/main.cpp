@@ -3,19 +3,19 @@
 // throw ConfigFileException("");
     // check for bloc validity
         //OK    // wrong implementation of scope
-        //NOK    // server block missing
+        //NOK   // server block missing
         //OK    // syntax error ; missing
-        //NOK    // syntax error {} ; space
+        //NOK   // syntax error {} ; space
     // check for directive validity
-        //OK    // directive missing, mandatory default values
-        //OK    // directive unknown, syntax error
-        //OK    // directive out of scope
-        //OK    // directive duplicate
-        //OK    // directive conflict
+        //NOK   // directive missing, mandatory default values
+        //NOK   // directive unknown, syntax error
+        //NOK   // directive out of scope
+        //NOK   // directive duplicate -> overwrite
+        //NOK   // directive conflict
     // check for value validity
-        //OK    // value invalid, syntax error
-        //OK    // value invalid, file not found
-        //OK    // value invalid, file unauthorized access
+        //NOK   // value invalid, syntax error
+        //NOK   // value invalid, file not found
+        //NOK   // value invalid, file unauthorized access
 
 // mandatory directives
     // "listen", "location", "server_name", "index", "body_size", "error_page", 
@@ -64,30 +64,57 @@
 # define BLOCK_NAME_LOCATION    "location "
 
 // struct
-typedef struct s_test_block { //check then implement final structure
-    std::vector<struct s_test_block>	sub_blocks;
+typedef struct s_conf_block {
 	std::map<std::string, std::string>	directives;
-	s_test_block() : sub_blocks(), directives() {}
-	s_test_block(const std::map<std::string, std::string>& dir) : sub_blocks(), directives() { this->directives = dir; }
-}	t_test_block;
+}	t_conf_block;
+
+typedef struct s_location_block : public t_conf_block {
+    std::vector<bool>   sub_blocks;
+	s_location_block(const std::map<std::string, std::string>& dir) : sub_blocks() {this->directives = dir;}
+}	t_location_block;
+
+// typedef struct s_virtual_server_block : public t_conf_block {
+//     std::vector<t_location_block>   sub_blocks;
+// 	s_virtual_server_block(const std::map<std::string, std::string>& dir) : sub_blocks() {this->directives = dir;}
+// }	t_virtual_server_block;
+
+typedef struct s_temp_server_block : public t_conf_block {
+    std::vector<t_location_block> sub_blocks;
+	s_server_block(const std::map<std::string, std::string>& dir) : sub_blocks() {this->directives = dir;}
+}	t_temp_server_block;
+
+// typedef struct s_server_block : public t_conf_block {
+//     std::vector<t_virtual_server_block> sub_blocks;
+// 	s_server_block(const std::map<std::string, std::string>& dir) : sub_blocks() {this->directives = dir;}
+// }	t_server_block;
+
+typedef struct s_http_block : public t_conf_block {
+    std::vector<s_server_block> sub_blocks;
+	s_http_block(const std::map<std::string, std::string>& dir) : sub_blocks() { this->directives = dir; }
+}	t_http_block;
+
+typedef struct s_conf_root_block : public t_conf_block {
+    std::vector<t_http_block>   sub_blocks;
+	s_conf_root_block(const std::map<std::string, std::string>& dir) : sub_blocks() { this->directives = dir; }
+}	t_conf_root_block;
 
 // prototypes
 std::string     read_config_file(std::string conf_pathname);
 void            parse_configuration_file(std::string config_file);
-void            parse_block(std::string& input, std::pair<size_t, size_t> current_range, t_test_block& block, int level);
-void            parse_directives(t_test_block& block, std::string& input, std::pair<size_t, size_t> range);
+void            parse_block(std::string& input, std::pair<size_t, size_t> current_range, t_conf_block& block, int level);
+void            parse_directives(t_conf_block& block, std::string& input, std::pair<size_t, size_t> range);
 size_t          find_end_of_block(std::string& input, size_t begin); 
 std::string     get_whole_line(std::string& line, int i);
 void            print_directives(std::map<std::string, std::string>& directives);
-void            print_block(t_test_block& block, size_t level);
-void            print_root(t_test_block& root);
+void            print_block(t_conf_block& block, size_t level);
+void            print_root(t_conf_block& root);
 void            remove_comments(std::string * line);
 std::string     type_get_name(size_t level);
 int             type_get_level(std::string block_name);
 size_t          type_get_max_nb(size_t level);
 size_t          type_get_max_nb(size_t level);
 size_t          type_get_min_nb(size_t level);
-t_test_block    type_get_obj(size_t level, std::map<std::string, std::string>& directives);
+t_conf_block    type_get_obj(size_t level, std::map<std::string, std::string>& directives);
 std::pair<bool, std::string> get_unknown_block_name(std::string& line, size_t i);
 
 // main
@@ -154,16 +181,16 @@ void    print_directives(std::map<std::string, std::string>& directives){
 }
 
 /*brief*/   // recursive call
-void    print_block(t_test_block& block, size_t level){
+void    print_block(t_conf_block& block, size_t level){
     std::cout << "--------------------------------------" << std::endl;
     std::cout << "| Printing level #" << level << " | " << type_get_name(level) << std::endl;
     print_directives(block.directives);
-    for (std::vector<struct s_test_block>::iterator it = block.sub_blocks.begin(); it != block.sub_blocks.end(); it++)
+    for (std::vector<t_conf_block>::iterator it = block.sub_blocks.begin(); it != block.sub_blocks.end(); it++)
         print_block(*it, level + 1);
 }
 
 /*brief*/   // prsize_t all blocks from the root
-void    print_root(t_test_block& root){
+void    print_root(t_conf_block& root){
     std::cout << "--------------------------------------" << std::endl;
     std::cout << "| Printing configuration blocks" << std::endl;
     print_block(root, 0);
@@ -182,14 +209,15 @@ std::string type_get_name(size_t level){
     return "error get_type_name()";
 }
 
+//WIP   // check find or compare
 int type_get_level(std::string block_name){
-    if (block_name.compare(BLOCK_NAME_ROOT) == 0)
+    if (block_name.find(BLOCK_NAME_ROOT) != std::string::npos)
         return 0;
-    if (block_name.compare(BLOCK_NAME_HTTP) == 0)
+    if (block_name.find(BLOCK_NAME_HTTP) != std::string::npos)
         return 1;
-    if (block_name.compare(BLOCK_NAME_SERVER) == 0)
+    if (block_name.find(BLOCK_NAME_SERVER) != std::string::npos)
         return 2;
-    if (block_name.compare(BLOCK_NAME_LOCATION) == 0)
+    if (block_name.find(BLOCK_NAME_LOCATION) != std::string::npos)
         return 3;
     return -1;
 }
@@ -216,20 +244,19 @@ size_t type_get_min_nb(size_t level){
     return -1;
 }
 
-t_test_block type_get_obj(size_t level, std::map<std::string, std::string>& directives){
+t_conf_block type_get_obj(size_t level, std::map<std::string, std::string>& directives){
     switch(level) {
-        case 0: return t_test_block(directives);
-        case 1: return t_test_block(directives);
-        case 2: return t_test_block(directives);
-        case 3: return t_test_block(directives);
+        case 0: return t_conf_root_block(directives);
+        case 1: return t_http_block(directives);
+        case 2: return t_temp_server_block(directives);
+        case 3: return t_location_block(directives);
     }
     throw std::invalid_argument("error type_get_min_nb() : level invalid");
-    return t_test_block();
+    return t_conf_block();
 }
 
-
 /*brief*/   // find any next block, and identifies the name 
-            // does not work for location blocks
+            // location blocks : returns the whole line not just name
 std::pair<bool, std::string> get_unknown_block_name(std::string& line, size_t i){
     size_t start, len;
 
@@ -247,7 +274,7 @@ std::pair<bool, std::string> get_unknown_block_name(std::string& line, size_t i)
 }
 
 /*brief*/   // find any next block, and identifies the level, if not identified returns root level 0
-            // does not work for location blocks
+            // location blocks : returns the whole line not just name
 int get_unknown_block_level(std::string& line, size_t i){
     int level = 0;
 
@@ -265,7 +292,7 @@ int get_unknown_block_level(std::string& line, size_t i){
     return (level);
 }
 
-/*brief*/   // extracts the whole line where i is positioned
+/*brief*/   // extracts and returns the whole line where i is positioned
 std::string    get_whole_line(std::string& line, int i){
     size_t start, len;
     start = line.rfind("\n", i);
@@ -307,10 +334,8 @@ size_t    find_end_of_block(std::string& input, size_t begin) {
     }
     // if (DEBUG) std::cout << MAGENTA << "| bracket flag: " << bracket_flag << std::endl;
     if (bracket_flag)
-        throw std::invalid_argument("error find_end_of_block() : end of block not found : missing }");
+        throw std::invalid_argument("error find_end_of_block() : end of block not found : missing '}'");
     // if (DEBUG) std::cout << YELLOW << "| last line: |" << get_whole_line(input, i) << "|"<< RESET << std::endl;
-    // return i;
-    // OR return end of line ??
     size_t ret = input.find("\n", i);
     if (ret == std::string::npos)
         return i;
@@ -330,8 +355,8 @@ std::pair<size_t, size_t> find_next_block_range(std::string& input, size_t begin
 
     // check wrong indentation
     size_t new_line = input.find("\n", begin_current);
-    if (new_line ==std::string::npos)
-        throw std::invalid_argument("error find_next_block_range()");
+    if (new_line == std::string::npos)
+        throw std::invalid_argument("error find_next_block_range()"); // reached eof
     size_t any_new = input.find("{", new_line);
     if ((any_new != std::string::npos) && ((begin_new == std::string::npos) || (any_new < begin_new))){
         std::pair<bool, std::string> any_name = get_unknown_block_name(input, any_new);
@@ -354,7 +379,7 @@ std::pair<size_t, size_t> find_next_block_range(std::string& input, size_t begin
 /*brief*/   // parse directives from "xx{" to next "xx{" or to end of block '}'
 /*WIP*/     // check key validity
 /*WIP*/     // check value validity
-void    parse_directives(t_test_block& block, std::string& input, std::pair<size_t, size_t> range){
+void    parse_directives(t_conf_block& block, std::string& input, std::pair<size_t, size_t> range){
     int loop = 0; // debug to delete
     if (DEBUG) std::cout << RED << "parse_directives()" << RESET << std::endl;
     std::string         line;
@@ -364,7 +389,6 @@ void    parse_directives(t_test_block& block, std::string& input, std::pair<size
     
     while (1){
         std::getline(input_stream >> std::ws, line);
-        // ignore space tabs and empty lines delimiter : ';' ???
         if (input_stream.eof()){
             // if (loop == 0)
             //     std::cout << RED << "No content" << RESET << std::endl;
@@ -421,7 +445,7 @@ void    parse_directives(t_test_block& block, std::string& input, std::pair<size
             // range indicates from "xx{" to next "xx{" or end of block '}'
             // range is always valid when entering this function
             // implement max and min number of blocks 
-void    parse_block(std::string& input, std::pair<size_t, size_t> current_range, t_test_block& block, int level){
+void    parse_block(std::string& input, std::pair<size_t, size_t> current_range, t_conf_block& block, int level){
     if (DEBUG) std::cout << YELLOW << "parse_block()" << RESET << std::endl;
     if (DEBUG) std::cout << YELLOW << "| type_name : " << type_get_name(level) << " | level : " << level << " | Range " << current_range.first << " - " << current_range.second << RESET << std::endl;
     if (DEBUG) std::cout << YELLOW << "| first line : " MAGENTA << get_whole_line(input, current_range.first) << RESET << std::endl;
@@ -464,42 +488,13 @@ void    parse_configuration_file(std::string config_file){
     if (DEBUG) std::cout << YELLOW << "parse_configuration_file()" << RESET << std::endl;
     size_t          start    = 0;
     size_t          end      = config_file.size() - 1 ;
-    t_test_block    root_block;
+    t_conf_block    root_block;
     size_t          level    = get_unknown_block_level(config_file, 0);
 
     parse_block(config_file, std::make_pair( start, end ), root_block, level );
 
     print_root(root_block);
 }
-
-
-// typedef struct s_conf_block {
-// 	std::map<std::string, std::string>	directives;
-// }	t_conf_block;
-
-// typedef struct s_location_block : public t_conf_block {
-// 	s_location_block(const std::map<std::string, std::string>& dir) {this->directives = dir;}
-// }	t_location_block;
-
-// typedef struct s_virtual_server_block : public t_conf_block {
-// 	std::vector<t_location_block> locations;
-// 	s_virtual_server_block(const std::map<std::string, std::string>& dir) : locations() {this->directives = dir;}
-// }	t_virtual_server_block;
-
-// typedef struct s_server_block : public t_conf_block {
-// 	std::vector<t_virtual_server_block> virtual_servers;
-// 	s_server_block(const std::map<std::string, std::string>& dir) : virtual_servers() {this->directives = dir;}
-// }	t_server_block;
-
-// typedef struct s_http_block : public t_conf_block {
-// 	std::vector<struct s_server_block>	servers;
-// 	s_http_block(const std::map<std::string, std::string>& dir) : servers() { this->directives = dir; }
-// }	t_http_block;
-
-// typedef struct s_conf_root_block : public t_conf_block {
-// 	t_http_block	http;
-// }	t_conf_root_block;
-
 
 
 // ARCHIVE
