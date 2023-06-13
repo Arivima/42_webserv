@@ -14,6 +14,7 @@
 # define Response_HPP
 
 # include <string>
+# include <sstream>
 
 # include "include/webserv.hpp"
 # include "EpollData.hpp"
@@ -43,9 +44,18 @@ public:
 
 	//*		Canonical Form Shit
 							~Response();
+	
+	//*		fulfillment
+	class ResponseFulfilled : public TaskFulfilled {
+	public:
+		virtual const char*	what( void ) const throw() {
+			return ("response fulfilled : switch to request mode");
+		}
+	};
 
 private:
 	//*		Helper functions
+	void							generateGETResponse( void );
 	bool							locationMatch(
 		const t_location_block& location, const std::string& req_url
 		);
