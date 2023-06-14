@@ -23,10 +23,10 @@
     
 // assumptions
     //  block_name  string      max     min     type
-    //  root        "root{"     1       1       s_conf_root_block
-    //  http        "http{"     1       1       s_conf_http_block
-    //  server      "server{"   +       1       s_conf_server_block
-    //  location    "location{" +       0       s_conf_location_block
+    //  root        "root{"     1       1       s_conf_block
+    //  http        "http{"     1       1       s_conf_block
+    //  server      "server{"   +       1       s_conf_block
+    //  location    "location{" +       0       s_conf_block
 
 // includes
 # include <iostream>
@@ -57,35 +57,19 @@
 # define DEBUG              1 // set to 0/1 to hide/show debug info
 # define DEFAULT_PATHNAME   "../_webserv/configuration_files/default.conf"
 
-# define MAX_NB_OF_SERVER_BLOCKS     10
-# define MAX_NB_OF_LOCATION_BLOCKS   10
-
-# define BLOCK_NAME_ROOT        "root {"
-# define BLOCK_NAME_HTTP        "http {"
-# define BLOCK_NAME_SERVER      "server {"
-# define BLOCK_NAME_LOCATION    "location "
-
-
-
-
 // prototypes
 std::string     read_config_file(std::string conf_pathname);
 void            remove_comments(std::string * line);
 void            parse_configuration_file(std::string config_file);
 void            parse_block(std::string& input, std::pair<size_t, size_t> current_range, t_conf_block& block, int level);
-void            parse_directives(t_conf_block& block, std::string& input, std::pair<size_t, size_t> range);
 size_t          find_end_of_block(std::string& input, size_t begin);
+void            parse_directives(t_conf_block& block, std::string& input, std::pair<size_t, size_t> range);
 
-void            print_root(t_conf_block& root);
+void            print_config_blocks(t_conf_block& root);
 
-std::string     type_get_name(size_t level);
-int             type_get_level(std::string block_name);
-size_t          type_get_max_nb(size_t level);
-size_t          type_get_max_nb(size_t level);
-size_t          type_get_min_nb(size_t level);
-t_conf_block    type_get_obj(size_t level, std::map<std::string, std::string>& directives);
 std::string     get_whole_line(std::string& line, int i);
-std::pair<bool, std::string> get_unknown_block_name(std::string& line, size_t i);
+std::pair<bool, std::string>    get_unknown_block_name(std::string& line, size_t i);
+std::pair<int, std::string>     get_unknown_block_level(std::string& line, size_t i);
 
 // main
 int main (int ac, char**av){
@@ -97,7 +81,6 @@ int main (int ac, char**av){
 
         std::string config_file = read_config_file(ac == 2 ? av[1] : DEFAULT_PATHNAME);
         parse_configuration_file(config_file);
-        // initialization_configuration_file();
     }
 	catch (std::exception& e)
     {
@@ -142,110 +125,15 @@ std::string    read_config_file(std::string conf_pathname){
 }
 
 /*brief*/   // print all blocks from the root
-void    print_root(t_conf_block& root){
+void    print_config_blocks(t_conf_block& root){
     std::cout << "--------------------------------------" << std::endl;
     std::cout << "| Printing configuration blocks" << std::endl;
-    root.print_block();
+    print_block(root, 0);
     std::cout << "--------------------------------------" << std::endl;
-}
-
-/// block management
-std::string type_get_name(size_t level){
-    switch(level) {
-        case 0: return BLOCK_NAME_ROOT;
-        case 1: return BLOCK_NAME_HTTP;
-        case 2: return BLOCK_NAME_SERVER;
-        case 3: return BLOCK_NAME_LOCATION;
-    }
-    throw std::invalid_argument("error get_type_name() : level invalid");
-    return "error get_type_name()";
-}
-
-//WIP   // check find or compare
-int type_get_level(std::string block_name){
-    if (block_name.find(BLOCK_NAME_ROOT) != std::string::npos)
-        return 0;
-    if (block_name.find(BLOCK_NAME_HTTP) != std::string::npos)
-        return 1;
-    if (block_name.find(BLOCK_NAME_SERVER) != std::string::npos)
-        return 2;
-    if (block_name.find(BLOCK_NAME_LOCATION) != std::string::npos)
-        return 3;
-    return -1;
-}
-
-size_t type_get_max_nb(size_t level){
-    switch(level) {
-        case 0: return 1;
-        case 1: return 1;
-        case 2: return MAX_NB_OF_SERVER_BLOCKS;
-        case 3: return MAX_NB_OF_LOCATION_BLOCKS;
-    }
-    throw std::invalid_argument("error type_get_max_nb() : level invalid");
-    return -1;
-}
-
-size_t type_get_min_nb(size_t level){
-    switch(level) {
-        case 0: return 1;
-        case 1: return 1;
-        case 2: return 1;
-        case 3: return 0;
-    }
-    throw std::invalid_argument("error type_get_min_nb() : level invalid");
-    return -1;
-}
-
-t_conf_block type_get_obj(size_t level, std::map<std::string, std::string>& directives){
-    switch(level) {
-        case 0: return t_conf_root_block(directives);
-        case 1: return t_http_block(directives);
-        case 2: return t_server_block(directives);
-        case 3: return t_location_block(directives);
-    }
-    throw std::invalid_argument("error type_get_min_nb() : level invalid");
-    return t_conf_block();
-}
-
-/*brief*/   // find any next block, and identifies the name 
-            // location blocks : returns the whole line not just name
-std::pair<bool, std::string> get_unknown_block_name(std::string& line, size_t i){
-    size_t start, len;
-
-    len = line.find("{", i);
-    if (len == std::string::npos)
-        return (std::make_pair(EXIT_FAILURE, "get_unknown_block_name : no next block found"));
-
-    start = line.rfind("\n", len);
-    if (start == std::string::npos)
-        start = 0;
-    else
-        start++;
-    len = len - start + 1;
-    return (std::make_pair(EXIT_SUCCESS, line.substr(start, len)));
-}
-
-/*brief*/   // find any next block, and identifies the level, if not identified returns root level 0
-            // location blocks : returns the whole line not just name
-int get_unknown_block_level(std::string& line, size_t i){
-    int level = 0;
-
-    std::pair<bool, std::string> ret = get_unknown_block_name(line, i);
-    if ( ret.first == EXIT_SUCCESS ){
-        level = type_get_level(ret.second);
-        if (level == -1)
-            level = 0;
-    }
-    else{
-        if (DEBUG) std::cout << RED << "get_unknown_block_level: error : " <<  ret.second << std::endl;
-        level = 0;
-    }
-        
-    return (level);
 }
 
 /*brief*/   // extracts and returns the whole line where i is positioned
-std::string    get_whole_line(std::string& line, int i){
+std::string    get_whole_line(std::string& line, size_t i){
     size_t start, len;
     start = line.rfind("\n", i);
     if (start != std::string::npos)
@@ -256,17 +144,55 @@ std::string    get_whole_line(std::string& line, int i){
     return (line.substr(start, len));
 }
 
+/*brief*/   // find any next block, and identifies the name 
+            // location blocks : returns the whole line not just name
+std::pair<bool, std::string> get_unknown_block_name(std::string& line, size_t i){
+    size_t start, len;
+
+    len = line.find("{", i);
+    if (len == std::string::npos)
+        return (std::make_pair(EXIT_FAILURE, "get_unknown_block_name : no configuration block identified"));
+
+    start = line.rfind("\n", len);
+    if (start == std::string::npos)
+        start = 0;
+    else
+        start++;
+    len = len - start + 1;
+    return (std::make_pair(EXIT_SUCCESS, line.substr(start, len)));
+}
+
+/*brief*/   // find any next block
+            // if identifies next block and its level returns pair(level, block_name), if not identified returns pair(-1, error message)
+            // location blocks : returns the whole line not just name
+std::pair<int, std::string> get_unknown_block_level(std::string& line, size_t i){
+    std::pair<int, std::string> level;
+
+    std::pair<bool, std::string> ret = get_unknown_block_name(line, i);
+    if ( ret.first == EXIT_SUCCESS ){
+        level.first = type_get_level(ret.second);
+        level.second = ret.second;
+        if (level.first == -1)
+            level.second = "get_unknown_block_level : unkown syntax for configuration block : " + level.second;
+    }
+    else{
+        level.first = -1;
+        level.second = ret.second;
+    }
+    return (level);
+}
+
 /*brief*/   // removes comment all comments = characters after a # and up until a \n
 void    remove_comments(std::string * line){
     if (DEBUG) std::cout << YELLOW << "remove_comments()" << RESET << std::endl;
     for (size_t i = 0; (i = line->find("#", i)) != std::string::npos;){
         if (DEBUG) std::cout << "Found string to delete at pos : " << i << std::endl <<  RED << get_whole_line(*line, i) << RESET << std::endl;
-        line->erase(i, line->find("\n", i) - i);
+        line->erase(i, line->find("\n", i) - i + 1);
     }
     // if (DEBUG) std::cout << * line << std::endl; 
 }
 
-/*brief*/   // returns end of line of the first '}' character from position "begin" //OLD=> returns position of the first '}' character from position "begin"
+/*brief*/   // returns end of line of the first '}' character from position "begin"
             // input and begin validity are checked beforehand  
 size_t    find_end_of_block(std::string& input, size_t begin) {
     if (DEBUG) std::cout << YELLOW << "find_end_of_block()" << RESET << std::endl;
@@ -297,8 +223,7 @@ size_t    find_end_of_block(std::string& input, size_t begin) {
 /*brief*/   // returns the range (start, end) of the next block from position "begin_current", if there isn't returns (npos, npos)
             // return pos 0 of "xx{"
             //! works with a string
-/*WIP*/     // leftover characters after '}' and before next '/n'
-/*WIP*/     // levels and types
+            // leftover characters after '}' and before next '/n' are disregarded
 std::pair<size_t, size_t> find_next_block_range(std::string& input, size_t begin_current, std::string next_block_name){
     if (DEBUG) std::cout << YELLOW << "find_next_block_range()" << RESET << std::endl;
     if (DEBUG) std::cout << YELLOW << next_block_name << RESET << std::endl;
@@ -351,7 +276,7 @@ void    parse_directives(t_conf_block& block, std::string& input, std::pair<size
         else if (input_stream.fail())
             throw std::invalid_argument("error configuration file : parse_directives() : failbit getline()");
         else {
-            if (((line.find("{", 0) != std::string::npos) && (line.find(BLOCK_NAME_LOCATION,0) == std::string::npos )) \
+            if (((line.find("{", 0) != std::string::npos) && (line.find(BLOCK_SEARCH_LOCATION,0) == std::string::npos )) \
                     || line.find("}", 0) != std::string::npos){
                 if (DEBUG) std::cout << "parse_directives: NOT ADDING getline : " << std::endl << line << std::endl;
                 loop++;
@@ -359,8 +284,8 @@ void    parse_directives(t_conf_block& block, std::string& input, std::pair<size
             }
 
             // if location block header
-            if (( line.find("{", 0) != std::string::npos) && (line.find(BLOCK_NAME_LOCATION,0) != std::string::npos )){
-                std::cout << line << std::endl;
+            if (( line.find("{", 0) != std::string::npos) && (line.find(BLOCK_SEARCH_LOCATION,0) != std::string::npos )){
+                if (DEBUG) std::cout << line << std::endl;
                 size_t erase_pos = ((line.find(" {", 0) != std::string::npos) ? line.find(" {", 0) : line.find("{", 0));
                 line.erase(erase_pos);
             }
@@ -396,43 +321,43 @@ void    parse_directives(t_conf_block& block, std::string& input, std::pair<size
 /*brief*/   // recursive call to parse blocks
             // range indicates from "xx{" to next "xx{" or end of block '}'
             // range is always valid when entering this function
-            // implement max and min number of blocks 
-void    parse_block(std::string& input, std::pair<size_t, size_t> current_range, t_conf_block& block, int level){
+void    parse_block(std::string& input, std::pair<size_t, size_t> current_range, t_conf_block& block){
     if (DEBUG) std::cout << YELLOW << "parse_block()" << RESET << std::endl;
-    if (DEBUG) std::cout << YELLOW << "| type_name : " << type_get_name(level) << " | level : " << level << " | Range " << current_range.first << " - " << current_range.second << RESET << std::endl;
+    if (DEBUG) std::cout << YELLOW << "| type_name : " << block.block_name << " | level : " << block.level << " | Range " << current_range.first << " - " << current_range.second << RESET << std::endl;
     if (DEBUG) std::cout << YELLOW << "| first line : " MAGENTA << get_whole_line(input, current_range.first) << RESET << std::endl;
 
 
-    if ( level < type_get_level(BLOCK_NAME_LOCATION) ){                                                                                            // root, http or server block
-        std::pair<size_t, size_t> next_range = find_next_block_range( input, current_range.first, type_get_name(level + 1) ); // (throws if not valid range)
+    if ( block.level < e_location_block ){                                                                                            // root, http or server block
+        std::pair<size_t, size_t> next_range = find_next_block_range( input, current_range.first, type_get_name(block.level + 1) ); // (throws if not valid range)
         if ( next_range.first != std::string::npos ) {                                                              // if there is a next block                                       
-            std::cout << MAGENTA << "| Found next block" << RESET << std::endl;
+            if (DEBUG) std::cout << MAGENTA << "| Found next block" << RESET << std::endl;
             parse_directives(block, input, std::make_pair( current_range.first, next_range.first ) );        // parse directives on same level until next block
             
-            block.sub_blocks.push_back( type_get_obj( level + 1, block.directives ) );                                   // create a new sub-block from current block
+            block.sub_blocks.push_back( t_conf_block( block.level + 1, block.directives ) );                                   // create a new sub-block from current block
 
-            parse_block( input, next_range, block.sub_blocks.back(), level + 1 );                                     // check & parse a new block on LOWER level
+            parse_block( input, next_range, block.sub_blocks.back());                                     // check & parse a new block on LOWER level
 
-            if (DEBUG) std::cout << MAGENTA << "| continuing parsing block : " << type_get_name(level) << RESET << std::endl;
-            parse_block( input, std::make_pair( next_range.second, current_range.second ), block, level );    // check & parse a new block on SAME level OR end of level directives
+            if (DEBUG) std::cout << MAGENTA << "| continuing parsing block : " << type_get_name(block.level) << RESET << std::endl;
+            parse_block( input, std::make_pair( next_range.second, current_range.second ), block );    // check & parse a new block on SAME level OR end of level directives
         }
         else {                                                                                                    // if no new blocks before '}'
-            std::cout << MAGENTA << "| NO next block" << RESET << std::endl;
+            if (DEBUG) std::cout << MAGENTA << "| NO next block" << RESET << std::endl;
             parse_directives( block, input, std::make_pair( current_range.first, current_range.second ) );        // parse directives on same level until end of current block
         }
     }
-    if ( type_get_name(level) == BLOCK_NAME_LOCATION ) {                                                                                       // if location block OR 
-        if (DEBUG) std::cout << MAGENTA << "| Reached max level : " << type_get_name(level) << " | remaining content in block is parsed as directives " << RESET << std::endl;
+    if ( block.level == e_location_block ) {                                                                                       // if location block OR 
+        if (DEBUG) std::cout << MAGENTA << "| Reached max level : " << type_get_name(block.level) << " | remaining content in block is parsed as directives " << RESET << std::endl;
         parse_directives( block, input, std::make_pair( current_range.first, current_range.second ) );        // parse directives on same level until end of current block
     }
 }
 
 /*brief*/   // parse configuration file into configuration structures, checks validity of input
-//TODO      // add the real structures
+// URGENT   // fix several server
+//TODO      // add virtual server
+            // implement max and min number of blocks 
 //TODO      // add all validity checks
 //TODO      // redo a flow run to catch all loose error/exception/cases threads
 //TODO      // thorough testing
-/*WIP*/     // add timeout
 void    parse_configuration_file(std::string config_file){
 
     remove_comments(&config_file);
@@ -440,15 +365,14 @@ void    parse_configuration_file(std::string config_file){
     if (DEBUG) std::cout << YELLOW << "parse_configuration_file()" << RESET << std::endl;
     size_t          start    = 0;
     size_t          end      = config_file.size() - 1 ;
-    t_conf_block    root_block;
-    size_t          level    = get_unknown_block_level(config_file, 0);
 
-    parse_block(config_file, std::make_pair( start, end ), root_block, level );
+    std::pair<int, std::string> level = get_unknown_block_level(config_file, 0);
+    if (level.first == -1)
+        throw std::invalid_argument("error configuration file : " + level.second);
 
-    print_root(root_block);
+    t_conf_block    root_block(level.first); // name in level.second si besoin
+    parse_block(config_file, std::make_pair( start, end ), root_block);
+
+    print_config_blocks(root_block);
 }
 
-
-// ARCHIVE
-// template < BlockType = s_conf_root_block >
-// void    parse_new_block(std::string& input, size_t begin_current, size_t end_current, std::string next_block){
