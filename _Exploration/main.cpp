@@ -41,6 +41,8 @@
 # include <vector>
 # include <map>
 
+# include "types.hpp"
+
 // defines
 # define RESET          "\033[0m"
 # define BLACK          "\033[30m"
@@ -63,58 +65,26 @@
 # define BLOCK_NAME_SERVER      "server {"
 # define BLOCK_NAME_LOCATION    "location "
 
-// struct
-typedef struct s_conf_block {
-	std::map<std::string, std::string>	directives;
-}	t_conf_block;
 
-typedef struct s_location_block : public t_conf_block {
-    std::vector<bool>   sub_blocks;
-	s_location_block(const std::map<std::string, std::string>& dir) : sub_blocks() {this->directives = dir;}
-}	t_location_block;
 
-// typedef struct s_virtual_server_block : public t_conf_block {
-//     std::vector<t_location_block>   sub_blocks;
-// 	s_virtual_server_block(const std::map<std::string, std::string>& dir) : sub_blocks() {this->directives = dir;}
-// }	t_virtual_server_block;
-
-typedef struct s_temp_server_block : public t_conf_block {
-    std::vector<t_location_block> sub_blocks;
-	s_server_block(const std::map<std::string, std::string>& dir) : sub_blocks() {this->directives = dir;}
-}	t_temp_server_block;
-
-// typedef struct s_server_block : public t_conf_block {
-//     std::vector<t_virtual_server_block> sub_blocks;
-// 	s_server_block(const std::map<std::string, std::string>& dir) : sub_blocks() {this->directives = dir;}
-// }	t_server_block;
-
-typedef struct s_http_block : public t_conf_block {
-    std::vector<s_server_block> sub_blocks;
-	s_http_block(const std::map<std::string, std::string>& dir) : sub_blocks() { this->directives = dir; }
-}	t_http_block;
-
-typedef struct s_conf_root_block : public t_conf_block {
-    std::vector<t_http_block>   sub_blocks;
-	s_conf_root_block(const std::map<std::string, std::string>& dir) : sub_blocks() { this->directives = dir; }
-}	t_conf_root_block;
 
 // prototypes
 std::string     read_config_file(std::string conf_pathname);
+void            remove_comments(std::string * line);
 void            parse_configuration_file(std::string config_file);
 void            parse_block(std::string& input, std::pair<size_t, size_t> current_range, t_conf_block& block, int level);
 void            parse_directives(t_conf_block& block, std::string& input, std::pair<size_t, size_t> range);
-size_t          find_end_of_block(std::string& input, size_t begin); 
-std::string     get_whole_line(std::string& line, int i);
-void            print_directives(std::map<std::string, std::string>& directives);
-void            print_block(t_conf_block& block, size_t level);
+size_t          find_end_of_block(std::string& input, size_t begin);
+
 void            print_root(t_conf_block& root);
-void            remove_comments(std::string * line);
+
 std::string     type_get_name(size_t level);
 int             type_get_level(std::string block_name);
 size_t          type_get_max_nb(size_t level);
 size_t          type_get_max_nb(size_t level);
 size_t          type_get_min_nb(size_t level);
 t_conf_block    type_get_obj(size_t level, std::map<std::string, std::string>& directives);
+std::string     get_whole_line(std::string& line, int i);
 std::pair<bool, std::string> get_unknown_block_name(std::string& line, size_t i);
 
 // main
@@ -171,29 +141,11 @@ std::string    read_config_file(std::string conf_pathname){
     return (str);
 }
 
-/// printing functions
-/*brief*/   // prints contents of a map of string directives
-void    print_directives(std::map<std::string, std::string>& directives){
-    std::cout << "| Directives :" << std::endl;
-    for (std::map<std::string, std::string>::iterator it = directives.begin(); it != directives.end(); it++)
-        std::cout << "|  Key/Value |" << (*it).first << "|" << (*it).second << "|" << std::endl;
-    std::cout << "--------------------------------------" << std::endl;
-}
-
-/*brief*/   // recursive call
-void    print_block(t_conf_block& block, size_t level){
-    std::cout << "--------------------------------------" << std::endl;
-    std::cout << "| Printing level #" << level << " | " << type_get_name(level) << std::endl;
-    print_directives(block.directives);
-    for (std::vector<t_conf_block>::iterator it = block.sub_blocks.begin(); it != block.sub_blocks.end(); it++)
-        print_block(*it, level + 1);
-}
-
-/*brief*/   // prsize_t all blocks from the root
+/*brief*/   // print all blocks from the root
 void    print_root(t_conf_block& root){
     std::cout << "--------------------------------------" << std::endl;
     std::cout << "| Printing configuration blocks" << std::endl;
-    print_block(root, 0);
+    root.print_block();
     std::cout << "--------------------------------------" << std::endl;
 }
 
@@ -248,7 +200,7 @@ t_conf_block type_get_obj(size_t level, std::map<std::string, std::string>& dire
     switch(level) {
         case 0: return t_conf_root_block(directives);
         case 1: return t_http_block(directives);
-        case 2: return t_temp_server_block(directives);
+        case 2: return t_server_block(directives);
         case 3: return t_location_block(directives);
     }
     throw std::invalid_argument("error type_get_min_nb() : level invalid");
