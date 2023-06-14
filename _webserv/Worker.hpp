@@ -58,7 +58,7 @@ private:
 	//*		private helper functions
 	void	_io_multiplexing_using_epoll();
 	void	_serve_clientS( void );
-	void	_serve_client( ConnectionSocket& request );
+	// void	_serve_client( ConnectionSocket& request );
 	void	_handle_new_connectionS( void );
 	void	_handle_new_connection();
 

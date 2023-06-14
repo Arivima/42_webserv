@@ -13,8 +13,8 @@
 #ifndef Response_HPP
 # define Response_HPP
 
+# include <map>
 # include <string>
-# include <sstream>
 
 # include "include/webserv.hpp"
 # include "EpollData.hpp"
@@ -24,7 +24,7 @@ class Response
 {
 private:
 	const t_conf_block&							matching_directives;
-	const std::map<std::string, std::string>&	req;
+	const std::map<std::string, std::string>	req;
 	const t_server&								assigned_server;
 	const int									sock_fd;
 	const t_epoll_data&							edata;
@@ -34,7 +34,7 @@ public:
 							Response(
 								const std::map<std::string, std::string>& req,
 								const t_server& assigned_server,
-								int sock_fd,
+								const int sock_fd,
 								const t_epoll_data& edata);
 
 	//*		main functionalities
@@ -45,14 +45,6 @@ public:
 	//*		Canonical Form Shit
 							~Response();
 	
-	//*		fulfillment
-	class ResponseFulfilled : public TaskFulfilled {
-	public:
-		virtual const char*	what( void ) const throw() {
-			return ("response fulfilled : switch to request mode");
-		}
-	};
-
 private:
 	//*		Helper functions
 	void							generateGETResponse( void );

@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/08 17:43:27 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/13 22:29:58 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/14 16:36:01 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -103,12 +103,27 @@ public:
 	}
 };
 
-//*		fulfillment
+//*		Exceptions
+
 class TaskFulfilled : public std::exception {
 public:
 	virtual const char*	what( void ) const throw() {
-		return ("TaskFulfilled exception : switch connection status");
+		return ("TaskFulfilled : switch connection status");
 	}
+};
+
+class SockEof : public std::exception {
+	public:
+		virtual const char*	what( void ) const throw() {
+			return ("Sockeof : client has left");
+		}
+};
+
+class TimerExpired : public std::exception {
+	public:
+		virtual const char*	what( void ) const throw() {
+			return ("TimerExpired : client starved");
+		}
 };
 
 #endif

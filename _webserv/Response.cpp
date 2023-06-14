@@ -11,13 +11,13 @@
 /* ************************************************************************** */
 
 #include "Response.hpp"
-#include <fstream>
-// #include <cstring>		//memset
+#include <sys/socket.h>	//send
+#include <fstream>		//open requested files
 
 Response::Response(
 	const std::map<std::string, std::string>& req,
 	const t_server& assigned_server,
-	int sock_fd,
+	const int sock_fd,
 	const t_epoll_data& edata)
 		:
 		req(req),
@@ -44,10 +44,10 @@ void	Response::generateResponse( void ) {
 //TODO	1.	refactor whole ConnectionSocket, make Request & Response classes
 //TODO	2.	each class should throw an exception when task is complete so that ConnectionSocket
 //TODO	can switch state with its switch-state functions
-//TODO		2.1 make only one switch-state function, that switches to response
-//TODO			or request depending on current status
+//TODO		2.1 make only one switch-state function, that switches to response or request
+//TODO			depending on current status
 //TODO	3.	when the ConnectionSocket catches a fulfillment exception, it should call the
-//TODO		fulfill function again recursively (there will never be two consecutive
+//TODO		serve_client function again recursively (there will never be two consecutive
 //TODO		recursive calls)
 //*		....
 //*		Done
@@ -60,14 +60,14 @@ void	Response::send_line( void )
 	size_t	bytes_read;
 
 	if (response.empty())
-		throw ResponseFulfilled();
+		throw TaskFulfilled();
 	else {
-		bytes_read = send(this->sock_fd, response.c_str(), SND_BUF_SIZE, 0);
+		bytes_read = send(this->sock_fd, response.c_str(), response.length(), 0);
 		if (bytes_read < 0)
 			throw ServerError();
 		else
 		if (0 == bytes_read)
-			throw ResponseFulfilled();
+			throw TaskFulfilled();
 		else
 			response = response.substr(bytes_read);
 	}
