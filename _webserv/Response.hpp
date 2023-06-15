@@ -49,13 +49,13 @@ private:
 	//*		Helper functions
 	void							generateGETResponse( void );
 	bool							locationMatch(
-		const t_location_block& location, const std::string& req_url
+		const t_conf_block& location, const std::string& req_url
 		);
 	const t_conf_block&				takeMatchingDirectives(
-		const t_server_block& conf_server_block
+		const t_conf_block& conf_server_block
 		);
-	const t_virtual_server_block&	takeMatchingServer(
-		const std::vector<t_virtual_server_block>&	virtual_servers
+	const t_conf_block&	takeMatchingServer(
+		const std::vector<t_conf_block>&	virtual_servers
 		);
 };
 

@@ -23,12 +23,14 @@
 //*			Parsing
 
 class ConnectionSocket;
-class t_server_block;
+// class t_server_block;
+class t_conf_block;
 
 typedef std::vector<ConnectionSocket* >		VectorCli;
 
 typedef struct s_server {
-	const t_server_block&		conf_server_block;
+	// const t_server_block&		conf_server_block;
+	const t_conf_block&		conf_server_block;
 	int							server_fd;
 	int							server_port;
 	struct sockaddr_in			server_addr;
