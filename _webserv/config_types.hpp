@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   config_types.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/08 11:02:02 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/09 15:36:53 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/16 14:23:52 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 
 # include <vector>
 # include <map>
+# include <ostream>
 
 # define BLOCK_NAME_ROOT        "root"
 # define BLOCK_NAME_HTTP        "http"

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   webserv.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/05 15:27:54 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/13 22:23:11 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/16 14:35:56 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,10 @@
 # include "Colors.hpp"
 # include "types.hpp"
 # include "../config_types.hpp"
+
+# ifndef DEBUG
+#  define DEBUG 0
+# endif
 
 # define DEFAULT_PORT_NUM 8080
 
