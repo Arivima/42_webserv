@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Config.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/16 14:09:56 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/16 17:47:14 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/06/17 19:15:24 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 # define CONFIG_HPP
 
 # include <string>
+# include <sstream>
 # include <cstring>
 # include <stdexcept>
 # include <iostream>
@@ -21,25 +22,30 @@
 # include <unistd.h>
 
 # include "include/webserv.hpp"
-# include "config_types.hpp"
+// # include "config_types.hpp"
 
 # define DEFAULT_PATHNAME   "../_webserv/configuration_files/default.conf"
 
 class Config {
 private:
-	t_conf_block	conf;
-	std::string		raw_content;
+	t_conf_block		conf;
+	std::string			raw_content;
+	std::stringstream	content_stream;
 public:
 	//*	main Constructors and destructors
 							Config (const char* config_file_path);
 							~Config ( void );
 
 	//*	main functionalities
-	void					parse( void );
+	void					parse_config( void );
 	const t_conf_block&		getConf( void );
 
 private:
 	//*	helper functions
+	void					parse( t_conf_block& current );
+	void					parse_server_block( t_conf_block& current );
+	void					parse_location_block( t_conf_block& current, std::string& cur_line );
+	void					parse_http_block( t_conf_block& current );
 	void					read_config_file(std::string conf_pathname);
 	void					remove_comments( void );
 };

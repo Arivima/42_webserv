@@ -1,0 +1,5 @@
+1. prendere i nuovi config type in _Exploration/types.hpp
+	1.2 E fare refactoring di ConnectionSocket, t_server, etc.
+2. Testare con le modifiche di oggi mercoledì 14/06 e fare BugFix
+3. Estendere GET
+4. Fare altri metodi Http
