@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/05 15:27:54 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/18 11:20:27 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/18 13:10:01 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,8 +17,14 @@
 # include "types.hpp"
 // # include "../config_types.hpp"
 
-# ifndef DEBUG
-#  define DEBUG 0
+// # ifndef DEBUG
+// #  define DEBUG 0
+// # endif
+
+# ifdef DEBUG
+#  define COUT_DEBUG_INSERTION(x) std::cout << x;
+# else
+#  define COUT_DEBUG_INSERTION(x)
 # endif
 
 # define DEFAULT_PORT_NUM 8080

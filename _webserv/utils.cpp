@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/18 10:41:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/18 12:32:21 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/18 15:37:15 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@ t_conf_block::	s_conf_block(
 {
 	// if (e_root_block == lvl)
 	// 	this->directives.erase(this->directives.begin(), this->directives.end());
-	if (DEBUG) std::cout << "Build a new : " << this->level << std::endl;
+	COUT_DEBUG_INSERTION("Build a new : " << this->level << std::endl);
 }
 
 //*		TYPE UTILITIES
@@ -32,18 +32,18 @@ t_conf_block::	s_conf_block(
 void						print_directives(std::map<std::string, std::string>& directives, size_t level) {
 	std::string	tabs(level, '\t');
 	
-    std::cout << tabs << "| Directives :" << std::endl;
+	COUT_DEBUG_INSERTION(tabs << "| Directives :" << std::endl);
     for (std::map<std::string, std::string>::iterator it = directives.begin(); it != directives.end(); it++)
-        std::cout << tabs << "|  Key/Value |" << (*it).first << "|" << (*it).second << "|" << std::endl;
-    std::cout << tabs << "--------------------------------------" << std::endl;
+        COUT_DEBUG_INSERTION(tabs << "|  Key/Value |" << (*it).first << "|" << (*it).second << "|" << std::endl);
+    COUT_DEBUG_INSERTION(tabs << "--------------------------------------" << std::endl);
 }
 /*brief*/   // recursive call
 void						print_block(t_conf_block& block, size_t level) {
 	std::string	tabs(level, '\t');
 	
-    std::cout << tabs << "--------------------------------------" << std::endl;
-    std::cout << tabs << "| Printing print_level #" << block.level << " | " << block.block_name << std::endl;
-    std::cout << tabs << "| Printing block_level #" << level << " |" << std::endl;
+    COUT_DEBUG_INSERTION(tabs << "--------------------------------------" << std::endl)
+    COUT_DEBUG_INSERTION(tabs << "| Printing print_level #" << block.level << " | " << block.block_name << std::endl)
+    COUT_DEBUG_INSERTION(tabs << "| Printing block_level #" << level << " |" << std::endl)
     print_directives(block.directives, level);
     for (std::vector<t_conf_block>::iterator it = block.sub_blocks.begin(); it != block.sub_blocks.end(); it++)
         print_block(*it, level + 1);
@@ -132,5 +132,5 @@ void						strip_trailing_and_leading_spaces(std::string& str) {
 		else
 			break;
 	}
-	// std::cout << "read line: |" << str << std::endl;
+	// COUT_DEBUG_INSERTION("trimmed line (no leading and trailing whitespace): |" << str << std::endl)
 }
