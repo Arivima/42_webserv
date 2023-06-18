@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/05 15:27:54 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/17 19:11:05 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/18 11:20:27 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,5 +47,17 @@ Connection: close\r\n\
 # define RCV_BUF_SIZE (MAX_HTTP_HEAD_LINE > MAX_HTTP_REQ_LINE ? MAX_HTTP_HEAD_LINE : MAX_HTTP_REQ_LINE)
 // # define RCV_BUF_SIZE 1024
 # define SND_BUF_SIZE 1024
+
+
+//*		general purpose utilities
+struct			IsSpacePredicate {
+	bool operator()(char c) const {
+		return std::isspace(static_cast<unsigned char>(c));
+	}
+};
+std::string		strip_spaces(std::string& str);
+void			strip_trailing_and_leading_spaces(std::string& str);
+//*		/////////////////////////////////////////////////////////////
+
 
 #endif

@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/08 17:43:27 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/17 19:28:18 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/18 12:08:45 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,12 +24,6 @@
 # include <map>
 
 //*			Parsing
-
-class ConnectionSocket;
-// class t_server_block;
-// class t_conf_block;
-
-// enum
 typedef enum e_config_block_level {
 	e_root_block = 0,
 	e_http_block,
@@ -38,7 +32,6 @@ typedef enum e_config_block_level {
 	e_location_block,
 }	t_config_block_level;
 
-// struct
 typedef struct s_conf_block {
     t_config_block_level				level;
     std::string							block_name;
@@ -46,16 +39,16 @@ typedef struct s_conf_block {
     std::vector<struct s_conf_block>	sub_blocks;
 
 	s_conf_block(
-		t_config_block_level lvl,
-		std::map<std::string, std::string> dir
+		t_config_block_level lvl = e_root_block,
+		std::map<std::string, std::string> dir = std::map<std::string, std::string>()
 	);
 }	t_conf_block;
 
+class ConnectionSocket;
 
 typedef std::vector<ConnectionSocket* >		VectorCli;
 
 typedef struct s_server {
-	// const t_server_block&		conf_server_block;
 	const t_conf_block&			conf_server_block;
 	int							server_fd;
 	int							server_port;
@@ -69,16 +62,20 @@ typedef struct s_server {
 
 typedef std::vector<t_server>				VectorServ;
 
-//Prototypes
-std::string type_get_name(t_config_block_level level);
 
-/// printing functions
-/*brief*/   // prints contents of a map of string directives
-void	print_directives(std::map<std::string, std::string>& directives);
-/*brief*/   // recursive call
-void	print_block(t_conf_block& block, size_t level);
-
-std::ostream&	operator<<(std::ostream& stream, const t_config_block_level& block);
+//*		type utilities
+t_config_block_level	next_conf_block_level(t_config_block_level lvl);
+int						block_get_level(std::string block_name);
+std::string 			block_get_name(t_config_block_level level);
+void					print_block(t_conf_block& block, size_t level);
+void					print_directives(
+	std::map<std::string, std::string>& directives,
+	size_t level
+	);
+std::ostream&	operator<<(
+	std::ostream& stream, const t_config_block_level& block
+	);
+//*		////////////////////////////////////////////////////
 
 
 //*			Execution

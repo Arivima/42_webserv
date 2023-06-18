@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/16 14:09:56 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/17 19:15:24 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/18 11:13:47 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,6 +48,7 @@ private:
 	void					parse_http_block( t_conf_block& current );
 	void					read_config_file(std::string conf_pathname);
 	void					remove_comments( void );
+	void					remove_empty_lines( void );
 };
 
 #endif

@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/30 13:20:37 by avilla-m          #+#    #+#             */
-/*   Updated: 2023/06/17 19:12:33 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/18 11:24:19 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@ int main(int ac, char** av){(void)ac;
 
     std::cout << "Welcome to mini-serv" << std::endl;
     try
-    {
+    {(void)config;
         config.parse_config();
         // //* parsing configuration file
         // if (ac == 1){
