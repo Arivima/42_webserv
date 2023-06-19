@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/30 13:20:37 by avilla-m          #+#    #+#             */
-/*   Updated: 2023/06/18 11:24:19 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/18 19:58:55 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,41 +15,29 @@
 #include "include/webserv.hpp"
 // #include "include/Colors.hpp"
 // #include "Exceptions.hpp"
-// #include "Worker.hpp"
+#include "Worker.hpp"
 #include "Config.hpp"
 // #include "Parsing_config_file.hpp"
 
 
-int main(int ac, char** av){(void)ac;
+int main(int ac, char** av){
     Config  config(av[1]);
 
-    std::cout << "Welcome to mini-serv" << std::endl;
+    (void)config;(void)ac;
+    COUT_DEBUG_INSERTION("Welcome to mini-serv" << std::endl);
     try
-    {(void)config;
+    {
+        //* parsing configuration file
         config.parse_config();
-        // //* parsing configuration file
-        // if (ac == 1){
-        //     // initialization_default();
-        //     ;
-        // }
-        // else if (ac == 2) {
-        //     parse_configuration_file(av[1]);
-        //     // initialization_configuration_file();
-        //     ;
-        // }
-        // else
-        //     // throw std::exception("Wrong number of arguments.\n ./webserv [configuration_file]\n");
-        //     ;
-        
-        // //* initializing server
-        // // Worker server;
+        // //* initializing worker
+        Worker worker(config.getConf());
         
         // //* starting worker
-        // // server.workerLoop();
+        worker.workerLoop();
     }
 	catch (std::exception& e)
     {
 		std::cout << std::endl << BOLDRED "! Caught exception >>" << e.what() << RESET << std::endl;
     }
-
+    return (1);
 }

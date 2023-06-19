@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 17:19:26 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/14 20:12:34 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/19 13:24:31 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,11 @@ Request::Request(
 	parser_status = e_READING_HEADS;
 	cur_body_size = 0;
 }
+
+Request::~Request( void ) {
+	req.clear();
+}
+
 
 //*		Main Functions
 

@@ -1,3 +1,13 @@
+
+dopo
+1.	rimuovere i ";" nel parser della richiesta http alla fine di ogni linea, se presenti
+2.	Debuggare GET e error_page fornite
+		2.1		Sistemare le error_page fornite in HttpError
+3. finire GET.
+
+
+
+scorsa volta...
 1. prendere i nuovi config type in _Exploration/types.hpp
 	1.2 E fare refactoring di ConnectionSocket, t_server, etc.
 2. Testare con le modifiche di oggi mercoledì 14/06 e fare BugFix

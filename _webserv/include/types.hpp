@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/08 17:43:27 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/18 12:08:45 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/19 13:54:48 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,9 @@
 #include "webserv.hpp"
 
 # include <string>
+# include <sstream>
 # include <iostream>		//cout
+# include <fstream>			//ifstream
 # include <cstdio>			//sprintf
 # include <sys/socket.h>
 # include <netinet/in.h>
@@ -81,52 +83,127 @@ std::ostream&	operator<<(
 //*			Execution
 //*	see https://developer.mozilla.org/en-US/docs/Web/HTTP/Status#client_error_responses
 
-class ClientError : public std::exception {
+//*		Exceptions
+
+class	HttpError : public std::exception {
 private:
-	const unsigned short			err_code;
-	const std::string				msg;
-	
+	std::string				err_page;
+	const unsigned short	err_code;
+	const std::string		msg;
+	const t_conf_block&		matching_directives;
+	const std::string		location_root;
+
 public:
-	ClientError(
-		unsigned short err_code = 400)
-		: err_code(err_code), msg(takeMsg(err_code))
-	{};
+	HttpError(
+		unsigned short err_code,
+		const t_conf_block& matching_directives,
+		const std::string&	location_root
+	)
+	:	err_code(err_code), msg(takeMsg(err_code)),
+		matching_directives(matching_directives), location_root(location_root)
+	{
+		err_page = this->buildErrorPage();
+	}
+
 	virtual const char*	what( void ) const throw() {
 		char buf[3];
 
 		sprintf(buf, "%u ", err_code);
-		return ((buf + msg).c_str());
+		return ((buf + std::string(" ") + msg).c_str());
 	}
+
+	std::string			getErrorPage( void ) const {
+		return (err_page);
+	}
+	
+	std::string		buildErrorPage( void ) {
+		
+		const std::map<std::string, std::string>	directives
+			= this->matching_directives.directives;
+		std::stringstream							err_page;
+		std::string									page_content = "";
+
+		//*		set page content
+		if ( directives.end() != directives.find("error_page"))
+		{
+			std::string			err_page_path = errPage_getPath();
+
+			if (false == err_page_path.empty())
+			{
+				std::ifstream		pageContentStream(this->location_root + err_page_path);
+
+				while (pageContentStream.good())
+				{
+					getline(pageContentStream, page_content);
+				}
+				if (pageContentStream.bad())
+					page_content = defaultErrorPage();
+			}
+			else
+				page_content = defaultErrorPage();
+		}
+		else
+			page_content = defaultErrorPage();
+
+		//*		set headers
+		err_page
+			<< "HTTP/1.1 " << err_code << " " << msg << "\r\n"
+			<< "Content-Type: text/html" << "\r\n"
+			<< "Content-Length : " << page_content.length()
+			<< "\r\n\r\n";
+
+		//*		append page content
+		err_page << page_content;
+
+		//*		return page
+		return (err_page.str());
+	}
+
+	std::string		errPage_getPath( void ) {
+
+		const std::map<std::string, std::string>	directives
+			= this->matching_directives.directives;
+		std::string									err_codes;
+		std::string									path;
+		std::stringstream							directiveStream(
+			directives.at("error_page")
+		);
+		std::stringstream							cur_error_stream;
+
+		cur_error_stream << this->err_code;
+		std::getline(directiveStream, err_codes, '/');
+		std::getline(directiveStream, path);
+
+		//*		check if cur error matches error_page accepted errors
+		if (path.empty() || std::string::npos == err_codes.find(cur_error_stream.str()))
+			return ("");
+		return (path);
+	}
+
+private:
+	std::string		defaultErrorPage( void ) {
+		return (
+			"<!DOCTYPE html>\
+<html lang=\"en\">\
+  <head>\
+    <meta charset=\"UTF-8\" />\
+    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\
+    <title>Default Error Page</title>\
+  </head>\
+  <body>\
+    <h1>Default Error Page</h1>\
+  </body>\
+</html>\
+"
+		);
+	}
+
 	const char*	takeMsg(unsigned short err_code) {
 		switch (err_code) {
 			case 400:
 				return ("bad request");
 			case 404:
 				return ("not found");
-			default:
-				return ("bad request");
-		}
-	}
-};
-
-class ServerError : public std::exception {
-private:
-	const unsigned short			err_code;
-	const std::string				msg;
-	
-public:
-	ServerError(
-		unsigned short err_code = 500)
-		: err_code(err_code), msg(takeMsg(err_code))
-	{};
-	virtual const char*	what( void ) const throw() {
-		char buf[3];
-
-		sprintf(buf, "%u ", err_code);
-		return ((buf + msg).c_str());
-	}
-	const char*	takeMsg(unsigned short err_code) {
-		switch (err_code) {
 			case 500:
 				return ("internal server error");
 			case 501:
@@ -134,12 +211,10 @@ public:
 			case 502:
 				return ("Bad Gateway");
 			default:
-				return ("internal server error");
+				return ("http unknown error");
 		}
 	}
 };
-
-//*		Exceptions
 
 class TaskFulfilled : public std::exception {
 public:

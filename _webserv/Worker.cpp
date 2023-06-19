@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/06 21:15:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/14 20:20:02 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/19 13:58:34 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,10 +14,14 @@
 
 //*		main constructors and destructor
 
-Worker::Worker(const t_conf_root_block& conf_enclosing_block) : servers(), edata()
+Worker::Worker(const t_conf_block& conf_enclosing_block) : servers(), edata()
 {
-	for (size_t i = 0; i < conf_enclosing_block.http.servers.size(); i++)
-		this->_server_init(conf_enclosing_block.http.servers[i]);
+	const t_conf_block&	http = conf_enclosing_block.sub_blocks[0];
+
+	// if (http.level == e_http_block)
+	// 	COUT_DEBUG_INSERTION("Worker block is root" << std::endl);
+	for (size_t i = 0; i < http.sub_blocks.size(); i++)
+		this->_server_init(http.sub_blocks[i]);
 	_init_io_multiplexing();
 }
 
@@ -44,10 +48,11 @@ Worker::~Worker() {
 
 //*		main functionalities
 
-void Worker::workerLoop(){
+void Worker::workerLoop() {
 	std::vector<ConnectionSocket *>::iterator	it;
 	
 	while (true) {
+		// COUT_DEBUG_INSERTION("workerloop\n");
 		try {
 			_io_multiplexing_using_epoll();
 		}
@@ -61,6 +66,8 @@ void Worker::workerLoop(){
 }
 
 void	Worker::_serve_clientS( void ) {
+	// COUT_DEBUG_INSERTION("Worker::serve_clientS" << std::endl);
+	
 	for (
 		VectorServ::iterator serv_it = servers.begin();
 		serv_it != servers.end();
@@ -90,6 +97,7 @@ void	Worker::_io_multiplexing_using_epoll(){
 	memset(this->edata.eeventS, 0, sizeof(struct epoll_event) * MAX_EVENTS);
 	this->edata.n_events = epoll_wait(this->edata.epoll_fd, this->edata.eeventS, MAX_EVENTS, -1);
 	if (-1 == this->edata.n_events) {
+		COUT_DEBUG_INSERTION(RED "throwing\n" RESET)
 		throw SystemCallException("epoll_wait()");
 	}
 }
@@ -102,7 +110,8 @@ void	Worker::_handle_new_connectionS() {
 		serv_it != servers.end();
 		serv_it++)
 	{
-		if (this->edata.getEpollEvent((*serv_it).server_fd))
+		if (this->edata.getEpollEvent((*serv_it).server_fd) &&
+		this->edata.getEpollEvent((*serv_it).server_fd)->events & EPOLLIN)
 		{
 			cli_socket = _create_ConnectionSocket((*serv_it));
 			_epoll_register_ConnectionSocket(cli_socket);
@@ -121,13 +130,14 @@ void	Worker::_handle_new_connectionS() {
 	// std::cout << std::endl;
 }
 
-int	Worker::_create_ConnectionSocket( t_server server ) {
+int	Worker::_create_ConnectionSocket( t_server& server ) {
 	
 	int						cli_socket;
 	struct sockaddr_in		cli_addr;
 	socklen_t				cli_addr_len = sizeof(cli_addr);
 
 	std::cout  << std::endl << "\033[1m\033[32m""handle_new_connection() called()""\033[0m" << std::endl;
+	COUT_DEBUG_INSERTION("accept on port " << server.server_port << std::endl)
 	std::cout << "---------------accept()" << std::endl;
 	cli_socket = accept(server.server_fd, (struct sockaddr *)&cli_addr, &cli_addr_len);
 	if (-1 == cli_socket){
@@ -189,17 +199,30 @@ void	Worker::_epoll_register_ConnectionSocket(int cli_socket) {
 
 //*		private initialization functions
 
-void	Worker::_server_init(const t_server_block& conf_server_block) {
+void	Worker::_server_init(const t_conf_block& conf_server_block) {
+	
+	//*		this is actually the first contained virtual server directives
+	//*		we only care about the common directives
+	//*		among all contained virtual servers
+	const std::map<std::string, std::string>&	server_directives
+		= conf_server_block.sub_blocks[0].directives;
+	
+	COUT_DEBUG_INSERTION("new server port is : " << std::atoi(
+		server_directives.at("listen").c_str()) << std::endl);
 	this->servers.push_back(t_server(conf_server_block));
-	//TODO	use conf block to set server data
-	this->servers.back().server_port = DEFAULT_PORT_NUM;
+	this->servers.back().server_port = std::atoi(
+		server_directives.at("listen").c_str()
+	);
+	COUT_DEBUG_INSERTION("adding new Connection Socket with port " << this->servers.back().server_port << std::endl)
 	_create_server_socket();
 	_set_socket_as_reusable();
 	_init_server_addr();
 	_print_server_ip_info();
 	_bind_server_socket_to_ip();
+	// exit(0);
 	_make_server_listening();
 	_make_socket_non_blocking(this->servers.back().server_fd);
+	COUT_DEBUG_INSERTION("end of server init\n");
 }
 
 void	Worker::_create_server_socket() {
@@ -235,8 +258,9 @@ void	Worker::_print_server_ip_info() {
 
 void	Worker::_bind_server_socket_to_ip() {
 	std::cout << "---------------bind()" << std::endl;
+	// COUT_DEBUG_INSERTION("socket fd: " << this->servers.back().server_fd << std::endl);
 	if (-1 == bind(
-		this->servers.back().server_fd, 
+		this->servers.back().server_fd,
 		(struct sockaddr *)&this->servers.back().server_addr, 
 		this->servers.back().server_addr_len
 		))
@@ -266,8 +290,9 @@ void	Worker::_init_io_multiplexing() {
 		throw SystemCallException("epoll_create()");
 	}
 	eevent.events = EPOLLIN;
-	eevent.data.fd = this->servers.back().server_fd;
 	for (VectorServ::iterator it = servers.begin(); it != servers.end(); it++)
+	{
+		eevent.data.fd = (*it).server_fd;
 		if (-1 == epoll_ctl(
 			this->edata.epoll_fd,
 			EPOLL_CTL_ADD,
@@ -276,6 +301,7 @@ void	Worker::_init_io_multiplexing() {
 		{
 			throw SystemCallException("epoll_ctl()");
 		}
+	}
 }
 
 

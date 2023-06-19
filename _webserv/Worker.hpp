@@ -49,7 +49,7 @@ private:
 
 	//*		Member functions
 public:
-	Worker(const t_conf_root_block& conf_enclosing_block);
+	Worker(const t_conf_block& conf_enclosing_block);
 	~Worker();
 	
 	void workerLoop();
@@ -63,9 +63,9 @@ private:
 	void	_handle_new_connection();
 
 	//*		private initialization functions
-	void	_server_init(const t_server_block& conf_server_block);
+	void	_server_init(const t_conf_block& conf_server_block);
 	void	_create_server_socket();
-	int		_create_ConnectionSocket(t_server server);	
+	int		_create_ConnectionSocket(t_server& server);	
 	void	_epoll_register_ConnectionSocket(int cli_socket);
 	void	_set_socket_as_reusable();
 	void	_init_server_addr();

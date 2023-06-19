@@ -46,17 +46,24 @@ public:
 							~Response();
 	
 private:
-	//*		Helper functions
+	//*		Private Helper functions
 	void							generateGETResponse( void );
 	bool							locationMatch(
 		const t_conf_block& location, const std::string& req_url
 		);
 	const t_conf_block&				takeMatchingDirectives(
-		const t_conf_block& conf_server_block
+		const t_conf_block& conf_server_block,
+		const std::map<std::string, std::string>& req
 		);
 	const t_conf_block&	takeMatchingServer(
-		const std::vector<t_conf_block>&	virtual_servers
+		const std::vector<t_conf_block>&	virtual_servers,
+		const std::map<std::string, std::string>& req
 		);
+	std::string			take_location_root( void );
+	std::string			http_req_take_url_path(
+		const std::string& url, const std::string& root
+		);
+	std::string			getIndexPage( const std::string& root );
 };
 
 
