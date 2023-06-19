@@ -16,6 +16,7 @@
 #include <sstream>		//stringstream
 
 //*		non-member helper functions
+void	path_remove_leading_slash(std::string& pathname);
 //*		/////////////////////////////////////////////////
 
 Response::Response(
@@ -72,6 +73,7 @@ void	Response::send_line( void )
 {
 	int	bytes_read;
 
+	// COUT_DEBUG_INSERTION("send_line()\n")
 	if (response.empty())
 		throw TaskFulfilled();
 	else {
@@ -93,36 +95,48 @@ void	Response::generateGETResponse( void )
 	const std::string				reqPath(
 		http_req_take_url_path(req.at("url"), root)
 	);
+	std::string						line;
+	std::string						page;
 
 	//TODO autoindex (CHECK that path refers to directory and not a regular file)
-	// if (reqPath.empty()) {
-	// 	GET_autoindex(root);
-	// }
-	// else {
-		COUT_DEBUG_INSERTION("serving page : " << reqPath << std::endl)
-		//!		remove when we add the if
-		if ( "/" == reqPath) {
-			COUT_DEBUG_INSERTION("throwing because path is empty" << std::endl)
-			throw (HttpError(404, matching_directives, take_location_root()));
-		}
-		//! -------------------------------------------
-		
-		//*		////////////////////////////////////////////////////
+	if (reqPath.empty()) {
+		//TODO GET_autoindex(root);
+		throw (std::runtime_error("not yet implemented"));
+	}
+	else {
+		COUT_DEBUG_INSERTION("serving page : " << root + reqPath << std::endl)
 		std::string						filePath(root + reqPath);
 		std::ifstream					docstream(filePath.c_str());
 
 		if (false == docstream.is_open())
 			throw HttpError(404, matching_directives, take_location_root());
-		response = "";
+		page = "";
 		while (docstream.good())
 		{
-			getline(docstream, response);
+			getline(docstream, line);
+			page += line;
 		}
 		if (docstream.bad())
 			throw HttpError(500, matching_directives, take_location_root());
-	// }
+		response = getHeaders(200, "OK", page);
+		response += page;
+	}
 }
 
+std::string		Response::getHeaders(
+	int status, std::string description, const std::string& body
+	)
+{
+	std::stringstream	headersStream;
+
+	headersStream
+		<< "HTTP/1.1 " << status << " " << description << "\r\n"
+		<< "Content-Type: text/html" << "\r\n"
+		<< "Content-Length : " << body.length()
+		<< "\r\n\r\n";
+	
+	return (headersStream.str());
+}
 
 //*		helper functions
 
@@ -232,7 +246,8 @@ std::string		Response::http_req_take_url_path(
 	if ("/" == path) {
 		path = getIndexPage(root);
 	}
-	return (path);//*	may be empty (a.k.a. "/")
+	path_remove_leading_slash(path);
+	return (path);//*	may be empty (a.k.a. "")
 }
 
 std::string		Response::getIndexPage( const std::string& root )
@@ -250,17 +265,16 @@ std::string		Response::getIndexPage( const std::string& root )
 
 		while (indexesStream.good()) {
 			getline(indexesStream, cur_index, ' ');
-			if (';' == cur_index[cur_index.length() - 1])
-				cur_index = cur_index.substr(0, cur_index.length() - 1);
+			path_remove_leading_slash(cur_index);
 			COUT_DEBUG_INSERTION("trying index file : " << root + cur_index << std::endl)
 			std::ifstream	file(root + cur_index);
 			if (file.is_open())
 				return (cur_index);
 		}
-		return ("/");
+		return ("");
 	}
 	else
-		return ("/");
+		return ("");
 }
 
 std::string		Response::take_location_root( void )
@@ -271,18 +285,19 @@ std::string		Response::take_location_root( void )
 
 	if (matching_directives.directives.end() != root_pos) {
 		root = matching_directives.directives.at("root");
-		if ('/' == root[0])
-			root = root.substr(1);
-		if (';' == root[root.length() - 1])
-			root = root.substr(0, root.length() - 1);
+		path_remove_leading_slash(root);
 		root += "/";
 	}
 	else
-		root = " ";
+		root = "/";
 	
 	return (root);
 }
 
 
 //*		non-member helper functions
-
+void	path_remove_leading_slash(std::string& pathname)
+{
+	if ('/' == pathname[0])
+		pathname = pathname.substr(1);
+}

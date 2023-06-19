@@ -1,9 +1,8 @@
 
-dopo
-1.	rimuovere i ";" nel parser della richiesta http alla fine di ogni linea, se presenti
-2.	Debuggare GET e error_page fornite
-		2.1		Sistemare le error_page fornite in HttpError
-3. finire GET.
+Config
+		1. gestire multi-valued directives (vedere quali sono)
+		2. definire lista di directives (keywords) accettate e rifiutare ogni directive non riconosciuta
+		3. finire GET. (directories & autoindex)
 
 
 

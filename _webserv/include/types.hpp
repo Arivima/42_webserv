@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/08 17:43:27 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/19 13:54:48 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/19 18:07:57 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -121,7 +121,8 @@ public:
 		const std::map<std::string, std::string>	directives
 			= this->matching_directives.directives;
 		std::stringstream							err_page;
-		std::string									page_content = "";
+		std::string									page_content;
+		std::string									line;
 
 		//*		set page content
 		if ( directives.end() != directives.find("error_page"))
@@ -132,9 +133,11 @@ public:
 			{
 				std::ifstream		pageContentStream(this->location_root + err_page_path);
 
+				page_content = "";
 				while (pageContentStream.good())
 				{
-					getline(pageContentStream, page_content);
+					getline(pageContentStream, line);
+					page_content += line;
 				}
 				if (pageContentStream.bad())
 					page_content = defaultErrorPage();

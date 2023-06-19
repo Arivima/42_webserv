@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/16 14:26:23 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/18 15:36:19 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/19 17:01:57 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,9 @@
 //TODO
 //TODO
 
+//TODO	add
+//TODO			isKeyword
+//TODO			directive_add (append or overwrite based on wether directive is multi-valued or not)
 //*		non member helper functions Prototypes
 static bool					parenthesis_balanced(const std::string& content);
 static std::string			get_whole_line(std::string& line, size_t i);
@@ -193,7 +196,7 @@ void	Config::parse_sub_block( t_conf_block& current, std::string& cur_line )
 //TODO
 void	Config::parse_directive( t_conf_block& current, std::string& cur_line )
 {
-	std::stringstream	linestream(cur_line);
+	std::stringstream	linestream;
 	std::string			key;
 	std::string			value;
 	// const std::string	keywords[] = {
@@ -208,7 +211,14 @@ void	Config::parse_directive( t_conf_block& current, std::string& cur_line )
 	// 		break ;
 	// if (11 == i)
 	// 	throw (std::invalid_argument("illegal directive found"));
+	
+	//*		removing directive semicolon
+	if (';' == cur_line[cur_line.length() - 1])
+		cur_line = cur_line.substr(0, cur_line.length() - 1);
+	//*		//////////////////////////////////////////////////
+
 	COUT_DEBUG_INSERTION("Parsing directive : " << cur_line << std::endl);
+	linestream.str(cur_line);
 	std::getline(linestream, key, ' ');
 	std::getline(linestream, value);
 	current.directives[key] = value;

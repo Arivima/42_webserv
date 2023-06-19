@@ -48,6 +48,9 @@ public:
 private:
 	//*		Private Helper functions
 	void							generateGETResponse( void );
+	std::string						getHeaders(
+		int status, std::string description, const std::string& body
+	);
 	bool							locationMatch(
 		const t_conf_block& location, const std::string& req_url
 		);
