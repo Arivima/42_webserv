@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/05 15:27:54 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/18 13:10:01 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/20 17:34:23 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,6 +63,16 @@ struct			IsSpacePredicate {
 };
 std::string		strip_spaces(std::string& str);
 void			strip_trailing_and_leading_spaces(std::string& str);
+/**
+ * @brief this function takes two white-spaced words and returns true iff they have words in common
+ * 
+ * @param s1 
+ * @param s2 
+ * @return true 
+ * @return false 
+ */
+//*		Mettere in utils.cpp !!!!!!!!!!!!!!!!!!!!!
+bool			str_compare_words(const std::string& s1, const std::string& s2);
 //*		/////////////////////////////////////////////////////////////
 
 

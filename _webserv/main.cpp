@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/30 13:20:37 by avilla-m          #+#    #+#             */
-/*   Updated: 2023/06/18 19:58:55 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/20 10:03:57 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,12 +21,12 @@
 
 
 int main(int ac, char** av){
-    Config  config(av[1]);
-
-    (void)config;(void)ac;
-    COUT_DEBUG_INSERTION("Welcome to mini-serv" << std::endl);
+    (void)ac;
     try
     {
+        Config  config(av[1]);
+        
+        COUT_DEBUG_INSERTION("Welcome to mini-serv" << std::endl);
         //* parsing configuration file
         config.parse_config();
         // //* initializing worker
@@ -37,7 +37,7 @@ int main(int ac, char** av){
     }
 	catch (std::exception& e)
     {
-		std::cout << std::endl << BOLDRED "! Caught exception >>" << e.what() << RESET << std::endl;
+		std::cout << std::endl << BOLDRED "! Caught exception >> " << e.what() << RESET << std::endl;
     }
     return (1);
 }

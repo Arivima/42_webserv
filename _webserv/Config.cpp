@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/16 14:26:23 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/19 17:01:57 by earendil         ###   ########.fr       */
+	/*   Updated: 2023/06/20 20:14:34 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,6 +57,9 @@ void					Config::parse_config( void ) {
 	if (false == parenthesis_balanced(this->raw_content))
 		throw (std::invalid_argument("Config::parse_config: unbalanced parenthesis"));
 	this->parse(this->conf);
+	//*	maybe make it a function
+	if (this->conf.sub_blocks[0].sub_blocks.empty())
+		throw (std::runtime_error("Config::parse_config() : no server defined"));
 	print_block(this->conf, this->conf.level);
 }
 
@@ -166,9 +169,13 @@ void	Config::parse( t_conf_block& current ) {
 			return ;
 		}
 		else if (false == cur_line.empty()) {
+			if (e_root_block == current.level)
+				throw (std::invalid_argument("Config::parse(): directive found outisde http"));
 			parse_directive(current, cur_line);
 		}
 	}
+	if (content_stream.bad())
+		throw (std::runtime_error("Config::parse() : IO corrupted"));
 }
 
 void	Config::parse_sub_block( t_conf_block& current, std::string& cur_line )
@@ -215,13 +222,38 @@ void	Config::parse_directive( t_conf_block& current, std::string& cur_line )
 	//*		removing directive semicolon
 	if (';' == cur_line[cur_line.length() - 1])
 		cur_line = cur_line.substr(0, cur_line.length() - 1);
+	else
+		throw (std::invalid_argument("Config::parse_directive() : ';' missing"));
 	//*		//////////////////////////////////////////////////
 
 	COUT_DEBUG_INSERTION("Parsing directive : " << cur_line << std::endl);
 	linestream.str(cur_line);
 	std::getline(linestream, key, ' ');
 	std::getline(linestream, value);
-	current.directives[key] = value;
+	if (isDirective(key))
+		add_directive(current, key, value);
+	else
+		throw (std::invalid_argument("Config::parse_directive() : unrecognized directive found"));
+}
+
+void	Config::add_directive(t_conf_block& current, std::string& key, std::string& value)
+{
+	const std::string	singleValued = "listen body_size root return autoindex location";
+	const std::string	multiValued = "server_name error_page method index";
+
+	if (str_compare_words(multiValued, key))
+	{
+		if (
+			current.directives.end() != current.directives.find(key) &&
+			str_compare_words(current.directives.at(key), value))
+			throw (std::invalid_argument("Config::add_directive() : found directive with repeated values"));
+		else
+			current.directives[key] = current.directives[key] + " " + value;
+	}
+	else
+	{
+		current.directives[key] = value;
+	}
 }
 
 void	Config::parse_http_block( t_conf_block& current ) {
@@ -263,46 +295,49 @@ void	Config::parse_location_block( t_conf_block& current, std::string& cur_line 
 void	Config::parse_server_block( t_conf_block& current ) {
 	COUT_DEBUG_INSERTION(MAGENTA "parse_server_block()" RESET << std::endl);
 	
-	std::vector<t_conf_block>::iterator	it;
-	std::vector<t_conf_block>::iterator	it2;
-	t_conf_block						virtual_server(
+	t_conf_block&							http = current;
+	std::vector<t_conf_block>::iterator		server;
+	std::vector<t_conf_block>::iterator		virtual_serv;
+	t_conf_block							new_virtual_serv(
 		e_virtual_server_block,
-		current.directives
+		http.directives
 	);
-	parse(virtual_server);
-	//*	current is http, it is a server.
-	//*	Each server has list of virtual servers.
-	for ( it = current.sub_blocks.begin(); it != current.sub_blocks.end(); it ++)
+
+	parse(new_virtual_serv);
+	for (server = http.sub_blocks.begin(); server != http.sub_blocks.end(); server ++)
 		if (
-			(*it).sub_blocks[0].directives.at("listen") == virtual_server.directives.at("listen")
+			(*server).sub_blocks[0].directives.at("listen") == new_virtual_serv.directives.at("listen")
 		)
 		{
-			for (it2 = (*it).sub_blocks.begin(); it2 != (*it).sub_blocks.end(); it2++)
-				if (
-					std::string::npos != virtual_server.directives.at("server_name").find((*it2).directives.at("server_name")) ||
-					std::string::npos != (*it2).directives.at("server_name").find(virtual_server.directives.at("server_name"))
+			for (virtual_serv = (*server).sub_blocks.begin(); virtual_serv != (*server).sub_blocks.end(); virtual_serv++)
+				if (str_compare_words(
+						(*virtual_serv).directives.at("server_name"),
+						new_virtual_serv.directives.at("server_name")
+					)
 				)
-					throw (std::invalid_argument("Config::parse_server_block() : multiple server port + server_name"));
+				{
+					throw (std::invalid_argument("Config::parse_server_block() : found to servers with common domain"));
+				}
 			COUT_DEBUG_INSERTION(
 				GREEN "pushing a new virtual server block into existing server sub-blocks" RESET << std::endl
 			);
-			(*it).sub_blocks.push_back(virtual_server);
+			(*server).sub_blocks.push_back(new_virtual_serv);
 			break ;
 		}
-	if (current.sub_blocks.end() == it)
+	if (http.sub_blocks.end() == server)
 	{
 		t_conf_block	server(
 			e_server_block,
-			current.directives
+			http.directives
 		);
 		COUT_DEBUG_INSERTION(
 			GREEN "pushing a new virtual server block into new server sub-blocks" RESET << std::endl
 		);
-		server.sub_blocks.push_back(virtual_server);
+		server.sub_blocks.push_back(new_virtual_serv);
 		COUT_DEBUG_INSERTION(
 			GREEN "pushing new server block into http sub-blocks" RESET << std::endl
 		);
-		current.sub_blocks.push_back(server);
+		http.sub_blocks.push_back(server);
 	}
 }
 
