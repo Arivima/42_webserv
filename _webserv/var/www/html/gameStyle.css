@@ -1,0 +1,83 @@
+.grid {
+  width: 300px;
+  height: 300px;
+  display: grid;
+  grid-template-columns: 100px 100px 100px;
+  grid-template-rows: 100px 100px 100px;
+  border: 1px solid black;
+}
+
+.grid div {
+  font-size: 22px;
+  display: flex;
+  text-align: center;
+  align-items: center;
+  justify-content: space-around;
+  font-weight: bold;
+  color: black;
+  border: 2px solid black;
+}
+.grid div p {
+  text-align: center;
+}
+.grid div:hover {
+  border: 2px solid red;
+  color: red;
+  cursor: pointer;
+}
+div#status,
+div#status span {
+  color: red;
+}
+#ending {
+  width: 280px;
+  height: 150px;
+  position: absolute;
+  left: 50%;
+  margin-left: -140px;
+  top: 50%;
+  margin-top: -75px;
+  border: 1px solid blue;
+  border-radius: 5%;
+  color: blue;
+  background-color: rgba(207, 196, 196, 0.8);
+  /* background-color: rgba(109, 101, 101, 0.2); */
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  font-size: 30px;
+  font-weight: bold;
+}
+#ending p {
+  text-align: center;
+}
+#c1 {
+  grid-area: c1;
+}
+#c2 {
+  grid-area: c2;
+}
+#c3 {
+  grid-area: c3;
+}
+#c4 {
+  grid-area: c4;
+}
+#c5 {
+  grid-area: c5;
+}
+#c6 {
+  grid-area: c6;
+}
+#c7 {
+  grid-area: c7;
+}
+#c8 {
+  grid-area: c8;
+}
+#c0 {
+  grid-area: c0;
+}
+#game {
+  position: relative;
+}

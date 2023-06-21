@@ -1,0 +1,358 @@
+@import url("https://fonts.googleapis.com/css2?family=Hind&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Play&display=swap");
+
+html,
+body,
+* {
+  font-family: "Hind", sans-serif;
+  font-size: 16px;
+  background-color: white;
+}
+body {
+  width: 100%;
+  margin: 0 auto;
+}
+main {
+  width: 944px;
+  margin: 0 auto;
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "Play", sans-serif;
+  color: #c76161;
+}
+a {
+  color: #3a7777;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #f5af33;
+}
+/*------HEADER---------------------------------------*/
+header {
+  width: 100%;
+  height: 230px;
+  margin: 0;
+  background-image: url(http://pw.netgroup.uniroma2.it/img/pic2.jpg);
+  background-attachment: fixed;
+  background-size: 100% 230px;
+  background-repeat: no-repeat;
+  text-align: center;
+  display: flex;
+  align-items: center;
+}
+#Riga_Bianca {
+  width: 100%;
+  height: 70px;
+}
+#Riga_Bianca > div {
+  width: 944px;
+  height: 70px;
+  margin: 0px auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+/*------------Header_titolo sito------------------------------*/
+
+/*Titolo Sito*/
+#Riga_Bianca h2 {
+  font-size: 2.2em;
+  font-weight: bold;
+}
+/*Blocco che contiene il Titolo del Sito ed il Bordo*/
+#Riga_Bianca > div > div {
+  width: 400px;
+  height: 90px;
+
+  align-self: flex-start;
+  line-height: 20px;
+
+  /*Background Trasparente per mostrare il bordo*/
+  background-color: rgba(0, 0, 0, 0);
+
+  background-image: url(http://pw.netgroup.uniroma2.it/img/bg-logo.png);
+  background-repeat: no-repeat;
+  background-attachment: local;
+  background-size: 100%;
+}
+/*------HEADER__Menu-------------------*/
+#Riga_Bianca ul li a {
+  font-weight: bold;
+}
+#Riga_Bianca ul {
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  width: 45%; /*544px*/
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+/*-------------------Parte Alta Contenuto----------------------*/
+p#bordoParteSuperiore {
+  content: "";
+  border: 1px solid #888888;
+
+  margin-bottom: 0;
+}
+div#ParteAltaContenuto {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  margin-top: 0;
+  justify-content: space-between;
+}
+/*Scritta "Antipasti"*/
+div#ParteAltaContenuto p {
+  color: #f5af33;
+  padding: 20px 0px;
+  align-self: flex-start;
+
+  margin: 0px auto;
+  margin-left: 0;
+}
+/*Immagini Facebook, twitter, etc.*/
+div#ParteAltaContenuto div a img {
+  display: block; /*Mi serve per allinearle centralmente alla scritta "Antipati"*/
+  width: 25px;
+}
+/*Blocco delle immagini Facebook, Twitter, etc.*/
+div#ParteAltaContenuto div {
+  width: 90px;
+  display: flex;
+  justify-content: space-evenly;
+}
+/*--------Contenuto Centrale ------------------------------------*/
+main > h1 {
+  /*Avrei anche potuto scrivere solo h1. E' buona norma mettere un solo h1 per pagina e io ne ho solo uno*/
+  font-size: 2em;
+}
+main p img#GamberiImg {
+  width: 100%; /*è 944px in questo punto per la proprietà di ereditarietà*/
+}
+div#ContenutoCentrale {
+  width: 100%;
+  height: max-content;
+  display: flex;
+  align-items: flex-start;
+
+  flex-wrap: wrap;
+
+  margin: 0px auto;
+  justify-content: space-between;
+}
+/*----------------ContenutoCentrale_colonna di SINISTRA-----------------*/
+div#ContenutoCentrale div#PrimaColonna {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  width: 600px;
+}
+div#PrimaColonna > div {
+  width: 100%;
+}
+div#PrimaColonna h2 {
+  font-size: 1.4em;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #888888;
+}
+/*-----Colonna di sinistra__lista ingedienti*/
+div#divIngredienti {
+  width: 600px;
+  padding-bottom: 0px;
+  margin-bottom: 0px;
+}
+ul#Ingredienti {
+  width: 665px;
+  height: 16em; /*600px;*/ /*100%;*/
+
+  list-style: none;
+
+  padding: 0px;
+  margin: 0px;
+}
+ul#Ingredienti li {
+  width: 300px;
+
+  padding: 15px;
+
+  text-transform: lowercase;
+  font-size: 1.1em;
+  margin-left: 0px;
+
+  float: left;
+
+  background-image: url(http://pw.netgroup.uniroma2.it/img/dot.png);
+  background-repeat: no-repeat;
+  background-position: left;
+}
+ul#Ingredienti li::after {
+  content: "";
+  display: block;
+  clear: both;
+}
+/*--------------Colonna Sinistra__Paragrafo Preparazione Ricetta--------------------------------------------*/
+div#PrepRicetta {
+  padding-top: 0px;
+  margin-top: 0px;
+}
+/*   ---------------------Colonna di Sinistra__COMMENTI-----------------------------------*/
+ul#commenti {
+  list-style-type: none;
+}
+ul#commenti li p + p {
+  font-size: 14px;
+  line-height: 20px;
+  padding: 25px 15px;
+  color: #3d3257;
+  background-color: #f8f6f9;
+}
+li#CommentoRisposta {
+  text-indent: 25px;
+}
+li#CommentoRisposta div {
+  margin-left: 25px;
+  padding: 10px 10px 10px 3px;
+}
+li#CommentoRisposta div,
+li#CommentoRisposta div * {
+  color: white;
+  background-color: #c76161;
+}
+main {
+  margin-bottom: 80px;
+}
+/*-----------------------ContenutoCentrale_colonna a DESTRA--------------------------*/
+div#ContenutoCentrale div#SecondaColonna {
+  display: block;
+  width: 279px; /*205px;*/ /*300px; */
+}
+div#ContenutoCentrale div#SecondaColonna h3 {
+  font-size: 1.2em;
+  width: 100%;
+}
+/*-----------Immagine Mandarini Ape---------------------------------------------------*/
+div#SecondaColonna > div > img {
+  width: 280px;
+  margin: 20px 0px;
+}
+/*--------------Sezione Altre Ricette------------------------------------------------*/
+/*Contiene titolo "Altre Ricette" e la ul relativa*/
+div#SecondaColonna > div + div {
+  width: 400px;
+}
+div#SecondaColonna div ul {
+  display: flex;
+  padding-left: 0px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+div#SecondaColonna div ul li {
+  width: 100%;
+  margin-left: 0px;
+  padding-bottom: 25px;
+  padding-top: 0px;
+  margin-top: 0px;
+  list-style: none;
+  display: flex;
+  align-items: center;
+}
+div#SecondaColonna div h3 {
+  padding-bottom: 0px;
+  margin-bottom: 0px;
+}
+div#SecondaColonna div ul li a {
+  width: 50%;
+  padding-left: 10px;
+}
+/*------Immagini Altre Ricette--------------------------------------*/
+div#ContenutoCentrale div#SecondaColonna div ul li > img {
+  box-sizing: border-box;
+  border: 2px solid #c76161;
+}
+/*-----------------------Footer--------------------------*/
+footer,
+footer * {
+  width: 100%;
+  background-color: #171717;
+}
+footer,
+footer *:not(a) {
+  color: #f1f1f1;
+}
+footer {
+  padding-top: 30px;
+}
+footer > div {
+  width: 944px;
+  margin: 0px auto;
+
+  position: relative;
+}
+/*100% rispetto alla dimensione ereditata perchè devono occupare tutta la riga*/
+footer > div > div {
+  width: 100%;
+}
+/*------------Menu Footer--------------------------------------------------*/
+footer > div > div#MenuFooter > div {
+  width: 33.3333%;
+  float: left;
+}
+
+footer > div > div#MenuFooter > div h3 {
+  color: #f5af33;
+  font-size: 1.2em;
+}
+footer > div > div#MenuFooter > div ul {
+  margin-left: 0;
+  padding-left: 0;
+  list-style: none;
+}
+/*---------Resto Footer & info Aggiuntive elementi Menu-------------------------------------------*/
+div.delimitatore {
+  display: flex;
+  border: 1px solid #f1f1f1;
+}
+div#Newsletter h4 {
+  color: #c76161;
+  font-size: 1em;
+
+  padding-bottom: 0px;
+  margin-bottom: 0px;
+}
+div#MangiareFuori {
+  padding-bottom: 15px;
+  margin-bottom: 55px;
+}
+/*-----Riga in fondo------------------------*/
+div#Bottom {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: right;
+  flex-wrap: nowrap;
+}
+div#Bottom a img {
+  margin: 0px;
+  padding: 0px;
+  width: auto;
+}
+div#Bottom div {
+  width: 20%;
+  display: flex;
+  align-items: center;
+  margin-right: 0px;
+  padding: 0px;
+  align-self: flex-end;
+}
+div#Bottom p {
+  width: 80%;
+  font-size: 0.8em;
+}

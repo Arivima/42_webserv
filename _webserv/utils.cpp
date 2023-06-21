@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/18 10:41:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/18 15:37:15 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/21 16:11:33 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -134,3 +134,75 @@ void						strip_trailing_and_leading_spaces(std::string& str) {
 	}
 	// COUT_DEBUG_INSERTION("trimmed line (no leading and trailing whitespace): |" << str << std::endl)
 }
+
+#include <algorithm>
+
+/*brief*/	// split a string into a vector using delimiter space, without keeping whitespace
+std::vector<std::string> split_str_to_vector( std::string s, const std::string& delimiter){
+	std::vector<std::string>	new_vector;
+	std::string 			tmp;
+	int 					pos;
+	// COUT_DEBUG_INSERTION("split_str_to_vector" << std::endl);
+	// COUT_DEBUG_INSERTION("inital s : " << s << std::endl);
+	while ( s.size() > 0 ){
+		// COUT_DEBUG_INSERTION("loop" << std::endl);
+		// COUT_DEBUG_INSERTION("str size " << s.size() << std::endl);
+		strip_trailing_and_leading_spaces(s);
+		// COUT_DEBUG_INSERTION("before s : " << s << std::endl);
+		pos = s.find(delimiter, 0);
+		tmp = s.substr(0, pos);
+		s.erase(0, pos);
+		// COUT_DEBUG_INSERTION("after s : " << s << std::endl);
+		// COUT_DEBUG_INSERTION("tmp : " << tmp << std::endl);
+		new_vector.push_back(tmp);
+	}
+	// COUT_DEBUG_INSERTION("final vector : " << std::endl);
+	for (std::vector<std::string>::iterator it = new_vector.begin(); it != new_vector.end(); it++)
+		COUT_DEBUG_INSERTION( *it << std::endl);
+	return (new_vector);
+}
+
+/*brief*/	// compare two strings, return true if there is at least one common word
+bool	str_compare_words(const std::string& str_haystack, const std::string& str_needle)
+{
+	std::vector<std::string> vector_haystack = split_str_to_vector(str_haystack, " ");
+	std::vector<std::string> vector_needle = split_str_to_vector(str_needle, " ");
+	// COUT_DEBUG_INSERTION("str_compare_words" << std::endl);
+
+	for (
+		std::vector<std::string>::iterator it_needle = vector_needle.begin();
+		it_needle != vector_needle.end();
+		it_needle++
+	){
+		for (
+			std::vector<std::string>::iterator it_haystack = vector_haystack.begin();
+			it_haystack != vector_haystack.end();
+			it_haystack++
+		){
+			// COUT_DEBUG_INSERTION("comparing " << *it_needle << " and " << *it_haystack << std::endl);
+			if ((*it_haystack).compare(*it_needle) == 0)
+				return (true);		}
+	}
+	return (false);
+}
+
+//! alternative with stream
+// bool	str_compare_words(const std::string& s1, const std::string& s2)
+// {
+// 	std::stringstream	stream;
+// 	stream.str(this->s1);
+// 	while (stream.good()) {
+//         std::getline(stream /*>> std::ws*/, line, ' ');
+// 		strip_trailing_and_leading_spaces(line);
+// 		COUT_DEBUG_INSERTION("line read: |" << line << std::endl);
+		
+// 		if (std::string::npos != s2.find(line)) {
+// 			// can return true if line is a substring of a word in s2
+// 			return (true);
+// 		}
+// 	}
+// 	if (stream.bad())
+// 		throw (std::runtime_error("Utils str_compare_words() : IO corrupted"));
+
+// 	return (false);
+// }

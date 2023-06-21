@@ -1,15 +1,15 @@
 
-Config
-		1.	gestire multi-valued directives (vedere quali sono)
-		2.	definire lista di directives (keywords) accettate e rifiutare ogni directive non riconosciuta
-		3.	mettere in utils funzione che prende 2 stringhe di spaced-words e controlla se hanno parole in comune
-			3.1	usare questa funzione per controllare se 2 virtual server hanno server_name in comune
-			3.2	e per controllare che una multivalued directive non abbia lo stesso valore ripetuto
-		4.	controllare presenza directive mandatorie (only "listen")
-		5.	vedere come posso redirezionare domain specifici (e.g. "example.com") al mio server locale.
+Parsing config
+ok		1.	gestire multi-valued directives (vedere quali sono)
+nok		2.	definire lista di directives (keywords) accettate e rifiutare ogni directive non riconosciuta
+ok		3.	mettere in utils funzione che prende 2 stringhe di spaced-words e controlla se hanno parole in comune
+ok			3.1	usare questa funzione per controllare se 2 virtual server hanno server_name in comune
+ok			3.2	e per controllare che una multivalued directive non abbia lo stesso valore ripetuto
+ok		4.	controllare presenza directive mandatorie (only "listen")
+ok		5.	vedere come posso redirezionare domain specifici (e.g. "example.com") al mio server locale.
 			Questo vuol dire che devo fare arrivare la mia richiesta al mio server locale e non al DNS
 			(e.g. da Chrome "example.fr:8080" ---> al mio server locale)
-		6.	Prendere in considerazione l'aggiunta di un dizionario con (mandatory?, single/multi_valued, default_value)
+nok		6.	Prendere in considerazione l'aggiunta di un dizionario con (mandatory?, single/multi_valued, default_value)
 
 
 finire GET. (directories & autoindex)

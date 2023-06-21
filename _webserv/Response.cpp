@@ -14,6 +14,7 @@
 #include <sys/socket.h>	//send
 #include <fstream>		//open requested files
 #include <sstream>		//stringstream
+#include <cstring>		//memeset
 
 //*		non-member helper functions
 void	path_remove_leading_slash(std::string& pathname);
@@ -47,6 +48,7 @@ void	Response::generateResponse( void ) {
 		// 	return (generatePUTResponse());
 		// if ("DELETE" == this->req.at("method"))
 		// 	return (generateDELETEResponse());
+		throw (std::runtime_error("Response::generateResponse() : case not yet implemented"));
 	}
 	catch (const HttpError& e) {
 		this->response = e.getErrorPage();
@@ -95,7 +97,8 @@ void	Response::generateGETResponse( void )
 	const std::string				reqPath(
 		http_req_take_url_path(req.at("url"), root)
 	);
-	std::string						line;
+	const size_t					buffer_size = 4096;//TODO	spostare in general purpose utilities !
+	char							buffer[buffer_size + 1];
 	std::string						page;
 
 	//TODO autoindex (CHECK that path refers to directory and not a regular file)
@@ -106,33 +109,56 @@ void	Response::generateGETResponse( void )
 	else {
 		COUT_DEBUG_INSERTION("serving page : " << root + reqPath << std::endl)
 		std::string						filePath(root + reqPath);
-		std::ifstream					docstream(filePath.c_str());
+		std::ifstream					docstream(filePath.c_str(), std::ios::binary);
 
 		if (false == docstream.is_open())
 			throw HttpError(404, matching_directives, take_location_root());
 		page = "";
 		while (docstream.good())
 		{
-			getline(docstream, line);
-			page += line;
+			memset(buffer, '\0', buffer_size + 1);
+			docstream.read(buffer, buffer_size);
+			page += buffer;
 		}
 		if (docstream.bad())
 			throw HttpError(500, matching_directives, take_location_root());
-		response = getHeaders(200, "OK", page);
+		response = getHeaders(200, "OK", filePath, page);
 		response += page;
 	}
 }
 
+//*	considerare se usare lstat per leggere nei primi byte del file il tipo
+//*	(l'estensione potrebbe essere stata cancellata)
 std::string		Response::getHeaders(
-	int status, std::string description, const std::string& body
+	int status, std::string description, std::string& filepath,
+	const std::string& body
 	)
 {
 	std::stringstream	headersStream;
+	size_t				dot_pos;
+	std::string			fileType = "";
+	std::string			fileType_prefix;
 
+	dot_pos = filepath.rfind('.');
+	if (std::string::npos != dot_pos)
+		fileType = filepath.substr(dot_pos);
+	if (".html" == fileType || ".css" == fileType)
+		fileType_prefix = "text/";
+	else if (".png" == fileType || ".jpg" == fileType || ".jpeg" == fileType || ".gif" == fileType)
+		fileType_prefix = "image/";
+	else if (".json" == fileType || ".js" == fileType)
+		fileType_prefix = "application/";
+	else {
+		fileType_prefix = "text/";
+		fileType = ".plain";
+	}
+	//*		removing the dot '.'
+	fileType = fileType.substr(1);
+	COUT_DEBUG_INSERTION("fileType : |" << fileType << "|"<< std::endl);
 	headersStream
 		<< "HTTP/1.1 " << status << " " << description << "\r\n"
-		<< "Content-Type: text/html" << "\r\n"
-		<< "Content-Length : " << body.length()
+		<< "Content-Type: " << fileType_prefix << fileType << "\r\n"
+		<< "Content-Length : " << body.size()
 		<< "\r\n\r\n";
 	
 	return (headersStream.str());
@@ -289,7 +315,7 @@ std::string		Response::take_location_root( void )
 		root += "/";
 	}
 	else
-		root = "/";
+		root = "./";
 	
 	return (root);
 }
