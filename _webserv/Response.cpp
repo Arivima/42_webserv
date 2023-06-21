@@ -73,20 +73,20 @@ void	Response::generateResponse( void ) {
 //TODO
 void	Response::send_line( void )
 {
-	int	bytes_read;
+	int	bytes_sent;
 
 	// COUT_DEBUG_INSERTION("send_line()\n")
 	if (response.empty())
 		throw TaskFulfilled();
 	else {
-		bytes_read = send(this->sock_fd, response.c_str(), response.length(), 0);
-		if (bytes_read < 0)
+		bytes_sent = send(this->sock_fd, response.data(), response.size(), 0);
+		if (bytes_sent < 0)
 			throw HttpError(500, matching_directives, take_location_root());
 		else
-		if (0 == bytes_read)
+		if (0 == bytes_sent)
 			throw TaskFulfilled();
 		else
-			response = response.substr(bytes_read);
+			response.erase(response.begin(), response.begin() + bytes_sent);
 	}
 }
 
@@ -96,10 +96,9 @@ void	Response::generateGETResponse( void )
 		= take_location_root();
 	const std::string				reqPath(
 		http_req_take_url_path(req.at("url"), root)
-	);
-	const size_t					buffer_size = 4096;//TODO	spostare in general purpose utilities !
-	char							buffer[buffer_size + 1];
-	std::string						page;
+	);;
+	std::string						headers;
+	std::vector<char>				page;
 
 	//TODO autoindex (CHECK that path refers to directory and not a regular file)
 	if (reqPath.empty()) {
@@ -113,17 +112,18 @@ void	Response::generateGETResponse( void )
 
 		if (false == docstream.is_open())
 			throw HttpError(404, matching_directives, take_location_root());
-		page = "";
-		while (docstream.good())
-		{
-			memset(buffer, '\0', buffer_size + 1);
-			docstream.read(buffer, buffer_size);
-			page += buffer;
+		try {
+			page.insert(
+				response.begin(),
+				std::istreambuf_iterator<char>(docstream),
+				std::istreambuf_iterator<char>());
 		}
-		if (docstream.bad())
+		catch (const std::exception& e) {
 			throw HttpError(500, matching_directives, take_location_root());
-		response = getHeaders(200, "OK", filePath, page);
-		response += page;
+		}
+		headers = getHeaders(200, "OK", filePath, page.size());
+		response.insert(response.begin(), headers.begin(), headers.end());
+		response.insert(response.end(), page.begin(), page.end());
 	}
 }
 
@@ -131,7 +131,7 @@ void	Response::generateGETResponse( void )
 //*	(l'estensione potrebbe essere stata cancellata)
 std::string		Response::getHeaders(
 	int status, std::string description, std::string& filepath,
-	const std::string& body
+	size_t body_size
 	)
 {
 	std::stringstream	headersStream;
@@ -158,7 +158,7 @@ std::string		Response::getHeaders(
 	headersStream
 		<< "HTTP/1.1 " << status << " " << description << "\r\n"
 		<< "Content-Type: " << fileType_prefix << fileType << "\r\n"
-		<< "Content-Length : " << body.size()
+		<< "Content-Length : " << body_size
 		<< "\r\n\r\n";
 	
 	return (headersStream.str());

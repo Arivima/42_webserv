@@ -241,16 +241,16 @@ void	Config::add_directive(t_conf_block& current, std::string& key, std::string&
 	const std::string	singleValued = "listen body_size root return autoindex location";
 	const std::string	multiValued = "server_name error_page method index";
 
-	// if (str_compare_words(multiValued, key))
-	// {
-	// 	if (
-	// 		current.directives.end() != current.directives.find(key) &&
-	// 		str_compare_words(current.directives.at(key), value))
-	// 		throw (std::invalid_argument("Config::add_directive() : found directive with repeated values"));
-	// 	else
-	// 		current.directives[key] = current.directives[key] + " " + value;
-	// }
-	// else
+	if (
+		current.directives.end() != current.directives.find(key) &&
+		str_compare_words(multiValued, key))
+	{
+		if (str_compare_words(current.directives.at(key), value))
+			throw (std::invalid_argument("Config::add_directive() : found directive with repeated values"));
+		else
+			current.directives[key].append(" " + value);
+	}
+	else
 	{
 		current.directives[key] = value;
 	}
@@ -316,15 +316,15 @@ void	Config::parse_server_block( t_conf_block& current ) {
 			(*server).sub_blocks[0].directives.at("listen") == new_virtual_serv.directives.at("listen")
 		)
 		{
-			// for (virtual_serv = (*server).sub_blocks.begin(); virtual_serv != (*server).sub_blocks.end(); virtual_serv++)
-			// 	if (str_compare_words(
-			// 			(*virtual_serv).directives.at("server_name"),
-			// 			new_virtual_serv.directives.at("server_name")
-			// 		)
-			// 	)
-			// 	{
-			// 		throw (std::invalid_argument("Config::parse_server_block() : found to servers with common domain"));
-			// 	}
+			for (virtual_serv = (*server).sub_blocks.begin(); virtual_serv != (*server).sub_blocks.end(); virtual_serv++)
+				if (str_compare_words(
+						(*virtual_serv).directives.at("server_name"),
+						new_virtual_serv.directives.at("server_name")
+					)
+				)
+				{
+					throw (std::invalid_argument("Config::parse_server_block() : found two servers with common domain"));
+				}
 			COUT_DEBUG_INSERTION(
 				GREEN "pushing a new virtual server block into existing server sub-blocks" RESET << std::endl
 			);

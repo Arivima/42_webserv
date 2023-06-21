@@ -13,6 +13,7 @@
 #ifndef Response_HPP
 # define Response_HPP
 
+# include <vector>
 # include <map>
 # include <string>
 
@@ -28,7 +29,8 @@ private:
 	const t_server&								assigned_server;
 	const int									sock_fd;
 	const t_epoll_data&							edata;
-	std::string									response;
+	std::vector<char>							response;
+
 public:
 	//*		main constructors and destructors
 							Response(
@@ -50,7 +52,7 @@ private:
 	void							generateGETResponse( void );
 	std::string						getHeaders(
 		int status, std::string description, std::string& filepath,
-		const std::string& body
+		size_t	body_size
 	);
 	bool							locationMatch(
 		const t_conf_block& location, const std::string& req_url

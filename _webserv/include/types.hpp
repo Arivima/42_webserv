@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/08 17:43:27 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/19 18:07:57 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/21 17:18:01 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,7 @@
 # include <cstdio>			//sprintf
 # include <sys/socket.h>
 # include <netinet/in.h>
-# include <vector>			//config file data type sub-block
+# include <vector>			//config file data type sub-block and error_page in HttpError exception.
 # include <map>
 
 //*			Parsing
@@ -87,7 +87,7 @@ std::ostream&	operator<<(
 
 class	HttpError : public std::exception {
 private:
-	std::string				err_page;
+	std::vector<char>		err_page;
 	const unsigned short	err_code;
 	const std::string		msg;
 	const t_conf_block&		matching_directives;
@@ -99,10 +99,15 @@ public:
 		const t_conf_block& matching_directives,
 		const std::string&	location_root
 	)
-	:	err_code(err_code), msg(takeMsg(err_code)),
+	:	err_page(), err_code(err_code), msg(takeMsg(err_code)),
 		matching_directives(matching_directives), location_root(location_root)
 	{
-		err_page = this->buildErrorPage();
+		std::string		page_str = this->buildErrorPage();
+
+		err_page.insert(
+			err_page.begin(),
+			page_str.begin(), page_str.end()
+		);
 	}
 
 	virtual const char*	what( void ) const throw() {
@@ -112,10 +117,10 @@ public:
 		return ((buf + std::string(" ") + msg).c_str());
 	}
 
-	std::string			getErrorPage( void ) const {
+	std::vector<char>	getErrorPage( void ) const {
 		return (err_page);
 	}
-	
+private:
 	std::string		buildErrorPage( void ) {
 		
 		const std::map<std::string, std::string>	directives
@@ -183,7 +188,6 @@ public:
 		return (path);
 	}
 
-private:
 	std::string		defaultErrorPage( void ) {
 		return (
 			"<!DOCTYPE html>\
