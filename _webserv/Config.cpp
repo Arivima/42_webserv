@@ -13,6 +13,7 @@
 #include "Config.hpp"
 #include <algorithm>	//remove_if
 #include <cstring>		//strncmp
+#include <set>			//isDirective()
 
 //TODO
 //TODO	1. controllare che non ci siano più http block.
@@ -257,8 +258,15 @@ void	Config::add_directive(t_conf_block& current, std::string& key, std::string&
 }
 
 bool	Config::isDirective(const std::string& directive)
-{(void)directive;
-	return (true);
+{
+	const char* strings[] = {
+		"listen", "location", "server_name", "index", "body_size", 
+		"error_page", "method", "root", "return", "autoindex", "exec_cgi", "extension_cgi"
+	};
+
+	std::set<std::string> dictionnary_directives(strings, strings + sizeof(strings) / sizeof(strings[0]));
+
+	return (dictionnary_directives.count(directive));
 }
 
 void	Config::parse_http_block( t_conf_block& current ) {

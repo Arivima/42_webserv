@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/05 15:27:54 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/20 17:34:23 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/22 10:24:01 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,9 +71,12 @@ void			strip_trailing_and_leading_spaces(std::string& str);
  * @return true 
  * @return false 
  */
-//*		Mettere in utils.cpp !!!!!!!!!!!!!!!!!!!!!
-bool			str_compare_words(const std::string& s1, const std::string& s2);
-//*		/////////////////////////////////////////////////////////////
+bool						str_compare_words(
+	const std::string& s1, const std::string& s2
+	);
+std::vector<std::string>	split_str_to_vector(
+		std::string s, const std::string& delimiter
+	);
 
 
 #endif
