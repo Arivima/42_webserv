@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/08 17:43:27 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/21 17:18:01 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/22 15:00:27 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -139,12 +139,17 @@ private:
 				std::ifstream		pageContentStream(this->location_root + err_page_path);
 
 				page_content = "";
-				while (pageContentStream.good())
-				{
-					getline(pageContentStream, line);
-					page_content += line;
+				if (pageContentStream.is_open()) {
+					
+					while (pageContentStream.good())
+					{
+						getline(pageContentStream, line);
+						page_content += line;
+					}
+					if (pageContentStream.bad())
+						page_content = defaultErrorPage();
 				}
-				if (pageContentStream.bad())
+				else
 					page_content = defaultErrorPage();
 			}
 			else
@@ -167,23 +172,32 @@ private:
 		return (err_page.str());
 	}
 
-	std::string		errPage_getPath( void ) {
+	std::string		errPage_getPath( void ) {std::cout << "errPage_getPath()" << std::endl;
 
-		const std::map<std::string, std::string>	directives
-			= this->matching_directives.directives;
-		std::string									err_codes;
-		std::string									path;
-		std::stringstream							directiveStream(
-			directives.at("error_page")
-		);
+		std::string									directive
+			= this->matching_directives.directives.at("error_page");
+		std::stringstream							directiveStream;
 		std::stringstream							cur_error_stream;
-
-		cur_error_stream << this->err_code;
-		std::getline(directiveStream, err_codes, '/');
-		std::getline(directiveStream, path);
+		size_t										cur_error_pos;
+		size_t										err_page_pos;
+		std::string									path;
 
 		//*		check if cur error matches error_page accepted errors
-		if (path.empty() || std::string::npos == err_codes.find(cur_error_stream.str()))
+		cur_error_stream << this->err_code << " ";
+		cur_error_pos = directive.find(cur_error_stream.str());
+		if (std::string::npos == cur_error_pos)
+			return ("");
+		//*		take page for this error (take begin index inside string)
+		err_page_pos = directive.find("/", cur_error_pos);
+		if (std::string::npos == err_page_pos)
+			return ("");
+		//*		extract the page (path is at least "/")
+		directiveStream.str(directive.substr(err_page_pos));
+		std::getline(directiveStream, path, ' ');//! doesn't work with tabs (guarda TODO)
+
+		//*		return empty string in case of missing pathname or format errors
+		std::cout << "trying error page " << path << std::endl;
+		if ("/" == path || std::string::npos != path.find("\t"))
 			return ("");
 		return (path);
 	}

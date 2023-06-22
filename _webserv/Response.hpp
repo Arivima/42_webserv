@@ -42,7 +42,6 @@ public:
 	//*		main functionalities
 	void					send_line( void );
 	void					generateResponse( void );
-	const std::string&		getResponse( void );
 
 	//*		Canonical Form Shit
 							~Response();

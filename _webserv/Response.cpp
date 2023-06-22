@@ -38,6 +38,8 @@ Response::~Response() {
 	response.clear();
 }
 
+//TODO check that the request method is inside the list of accepted method
+//TODO inside the conf block (i.e.: "method" directive)
 void	Response::generateResponse( void ) {
 	try {
 		if ("GET" == this->req.at("method"))
@@ -110,11 +112,13 @@ void	Response::generateGETResponse( void )
 		std::string						filePath(root + reqPath);
 		std::ifstream					docstream(filePath.c_str(), std::ios::binary);
 
-		if (false == docstream.is_open())
+		if (false == docstream.is_open()) {
+			COUT_DEBUG_INSERTION("throwing page not found\n")
 			throw HttpError(404, matching_directives, take_location_root());
+		}
 		try {
 			page.insert(
-				response.begin(),
+				page.begin(),
 				std::istreambuf_iterator<char>(docstream),
 				std::istreambuf_iterator<char>());
 		}
@@ -166,19 +170,43 @@ std::string		Response::getHeaders(
 
 //*		helper functions
 
-//* 	prefix match implemented as of now
-//TODO	see if we need to implement other kinds of match too 
+//TODO	TEST 
 bool	Response::locationMatch(
 	const t_conf_block& location, const std::string& req_url
 	)
 {
-	size_t	path_begin;
+	size_t		path_begin;
+	size_t		query_arguments_start;
+	std::string	location_path;
+	std::string	reqUrl = req_url;
 
-	return (
-		0 == req_url.find("http://") &&
-		std::string::npos != (path_begin = req_url.substr(7).find("/")) &&
-		0 == req_url.substr(7 + path_begin).find(location.directives.at("location"))
-	);
+	//*		removing optional query string part
+	query_arguments_start = reqUrl.find("?");
+	if (std::string::npos != query_arguments_start)
+		reqUrl = reqUrl.substr(0, query_arguments_start);
+
+	if (0 == location.directives.at("location").find("="))
+	{
+		//*		exact match
+		location_path = location.directives.at("location").substr(1);
+		strip_trailing_and_leading_spaces(location_path);
+		return (
+			0 == reqUrl.find("http://") &&
+			std::string::npos != (path_begin = reqUrl.substr(7).find("/")) &&
+			0 == reqUrl.substr(7 + path_begin).compare(location_path)
+		);
+	}
+	else
+	{
+		//*		prefix match
+		location_path = location.directives.at("location");
+		strip_trailing_and_leading_spaces(location_path);
+		return (
+			0 == reqUrl.find("http://") &&
+			std::string::npos != (path_begin = reqUrl.substr(7).find("/")) &&
+			0 == reqUrl.substr(7 + path_begin).find(location_path)
+		);
+	}
 }
 
 /**

@@ -1,4 +1,16 @@
 
+	1	refactoring HttpError ----> usare vector of char
+	2.	gestire directory in GET e fare autoindex
+			(la funzione http_req_take_url_path() deve controllare che il path sia una directory;
+			 se lo è, deve tornare la getIndexPage().
+			 Se non è settata la directive index oppure le pagine indicate non esistono,
+			 getIndexPage() ritorna vuoto.
+			 Nel caso di reqPath vuota, generateGETResponse() deve gestire directive autoindex)
+	3.util : fare funzione che, presa una stringa, rimuove tutti i caratteri a partire da uno dato,
+		se esiste nella stringa.
+
+
+---------------------------------------------------------
 Parsing config
 ok		1.	gestire multi-valued directives (vedere quali sono)
 nok		2.	definire lista di directives (keywords) accettate e rifiutare ogni directive non riconosciuta
