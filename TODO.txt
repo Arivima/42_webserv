@@ -1,13 +1,64 @@
+togliere set buffer size del socket nel Worker (setsockopt)
 
-	1	refactoring HttpError ----> usare vector of char
+
+//TODO	mettere in un file a parte
+REGOLE file Configurazione
+
+1.	solo listen è mandatory
+2.	host può essere usata per specificare su quale interfaccia (IP) il server si mette in ascoloto.
+	-se non è specificata, il server si mette in ascolto su tutte le interfacce
+3.	server_name è opzionale soltanto quando c'è un solo server in ascolto su uno IP + porta.
+	-quando ce ne sono di più, c'è bisogno di distinguerli con i server_name
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+		Prioritario
 	2.	gestire directory in GET e fare autoindex
 			(la funzione http_req_take_url_path() deve controllare che il path sia una directory;
 			 se lo è, deve tornare la getIndexPage().
 			 Se non è settata la directive index oppure le pagine indicate non esistono,
 			 getIndexPage() ritorna vuoto.
 			 Nel caso di reqPath vuota, generateGETResponse() deve gestire directive autoindex)
+		DONE3.		GET caso non coperto : quando index non è settata devo dare una pagina di errore di default
+	3.	gestire quando più location block matchano una richiesta
+	
+
+	
+	4.	aggiungere directive "host"
+
+	4.	settare l'ip dei server
+							risolvere quando server_name non c'è
+	5.	gestire "host" in Config : due server sono lo stesso sse matcha porta E "ip"
+
+	6. HEAD, POST (prio), DELETE
+
+	7. CGI
+
+	8. Check against subject, correction sheet, tester 
+
+		Meno Prioritario
+	1	refactoring HttpError ----> usare vector of char
+		DONE 2.	forse, in HttpError chiudere la connessione dopo aver ritornato un errore
+	5.	gestire client body_size
 	3.util : fare funzione che, presa una stringa, rimuove tutti i caratteri a partire da uno dato,
 		se esiste nella stringa.
+
+Config file:
+	1. host directive
+	2. client body_size
+	3. routes
+		3.1 accepted methods
+		3.2 redirection
+		3.3 autoindex
+		3.4	directive for uploading files
+		3.4 CGI
+
+Overall at the end:
+- clean exceptions / error syntax to make it consistent throughout files
+- use errno ?
+- clean all comments
+- put all implementations in .cpp
+
 
 
 ---------------------------------------------------------
