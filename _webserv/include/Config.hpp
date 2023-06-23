@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/16 14:09:56 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/20 20:07:02 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/23 16:10:01 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,16 +21,15 @@
 # include <fcntl.h>
 # include <unistd.h>
 
-# include "include/webserv.hpp"
-// # include "config_types.hpp"
+# include "Webserv.hpp"
 
 # define DEFAULT_PATHNAME   "../_webserv/configuration_files/default.conf"
 
 class Config {
 private:
-	t_conf_block		conf;
-	std::string			raw_content;
-	std::stringstream	content_stream;
+	t_conf_block			conf;
+	std::string			 	raw_content;
+	std::stringstream	 	content_stream;
 public:
 	//*	main Constructors and destructors
 							Config (const char* config_file_path);
@@ -48,13 +47,9 @@ private:
 	void					parse( t_conf_block& current );
 	void					parse_sub_block( t_conf_block& current, std::string& cur_line );
 	void					parse_directive( t_conf_block& current, std::string& cur_line );
-	
-	//TODO	TODO	TODO	TODO	TODO	TODO	TODO	TODO	TODO	TODO	TODO	TODO
 	bool					isDirective(const std::string& directive);
 	void					add_directive(t_conf_block& current, std::string& key, std::string& value);
-	//*	------------------------------------------------------------------------------------------------
-	
-	void					parse_server_block( t_conf_block& current );
+ 	void					parse_server_block( t_conf_block& current );
 	void					parse_location_block( t_conf_block& current, std::string& cur_line );
 	void					parse_http_block( t_conf_block& current );
 };

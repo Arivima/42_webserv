@@ -1,89 +1,84 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   types.hpp                                          :+:      :+:    :+:   */
+/*   Exceptions.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/06/08 17:43:27 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/22 15:00:27 by earendil         ###   ########.fr       */
+/*   Created: 2023/05/30 12:37:05 by avilla-m          #+#    #+#             */
+/*   Updated: 2023/06/23 11:00:13 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef TYPES_HPP
-# define TYPES_HPP
+//! EXAMPLE
+// class BLABLAException: public std::exception
+// {
+// 	public:
+// 		virtual const char * what () const throw()
+// 		{
+// 			return ("BLABLA Error_message");
+// 		}
+// };
 
-#include "webserv.hpp"
+#ifndef EXCEPTIONS_HPP
+#define EXCEPTIONS_HPP
 
+# include <iostream>
 # include <string>
-# include <sstream>
-# include <iostream>		//cout
-# include <fstream>			//ifstream
-# include <cstdio>			//sprintf
-# include <sys/socket.h>
-# include <netinet/in.h>
-# include <vector>			//config file data type sub-block and error_page in HttpError exception.
-# include <map>
+# include <stdexcept>
 
-//*			Parsing
-typedef enum e_config_block_level {
-	e_root_block = 0,
-	e_http_block,
-	e_server_block,
-	e_virtual_server_block,
-	e_location_block,
-}	t_config_block_level;
+class SystemCallException: public std::exception
+{
+    private:
+        SystemCallException();
+    public:
+        const std::string _sysCall;
+        SystemCallException(const std::string & s) : _sysCall(s){}
+        virtual const char * what () const throw(){return (("system call " + _sysCall + " failed.").c_str());}
+};
 
-typedef struct s_conf_block {
-    t_config_block_level				level;
-    std::string							block_name;
-	std::map<std::string, std::string>	directives;
-    std::vector<struct s_conf_block>	sub_blocks;
+class ConfigFileException: public std::exception
+{
+    private:
+        ConfigFileException();
+    public:
+        const std::string _message;
+        ConfigFileException(const std::string & s) : _message(s){}
+        virtual const char * what () const throw(){return (("Configuration file error: " + _message + ".").c_str());}
+};
 
-	s_conf_block(
-		t_config_block_level lvl = e_root_block,
-		std::map<std::string, std::string> dir = std::map<std::string, std::string>()
-	);
-}	t_conf_block;
+class TaskFulfilled : public std::exception {
+public:
+	virtual const char*	what( void ) const throw() {
+		return ("TaskFulfilled : switch connection status");
+	}
+};
 
-class ConnectionSocket;
+class SockEof : public std::exception {
+	public:
+		virtual const char*	what( void ) const throw() {
+			return ("Sockeof : client has left");
+		}
+};
 
-typedef std::vector<ConnectionSocket* >		VectorCli;
+class TimerExpired : public std::exception {
+	public:
+		virtual const char*	what( void ) const throw() {
+			return ("TimerExpired : client starved");
+		}
+};
 
-typedef struct s_server {
-	const t_conf_block&			conf_server_block;
-	int							server_fd;
-	int							server_port;
-	struct sockaddr_in			server_addr;
-	socklen_t					server_addr_len;
-
-	VectorCli					requests;
-	
-	s_server(const t_conf_block& server_block) : conf_server_block(server_block) {}
-}	t_server;
-
-typedef std::vector<t_server>				VectorServ;
-
-
-//*		type utilities
-t_config_block_level	next_conf_block_level(t_config_block_level lvl);
-int						block_get_level(std::string block_name);
-std::string 			block_get_name(t_config_block_level level);
-void					print_block(t_conf_block& block, size_t level);
-void					print_directives(
-	std::map<std::string, std::string>& directives,
-	size_t level
-	);
-std::ostream&	operator<<(
-	std::ostream& stream, const t_config_block_level& block
-	);
-//*		////////////////////////////////////////////////////
-
-
-//*			Execution
+//*		HttpError
 //*	see https://developer.mozilla.org/en-US/docs/Web/HTTP/Status#client_error_responses
+# include <iostream>
+# include <vector>
+# include <map>
+# include <string>
 
-//*		Exceptions
+# include <sstream>     // stringstream
+# include <fstream>     // ifstream
+# include <istream>     // std::getline
+# include <cstdio>      //sprintf
 
 class	HttpError : public std::exception {
 private:
@@ -95,14 +90,14 @@ private:
 
 public:
 	HttpError(
-		unsigned short err_code,
+		unsigned short      err_code,
 		const t_conf_block& matching_directives,
 		const std::string&	location_root
 	)
 	:	err_page(), err_code(err_code), msg(takeMsg(err_code)),
 		matching_directives(matching_directives), location_root(location_root)
 	{
-		std::string		page_str = this->buildErrorPage();
+		std::string         page_str = this->buildErrorPage();
 
 		err_page.insert(
 			err_page.begin(),
@@ -235,27 +230,6 @@ private:
 				return ("http unknown error");
 		}
 	}
-};
-
-class TaskFulfilled : public std::exception {
-public:
-	virtual const char*	what( void ) const throw() {
-		return ("TaskFulfilled : switch connection status");
-	}
-};
-
-class SockEof : public std::exception {
-	public:
-		virtual const char*	what( void ) const throw() {
-			return ("Sockeof : client has left");
-		}
-};
-
-class TimerExpired : public std::exception {
-	public:
-		virtual const char*	what( void ) const throw() {
-			return ("TimerExpired : client starved");
-		}
 };
 
 #endif

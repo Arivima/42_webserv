@@ -32,10 +32,10 @@
 #include <unistd.h>         // close
 #include <stdlib.h>         // exit, EXIT_FAILURE
 
-#include "include/webserv.hpp"
+#include "Webserv.hpp"
 #include "ConnectionSocket.hpp"
 #include "EpollData.hpp"
-#include "Exceptions.hpp"
+// #include "Exceptions.hpp"
 
 class Worker{
 
@@ -68,7 +68,9 @@ private:
 	int		_create_ConnectionSocket(t_server& server);	
 	void	_epoll_register_ConnectionSocket(int cli_socket);
 	void	_set_socket_as_reusable();
-	void	_init_server_addr();
+	void	_init_server_addr(
+		const std::map<std::string, std::string>& server_directives
+	);
 	void	_print_server_ip_info();
 	void	_bind_server_socket_to_ip();
 	void	_make_server_listening();

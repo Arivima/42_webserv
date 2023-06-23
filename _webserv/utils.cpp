@@ -6,11 +6,11 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/18 10:41:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/22 10:23:25 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/23 21:46:01 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "include/webserv.hpp"
+#include "include/Webserv.hpp"
 #include <algorithm>
 #include <cstring>
 
@@ -95,6 +95,78 @@ std::string 				block_get_name(t_config_block_level level) {
 	return ("");
 }
 
+bool	mandatory_server_directives_present(const t_conf_block& current)
+{
+	static const char*							mandatory[] = {
+		"listen", NULL//"host", "server_name", NULL
+	};
+	const std::map<std::string, std::string>&	directives
+		= current.directives;
+	size_t										i;
+
+	i = 0;
+	while (mandatory[i])
+	{
+		if (directives.end() == directives.find(mandatory[i]))
+			return (false);
+		i++;
+	}
+	return (true);
+}
+
+bool	same_server(
+	const t_conf_block& server,
+	const t_conf_block& virtual_serv2
+)
+{
+	const std::map<std::string, std::string>&	server_dirs
+		= server.sub_blocks[0].directives;
+	const std::map<std::string, std::string>&	dirs2
+		= virtual_serv2.directives;
+		
+	return (
+		server_dirs.at("listen") == dirs2.at("listen")
+		&&
+		(
+			//*	when host not set, server is listening on all
+			//*	available local interfaces (IPs of the machine)
+			server_dirs.end() == server_dirs.find("host") ||
+			dirs2.end() == dirs2.find("host") ||
+			server_dirs.at("host") == dirs2.at("host")
+
+		)
+	);
+}
+
+/**
+ * @brief This function returns true iff there is a conflict between two virtual servers from the configuration.
+ * Virtual servers are servers that share the same physical layer (ip and port).
+ * The way to distinguish them is the use of server_names which define their virtual host.
+ * There cannot be a virtual server that does not specify a server_name;
+ * the server_name directive is only optional when there's only one server listening on an ip + port.
+ * @param virtual_serv1 
+ * @param virtual_serv2 
+ * @return true 
+ * @return false 
+ */
+bool	same_host(
+	const t_conf_block& virtual_serv1,
+	const t_conf_block& virtual_serv2
+)
+{
+	const std::map<std::string, std::string>&	dirs1
+		= virtual_serv1.directives;
+	const std::map<std::string, std::string>&	dirs2
+		= virtual_serv2.directives;
+		
+	return (
+		dirs1.end() == dirs1.find("server_name") ||
+		dirs2.end() == dirs2.find("server_name") ||
+		str_compare_words(
+			dirs1.at("server_name"), dirs2.at("server_name")
+		)
+	);
+}
 
 //*		GENERAL PURPOSE UTILITIES
 std::string					strip_spaces(std::string& str) {
@@ -191,4 +263,64 @@ bool	str_compare_words(const std::string& str_haystack, const std::string& str_n
 	}
 	COUT_DEBUG_INSERTION(MAGENTA"str_compare_words RETURN : negative match" RESET << std::endl);
 	return (false);
+}
+
+#include <sys/stat.h>
+// alternative with readdir type
+bool			isDirectory(const std::string path) {
+    struct stat fileStat;
+
+    if (stat(path.c_str(), &fileStat) == 0) {
+        return (S_ISDIR(fileStat.st_mode));
+    }
+	else
+		throw SystemCallException("stat()");
+    return (false);
+}
+
+#include <iostream>
+#include <string>
+#include <dirent.h>
+#include <cerrno>
+
+// readdir()
+//		  RETURN VALUE 
+//        On success, readdir() returns a pointer to a dirent structure.
+//        If the end of the directory stream is reached, NULL is returned
+//        and errno is not changed.  If an error occurs, NULL is returned
+//        and errno is set to indicate the error.  To distinguish end of
+//        stream from an error, set errno to zero before calling readdir()
+//        and then check the value of errno if NULL is returned.
+
+std::string getDirectoryContentList(const std::string directoryPath)
+{
+    std::string contentList;
+    DIR* dir = opendir(directoryPath.c_str());
+    if (dir){
+        dirent* entry;
+		errno = 0;
+        while ((entry = readdir(dir)) != NULL){
+			
+			if (entry == NULL && errno != 0)								// errno, see above
+				throw SystemCallException("readdir() : ");
+
+			std::string fileType;
+			if (entry->d_type == DT_DIR)
+				fileType = " | Directory ";
+			else if (entry->d_type == DT_REG)
+				fileType = " | Regular_file ";
+			else
+				fileType = " | Unkown_type ";
+
+            std::string fileName = entry->d_name;
+            if (fileName != "." && fileName != ".."){
+                contentList += fileName + fileType + "\n";
+            }
+        }
+        if (closedir(dir) != 0)
+			throw SystemCallException("closedir()");
+    }
+    else
+		throw SystemCallException("opendir()");
+    return contentList;
 }

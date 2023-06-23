@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Response.hpp"
+#include "include/Response.hpp"
 #include <sys/socket.h>	//send
 #include <fstream>		//open requested files
 #include <sstream>		//stringstream
@@ -75,20 +75,28 @@ void	Response::generateResponse( void ) {
 //TODO
 void	Response::send_line( void )
 {
-	int	bytes_sent;
+	const struct epoll_event*	eevent = edata.getEpollEvent(this->sock_fd);
+	int							bytes_sent;
 
 	// COUT_DEBUG_INSERTION("send_line()\n")
 	if (response.empty())
 		throw TaskFulfilled();
 	else {
-		bytes_sent = send(this->sock_fd, response.data(), response.size(), 0);
-		if (bytes_sent < 0)
-			throw HttpError(500, matching_directives, take_location_root());
-		else
-		if (0 == bytes_sent)
-			throw TaskFulfilled();
-		else
-			response.erase(response.begin(), response.begin() + bytes_sent);
+		if (NULL != eevent && eevent->events & EPOLLOUT)
+		{
+			bytes_sent = send(
+				this->sock_fd, response.data(), response.size(), 0
+			);
+			if (bytes_sent < 0)
+				throw HttpError(500, matching_directives, take_location_root());
+			else
+			if (0 == bytes_sent)
+				throw TaskFulfilled();
+			else
+				response.erase(
+					response.begin(), response.begin() + bytes_sent
+				);
+		}
 	}
 }
 
@@ -104,8 +112,16 @@ void	Response::generateGETResponse( void )
 
 	//TODO autoindex (CHECK that path refers to directory and not a regular file)
 	if (reqPath.empty()) {
-		//TODO GET_autoindex(root);
-		throw (std::runtime_error("not yet implemented"));
+		if (
+			(this->matching_directives.directives.find("autoindex") != this->matching_directives.directives.end())
+			&& (this->matching_directives.directives.at("autoindex") == "on" ))
+		{
+			throw (std::runtime_error("not yet implemented"));
+			// finire gestire ls
+			// std::string directory_list = getDirectoryContentList(root + reqPath);
+		}
+		else
+			throw HttpError(404, this->matching_directives, root);
 	}
 	else {
 		COUT_DEBUG_INSERTION("serving page : " << root + reqPath << std::endl)
@@ -262,8 +278,8 @@ const t_conf_block&	Response::takeMatchingServer(
 		virtual_server ++
 	)
 		if (
-			(*virtual_server).\
-				directives.at("server_name") == req.at("Host"))
+			(*virtual_server).directives.end() != (*virtual_server).directives.find("server_name") &&
+			(*virtual_server).directives.at("server_name") == req.at("Host"))
 			break ;
 		
 	//*		if no Host is matched, choose the default server
@@ -275,6 +291,7 @@ const t_conf_block&	Response::takeMatchingServer(
 }
 
 //*		Private Member Helper functions
+
 std::string		Response::http_req_take_url_path(
 	const std::string& url, const std::string& root
 	)
@@ -284,7 +301,7 @@ std::string		Response::http_req_take_url_path(
 	size_t			path_end;
 
 	if (
-		std::string::npos ==  (path_start = url.find("/"))
+		std::string::npos == (path_start = url.find("/"))
 	)
 	{
 		COUT_DEBUG_INSERTION("throwing url : " << url << std::endl)
@@ -297,9 +314,12 @@ std::string		Response::http_req_take_url_path(
 		path_end = url.length();
 	
 	path = url.substr(path_start, path_end - path_start);
-	if ("/" == path) {
+
+	if ("/" == path){// true == isDirectory( root + path ) ) {
 		path = getIndexPage(root);
 	}
+	// else path refers to a file and is already correct
+
 	path_remove_leading_slash(path);
 	return (path);//*	may be empty (a.k.a. "")
 }

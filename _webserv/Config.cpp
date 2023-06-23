@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Config.hpp"
+#include "include/Config.hpp"
 #include <algorithm>	//remove_if
 #include <cstring>		//strncmp
 #include <set>			//isDirective()
@@ -259,12 +259,12 @@ void	Config::add_directive(t_conf_block& current, std::string& key, std::string&
 
 bool	Config::isDirective(const std::string& directive)
 {
-	const char* strings[] = {
-		"listen", "location", "server_name", "index", "body_size", 
+	static const char* strings[] = {
+		"listen", "location", "server_name", "host", "index", "body_size", 
 		"error_page", "method", "root", "return", "autoindex", "exec_cgi", "extension_cgi"
 	};
 
-	std::set<std::string> dictionnary_directives(strings, strings + sizeof(strings) / sizeof(strings[0]));
+	static std::set<std::string> dictionnary_directives(strings, strings + sizeof(strings) / sizeof(strings[0]));
 
 	return (dictionnary_directives.count(directive));
 }
@@ -317,22 +317,22 @@ void	Config::parse_server_block( t_conf_block& current ) {
 	);
 
 	parse(new_virtual_serv);
-	if (new_virtual_serv.directives.end() == new_virtual_serv.directives.find("listen"))
-		throw (std::invalid_argument("Config::parse_server_block() : server block should have \"listen\" directive"));
+	if (false == mandatory_server_directives_present(new_virtual_serv))
+		throw (std::invalid_argument(
+			"Config::parse_server_block() : server block should have \"listen\" directive")
+		);
 	for (server = http.sub_blocks.begin(); server != http.sub_blocks.end(); server ++)
-		if (
-			(*server).sub_blocks[0].directives.at("listen") == new_virtual_serv.directives.at("listen")
-		)
+		if (same_server(*server, new_virtual_serv))
 		{
-			for (virtual_serv = (*server).sub_blocks.begin(); virtual_serv != (*server).sub_blocks.end(); virtual_serv++)
-				if (str_compare_words(
-						(*virtual_serv).directives.at("server_name"),
-						new_virtual_serv.directives.at("server_name")
-					)
-				)
-				{
-					throw (std::invalid_argument("Config::parse_server_block() : found two servers with common domain"));
-				}
+			for (
+				virtual_serv = (*server).sub_blocks.begin();
+				virtual_serv != (*server).sub_blocks.end();
+				virtual_serv++
+			)
+				if (same_host(*virtual_serv, new_virtual_serv))
+					throw (std::invalid_argument("Config::parse_server_block() : \
+							found two servers with conflicting server_names")
+					);
 			COUT_DEBUG_INSERTION(
 				GREEN "pushing a new virtual server block into existing server sub-blocks" RESET << std::endl
 			);
@@ -354,6 +354,7 @@ void	Config::parse_server_block( t_conf_block& current ) {
 		);
 		http.sub_blocks.push_back(server);
 	}
+	COUT_DEBUG_INSERTION(MAGENTA "parse_server_block() ----END" RESET << std::endl);
 }
 
 

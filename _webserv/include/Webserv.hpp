@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   webserv.hpp                                        :+:      :+:    :+:   */
+/*   Webserv.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/05 15:27:54 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/22 10:24:01 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/23 21:14:38 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,8 @@
 # define WEBSERV_HPP
 
 # include "Colors.hpp"
-# include "types.hpp"
+# include "Types.hpp"
+# include "Exceptions.hpp"
 // # include "../config_types.hpp"
 
 // # ifndef DEBUG
@@ -78,5 +79,9 @@ std::vector<std::string>	split_str_to_vector(
 		std::string s, const std::string& delimiter
 	);
 
+std::string		getDirectoryContentList(
+	const std::string directoryPath
+	);
+bool 			isDirectory(const std::string path);
 
 #endif

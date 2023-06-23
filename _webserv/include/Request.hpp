@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 15:41:58 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/14 20:09:15 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/23 11:31:03 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 # include <string>
 # include <sstream>
 
-# include "include/webserv.hpp"
+# include "Webserv.hpp"
 # include "EpollData.hpp"
 
 /**

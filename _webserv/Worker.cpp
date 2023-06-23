@@ -6,11 +6,11 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/06 21:15:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/19 13:58:34 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/23 20:24:00 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Worker.hpp"
+#include "include/Worker.hpp"
 
 //*		main constructors and destructor
 
@@ -116,12 +116,17 @@ void	Worker::_handle_new_connectionS() {
 			cli_socket = _create_ConnectionSocket((*serv_it));
 			_epoll_register_ConnectionSocket(cli_socket);
 		    //*     modifying rcv buffer
-		    // int buffer_size = 8001;
-		    // if (-1 == setsockopt(cli_socket, SOL_SOCKET, SO_RCVBUF, &buffer_size, sizeof(buffer_size)))
-		    // {
-		    //     ft_close(server_fd);
-		    //     ftError("setsockopt() failed : setting rcv buffer size");
-		    // }
+		    int buffer_size = 512000;
+		    int snd_buffer_size = 512000;
+		    if (
+				-1 == setsockopt(cli_socket, SOL_SOCKET, SO_RCVBUF, &buffer_size, sizeof(buffer_size)) ||
+				-1 == setsockopt(cli_socket, SOL_SOCKET, SO_SNDBUF, &snd_buffer_size, sizeof(snd_buffer_size))
+			)
+		    {
+				return ;
+		        // close(server_fd);
+		        // ftError("setsockopt() failed : setting rcv buffer size");
+		    }
 						
 			//*     adding to list of clients
 			(*serv_it).requests.push_back(new ConnectionSocket(cli_socket, *serv_it, edata));
@@ -216,7 +221,7 @@ void	Worker::_server_init(const t_conf_block& conf_server_block) {
 	COUT_DEBUG_INSERTION("adding new Connection Socket with port " << this->servers.back().server_port << std::endl)
 	_create_server_socket();
 	_set_socket_as_reusable();
-	_init_server_addr();
+	_init_server_addr(server_directives);
 	_print_server_ip_info();
 	_bind_server_socket_to_ip();
 	// exit(0);
@@ -239,12 +244,35 @@ void	Worker::_set_socket_as_reusable() {
 	}
 }
 
-void	Worker::_init_server_addr() {
+void	Worker::_init_server_addr(
+	const std::map<std::string, std::string>& server_directives
+	)
+{
+	std::string									host = "ANY";
+	in_addr_t									ip;
+
 	this->servers.back().server_addr_len = sizeof(this->servers.back().server_addr);
 	std::memset(&this->servers.back().server_addr, 0, this->servers.back().server_addr_len);
 	this->servers.back().server_addr.sin_family = AF_INET;
 	this->servers.back().server_addr.sin_port = htons(this->servers.back().server_port);
-	this->servers.back().server_addr.sin_addr.s_addr = INADDR_ANY; // bind to any local available address (port)
+	if (server_directives.end() == server_directives.find("host"))
+		ip = INADDR_ANY;
+	else {
+		if ("localhost" == server_directives.at("host"))
+			host = "127.0.0.1";
+		else
+			host = server_directives.at("host");
+		ip = inet_addr(host.c_str());
+	}
+	COUT_DEBUG_INSERTION(\
+		GREEN"new server with ip ===>\tas string : |" << host \
+		<< "|; as number : " << ip << RESET << std::endl\
+	)
+	if ((in_addr_t)(-1) == ip)
+		throw (
+			std::runtime_error(
+				"Worker::_init_server_addr() : wrong IP in \"host\" directive"));
+	this->servers.back().server_addr.sin_addr.s_addr = ip;
 }
 
 void	Worker::_print_server_ip_info() {
