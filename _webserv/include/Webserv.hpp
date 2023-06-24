@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/05 15:27:54 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/23 21:14:38 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/24 18:42:34 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,7 +62,8 @@ struct			IsSpacePredicate {
 		return std::isspace(static_cast<unsigned char>(c));
 	}
 };
-std::string		strip_spaces(std::string& str);
+
+
 void			strip_trailing_and_leading_spaces(std::string& str);
 /**
  * @brief this function takes two white-spaced words and returns true iff they have words in common
@@ -72,16 +73,24 @@ void			strip_trailing_and_leading_spaces(std::string& str);
  * @return true 
  * @return false 
  */
-bool						str_compare_words(
-	const std::string& s1, const std::string& s2
-	);
-std::vector<std::string>	split_str_to_vector(
-		std::string s, const std::string& delimiter
-	);
 
-std::string		getDirectoryContentList(
-	const std::string directoryPath
-	);
-bool 			isDirectory(const std::string path);
+// BLOCK HPP
+t_config_block_level		next_conf_block_level(t_config_block_level lvl);
+std::ostream&				operator<<(std::ostream& stream, const t_config_block_level& block);
+void						print_block(t_conf_block& block, size_t level);
+void						print_directives(std::map<std::string, std::string>& directives, size_t level);
+int							block_get_level(std::string block_name);
+std::string 				block_get_name(t_config_block_level level);
+bool						mandatory_server_directives_present(const t_conf_block& current);
+bool						same_server( const t_conf_block& server, const t_conf_block& virtual_serv2);
+bool						same_host( const t_conf_block& virtual_serv1, const t_conf_block& virtual_serv2);
+// UTILS HPP
+std::string					strip_spaces(std::string& str);
+void						strip_trailing_and_leading_spaces(std::string& str);
+std::vector<std::string> 	split_str_to_vector(std::string s, const std::string& delimiter);
+bool						str_compare_words(const std::string& str_haystack, const std::string& str_needle);
+void						path_remove_leading_slash(std::string& pathname);
+bool						isDirectory(const std::string root, std::string path, const t_conf_block& matching_directives);
+std::string 				getDirectoryContentList(const std::string directoryPath);
 
 #endif

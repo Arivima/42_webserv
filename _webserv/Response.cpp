@@ -17,7 +17,6 @@
 #include <cstring>		//memeset
 
 //*		non-member helper functions
-void	path_remove_leading_slash(std::string& pathname);
 //*		/////////////////////////////////////////////////
 
 Response::Response(
@@ -116,9 +115,9 @@ void	Response::generateGETResponse( void )
 			(this->matching_directives.directives.find("autoindex") != this->matching_directives.directives.end())
 			&& (this->matching_directives.directives.at("autoindex") == "on" ))
 		{
+			// std::string directory_list = getDirectoryContentList(root + reqPath);
 			throw (std::runtime_error("not yet implemented"));
 			// finire gestire ls
-			// std::string directory_list = getDirectoryContentList(root + reqPath);
 		}
 		else
 			throw HttpError(404, this->matching_directives, root);
@@ -315,7 +314,7 @@ std::string		Response::http_req_take_url_path(
 	
 	path = url.substr(path_start, path_end - path_start);
 
-	if ("/" == path){// true == isDirectory( root + path ) ) {
+	if ( true == isDirectory( root, path, this->matching_directives) ) {
 		path = getIndexPage(root);
 	}
 	// else path refers to a file and is already correct
@@ -370,8 +369,3 @@ std::string		Response::take_location_root( void )
 
 
 //*		non-member helper functions
-void	path_remove_leading_slash(std::string& pathname)
-{
-	if ('/' == pathname[0])
-		pathname = pathname.substr(1);
-}

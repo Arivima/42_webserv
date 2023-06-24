@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/18 10:41:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/23 21:46:01 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/24 19:03:55 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <cstring>
 
+// BLOCK HPP
 //*		TYPES CONSTRUCTORS
 t_conf_block::	s_conf_block(
 		t_config_block_level lvl,
@@ -265,16 +266,31 @@ bool	str_compare_words(const std::string& str_haystack, const std::string& str_n
 	return (false);
 }
 
+void	path_remove_leading_slash(std::string& pathname)
+{
+	if ('/' == pathname[0])
+		pathname = pathname.substr(1);
+}
+
+#include <cerrno>
 #include <sys/stat.h>
-// alternative with readdir type
-bool			isDirectory(const std::string path) {
+bool			isDirectory(const std::string root, std::string path, const t_conf_block& matching_directives) {
     struct stat fileStat;
 
-    if (stat(path.c_str(), &fileStat) == 0) {
-        return (S_ISDIR(fileStat.st_mode));
+	path_remove_leading_slash(path);
+	std::string dir_path = root + path;
+
+    if (stat(dir_path.c_str(), &fileStat) == 0) {
+		bool ret = S_ISDIR(fileStat.st_mode);
+		COUT_DEBUG_INSERTION(MAGENTA << "isDirectory("<< dir_path <<"): " << (ret? "is a directory" : "is not a directory") << RESET << std::endl;);
+		return ret;
+        // return (S_ISDIR(fileStat.st_mode));
     }
-	else
-		throw SystemCallException("stat()");
+	else{
+		//TODO check errno for returning different HTTP error codes
+		COUT_DEBUG_INSERTION(MAGENTA << "! isDirectory("<< dir_path <<"):" YELLOW " errno : " << errno << ":" << strerror(errno) << RESET << std::endl;);
+		throw HttpError(404, matching_directives, root);
+	}
     return (false);
 }
 
@@ -294,7 +310,8 @@ bool			isDirectory(const std::string path) {
 
 std::string getDirectoryContentList(const std::string directoryPath)
 {
-    std::string contentList;
+	COUT_DEBUG_INSERTION(MAGENTA << "getDirectoryContentList("<< directoryPath <<"): " << RESET << std::endl;);
+	std::string contentList;
     DIR* dir = opendir(directoryPath.c_str());
     if (dir){
         dirent* entry;
@@ -322,5 +339,6 @@ std::string getDirectoryContentList(const std::string directoryPath)
     }
     else
 		throw SystemCallException("opendir()");
+	COUT_DEBUG_INSERTION(YELLOW << contentList << RESET << std::endl;);
     return contentList;
 }
