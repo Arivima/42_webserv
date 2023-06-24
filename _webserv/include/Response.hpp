@@ -68,7 +68,7 @@ private:
 	std::string			http_req_take_url_path(
 		const std::string& url, const std::string& root
 		);
-	std::string			getIndexPage( const std::string& root );
+	std::string			getIndexPage( const std::string& root, std::string path );
 };
 
 

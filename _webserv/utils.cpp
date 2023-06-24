@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/18 10:41:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/24 19:03:55 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/24 20:16:55 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -311,6 +311,7 @@ bool			isDirectory(const std::string root, std::string path, const t_conf_block&
 std::string getDirectoryContentList(const std::string directoryPath)
 {
 	COUT_DEBUG_INSERTION(MAGENTA << "getDirectoryContentList("<< directoryPath <<"): " << RESET << std::endl;);
+	std::cout << MAGENTA << "getDirectoryContentList : path ->"<< directoryPath << RESET << std::endl;
 	std::string contentList;
     DIR* dir = opendir(directoryPath.c_str());
     if (dir){
@@ -340,5 +341,29 @@ std::string getDirectoryContentList(const std::string directoryPath)
     else
 		throw SystemCallException("opendir()");
 	COUT_DEBUG_INSERTION(YELLOW << contentList << RESET << std::endl;);
+	std::cout << MAGENTA << contentList << RESET << std::endl;
     return contentList;
+}
+
+//TODO	mettere pathname directory nel titolo
+std::string	createHtmlPage(const std::string& body)
+{
+	std::stringstream	pageStream;
+
+	pageStream
+	<< "<!DOCTYPE html>\
+<html lang=\"en\">\
+  <head>\
+    <meta charset=\"UTF-8\" />\
+    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\
+    <title>Directory Listing</title>\
+  </head>\
+  <body>\
+    <h1>Directory Listing</h1>"
+	<< body
+	<< "</body>\
+</html>\
+";
+
+	return (pageStream.str());
 }

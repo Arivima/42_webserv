@@ -99,6 +99,7 @@ void	Response::send_line( void )
 	}
 }
 
+// refactor to clean + test and make sure all cases are covered
 void	Response::generateGETResponse( void )
 {
 	const std::string				root
@@ -108,15 +109,28 @@ void	Response::generateGETResponse( void )
 	);;
 	std::string						headers;
 	std::vector<char>				page;
+	std::string						filePath = "";
 
 	//TODO autoindex (CHECK that path refers to directory and not a regular file)
+	std::cout << "Path of the request : " << (reqPath.empty()? "EMPTY" : reqPath ) << std::endl;
 	if (reqPath.empty()) {
 		if (
 			(this->matching_directives.directives.find("autoindex") != this->matching_directives.directives.end())
 			&& (this->matching_directives.directives.at("autoindex") == "on" ))
 		{
-			// std::string directory_list = getDirectoryContentList(root + reqPath);
-			throw (std::runtime_error("not yet implemented"));
+			std::string	path = req.at("url");
+			path_remove_leading_slash(path);
+			COUT_DEBUG_INSERTION("showing dir listing for " << root + path << std::endl)
+			std::string dir_listing_page = createHtmlPage(
+				getDirectoryContentList(root + path) //wip
+			);
+			page.insert(
+				page.begin(),
+				dir_listing_page.begin(),
+				dir_listing_page.end()
+			);
+			headers = getHeaders(200, "OK", filePath, page.size());
+			// throw (std::runtime_error("not yet implemented"));
 			// finire gestire ls
 		}
 		else
@@ -124,7 +138,7 @@ void	Response::generateGETResponse( void )
 	}
 	else {
 		COUT_DEBUG_INSERTION("serving page : " << root + reqPath << std::endl)
-		std::string						filePath(root + reqPath);
+										filePath = root + reqPath;
 		std::ifstream					docstream(filePath.c_str(), std::ios::binary);
 
 		if (false == docstream.is_open()) {
@@ -141,9 +155,9 @@ void	Response::generateGETResponse( void )
 			throw HttpError(500, matching_directives, take_location_root());
 		}
 		headers = getHeaders(200, "OK", filePath, page.size());
-		response.insert(response.begin(), headers.begin(), headers.end());
-		response.insert(response.end(), page.begin(), page.end());
 	}
+	response.insert(response.begin(), headers.begin(), headers.end());
+	response.insert(response.end(), page.begin(), page.end());
 }
 
 //*	considerare se usare lstat per leggere nei primi byte del file il tipo
@@ -158,9 +172,15 @@ std::string		Response::getHeaders(
 	std::string			fileType = "";
 	std::string			fileType_prefix;
 
-	dot_pos = filepath.rfind('.');
-	if (std::string::npos != dot_pos)
-		fileType = filepath.substr(dot_pos);
+	if ("" == filepath)//* not specified : means we are creating an html page on the fly
+		fileType = ".html";
+	else {
+		dot_pos = filepath.rfind('.');
+		if (std::string::npos != dot_pos)//* the html page is an actual file, we take the position of the file extension
+			fileType = filepath.substr(dot_pos);
+		//*else //the html page is an actual file, but does not name a file extension
+	}
+
 	if (".html" == fileType || ".css" == fileType)
 		fileType_prefix = "text/";
 	else if (".png" == fileType || ".jpg" == fileType || ".jpeg" == fileType || ".gif" == fileType)
@@ -315,7 +335,7 @@ std::string		Response::http_req_take_url_path(
 	path = url.substr(path_start, path_end - path_start);
 
 	if ( true == isDirectory( root, path, this->matching_directives) ) {
-		path = getIndexPage(root);
+		path = getIndexPage(root, path);
 	}
 	// else path refers to a file and is already correct
 
@@ -323,7 +343,7 @@ std::string		Response::http_req_take_url_path(
 	return (path);//*	may be empty (a.k.a. "")
 }
 
-std::string		Response::getIndexPage( const std::string& root )
+std::string		Response::getIndexPage( const std::string& root, std::string path )
 {
 	std::string									indexes;
 	std::stringstream							indexesStream;
@@ -331,6 +351,8 @@ std::string		Response::getIndexPage( const std::string& root )
 	const std::map<std::string, std::string>&	directives
 		= this->matching_directives.directives;
 	
+	if ('/' != path[path.length() - 1])
+		path += "/";
 	if (directives.end() != directives.find("index"))
 	{
 		indexes = directives.at("index");
@@ -339,10 +361,12 @@ std::string		Response::getIndexPage( const std::string& root )
 		while (indexesStream.good()) {
 			getline(indexesStream, cur_index, ' ');
 			path_remove_leading_slash(cur_index);
-			COUT_DEBUG_INSERTION("trying index file : " << root + cur_index << std::endl)
-			std::ifstream	file(root + cur_index);
+			COUT_DEBUG_INSERTION("trying index file : "\
+				 << root + path + cur_index \
+				 << std::endl)
+			std::ifstream	file(root + path + cur_index);
 			if (file.is_open())
-				return (cur_index);
+				return (path + cur_index);
 		}
 		return ("");
 	}

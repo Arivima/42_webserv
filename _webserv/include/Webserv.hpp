@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/05 15:27:54 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/24 18:42:34 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/24 19:41:54 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -91,6 +91,7 @@ std::vector<std::string> 	split_str_to_vector(std::string s, const std::string& 
 bool						str_compare_words(const std::string& str_haystack, const std::string& str_needle);
 void						path_remove_leading_slash(std::string& pathname);
 bool						isDirectory(const std::string root, std::string path, const t_conf_block& matching_directives);
-std::string 				getDirectoryContentList(const std::string directoryPath);
+std::string					getDirectoryContentList(const std::string directoryPath);
+std::string					createHtmlPage(const std::string& body);
 
 #endif
