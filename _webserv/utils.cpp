@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/18 10:41:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/24 20:16:55 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/25 16:37:48 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -320,7 +320,7 @@ std::string getDirectoryContentList(const std::string directoryPath)
         while ((entry = readdir(dir)) != NULL){
 			
 			if (entry == NULL && errno != 0)								// errno, see above
-				throw SystemCallException("readdir() : ");
+				throw SystemCallException("readdir() : ");//*HttpError 500 server internal error
 
 			std::string fileType;
 			if (entry->d_type == DT_DIR)
@@ -336,10 +336,10 @@ std::string getDirectoryContentList(const std::string directoryPath)
             }
         }
         if (closedir(dir) != 0)
-			throw SystemCallException("closedir()");
+			throw SystemCallException("closedir()");//*HttpError 500 server internal error
     }
     else
-		throw SystemCallException("opendir()");
+		throw SystemCallException("opendir()");//*HttpError 500 server internal error
 	COUT_DEBUG_INSERTION(YELLOW << contentList << RESET << std::endl;);
 	std::cout << MAGENTA << contentList << RESET << std::endl;
     return contentList;

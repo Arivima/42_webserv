@@ -1,47 +1,36 @@
 togliere set buffer size del socket nel Worker (setsockopt)
 
 
-//TODO	mettere in un file a parte
-REGOLE file Configurazione
+///////////////////////////////////////////////////////////////////////////////////////////////////////
 
-1.	solo listen è mandatory
-2.	host può essere usata per specificare su quale interfaccia (IP) il server si mette in ascoloto.
-	-se non è specificata, il server si mette in ascolto su tutte le interfacce
-3.	server_name è opzionale soltanto quando c'è un solo server in ascolto su uno IP + porta.
-	-quando ce ne sono di più, c'è bisogno di distinguerli con i server_name
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-		Prioritario
-	2.	gestire directory in GET e fare autoindex
-			(la funzione http_req_take_url_path() deve controllare che il path sia una directory;
-			 se lo è, deve tornare la getIndexPage().
-			 Se non è settata la directive index oppure le pagine indicate non esistono,
-			 getIndexPage() ritorna vuoto.
-			 Nel caso di reqPath vuota, generateGETResponse() deve gestire directive autoindex)
-		DONE3.		GET caso non coperto : quando index non è settata devo dare una pagina di errore di default
-	3.	gestire quando più location block matchano una richiesta
-	
-
-	
-	4.	aggiungere directive "host"
-
-	4.	settare l'ip dei server
-							risolvere quando server_name non c'è
-	5.	gestire "host" in Config : due server sono lo stesso sse matcha porta E "ip"
-
-	6. HEAD, POST (prio), DELETE
-
-	7. CGI
-
-	8. Check against subject, correction sheet, tester 
-
-		Meno Prioritario
-	1	refactoring HttpError ----> usare vector of char
-		DONE 2.	forse, in HttpError chiudere la connessione dopo aver ritornato un errore
-	5.	gestire client body_size
+Prioritaria
+	7.	Check against subject, correction sheet, tester, write tests with python, Postman 
+Arielle
+	3.	refactoring isDirective : prendere current block and check if valid in that block.
+	10.	Give different HTTP response status code depending on errors - throughout the response class, every where there is a 
+		Response (dirlisting, etc.) : give different error codes based on reading of errno
+		10.1	file not found
+		10.2	unauthorized
 	3.util : fare funzione che, presa una stringa, rimuove tutti i caratteri a partire da uno dato,
 		se esiste nella stringa.
+Matteo
+	4.	gesite location matching : exact & prefix : prendere il blocco più specifico
+	8.	implement timers
+	12	If a server creation fails, throw but not close all servers.
+
+To assign
+	1.	implementare redirections in GET
+	2.	gestire client body_size
+	5.	HEAD, POST (prio), DELETE
+	6.	CGI
+	9.	Check compatibility with Chrome/Firefox (set right headers)
+	11	check that ifstreams are ALWAYS used to read response static files.
+		11.2	check that there is no read/recv send/write without going through epoll
+
+Meno Prioritario
+	1	refactoring HttpError ----> usare vector of char
+		-forse, in HttpError chiudere la connessione dopo aver ritornato un errore
+
 
 Config file:
 	1. host directive
@@ -58,30 +47,3 @@ Overall at the end:
 - use errno ?
 - clean all comments
 - put all implementations in .cpp
-
-
-
----------------------------------------------------------
-Parsing config
-ok		1.	gestire multi-valued directives (vedere quali sono)
-nok		2.	definire lista di directives (keywords) accettate e rifiutare ogni directive non riconosciuta
-ok		3.	mettere in utils funzione che prende 2 stringhe di spaced-words e controlla se hanno parole in comune
-ok			3.1	usare questa funzione per controllare se 2 virtual server hanno server_name in comune
-ok			3.2	e per controllare che una multivalued directive non abbia lo stesso valore ripetuto
-ok		4.	controllare presenza directive mandatorie (only "listen")
-ok		5.	vedere come posso redirezionare domain specifici (e.g. "example.com") al mio server locale.
-			Questo vuol dire che devo fare arrivare la mia richiesta al mio server locale e non al DNS
-			(e.g. da Chrome "example.fr:8080" ---> al mio server locale)
-nok		6.	Prendere in considerazione l'aggiunta di un dizionario con (mandatory?, single/multi_valued, default_value)
-
-
-finire GET. (directories & autoindex)
-
-
-
-scorsa volta...
-1. prendere i nuovi config type in _Exploration/types.hpp
-	1.2 E fare refactoring di ConnectionSocket, t_server, etc.
-2. Testare con le modifiche di oggi mercoledì 14/06 e fare BugFix
-3. Estendere GET
-4. Fare altri metodi Http

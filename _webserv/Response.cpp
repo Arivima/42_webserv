@@ -311,6 +311,11 @@ const t_conf_block&	Response::takeMatchingServer(
 
 //*		Private Member Helper functions
 
+//*	(la funzione http_req_take_url_path() deve controllare che il path sia una directory;
+//*	se lo è, deve tornare la getIndexPage().
+//*	Se non è settata la directive index oppure le pagine indicate non esistono,
+//*	getIndexPage() ritorna vuoto.
+//*	Nel caso di reqPath vuota, generateGETResponse() deve gestire directive autoindex)
 std::string		Response::http_req_take_url_path(
 	const std::string& url, const std::string& root
 	)
