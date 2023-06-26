@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/16 14:09:56 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/23 16:10:01 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/26 11:53:04 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,7 +47,7 @@ private:
 	void					parse( t_conf_block& current );
 	void					parse_sub_block( t_conf_block& current, std::string& cur_line );
 	void					parse_directive( t_conf_block& current, std::string& cur_line );
-	bool					isDirective(const std::string& directive);
+	void					check_directive_validity(const std::string& directive, t_config_block_level level);
 	void					add_directive(t_conf_block& current, std::string& key, std::string& value);
  	void					parse_server_block( t_conf_block& current );
 	void					parse_location_block( t_conf_block& current, std::string& cur_line );

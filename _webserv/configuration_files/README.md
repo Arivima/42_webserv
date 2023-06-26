@@ -1,12 +1,20 @@
 CONFIGURATION DOCUMENTATION
 
+Formatting Rules:
+
+    - no tabs in config file. Only whitespace and new line are valid space characters.
+    - opening block brackets must be at the same line as the block level (i.e.: "server {")
+    - closing block brackets must be on their own line (i.e.: "<something>}" is not valid)
+
+If one of those rules is not respected, config file is considered as non-valid.
+
 List of implemented directives, within their relevant scope
 name | root | http | server | location |
 | --------- | :----:| :-----:| :-----:| -----: |
 host | - | - | Y | -
 listen | - | - | Y | - |
 server_name | - | - | Y | - |
-location | - | - | - | Y |
+location | - | - | Y | Y |
 method | - | - | Y | Y |
 root | - | - | Y | Y |
 index | - | - | Y | Y |
@@ -21,6 +29,7 @@ note:
 
 - if a directive is declared outside of its scope, configuration file is invalid
 - location is a made-up directive that exists in the location block and points to the location path
+  - we also have a made-up location directive in the server, with key location<location_path> used for checking the existence of a specific location in a server block
 
 Configuration requirements:
 host : specifies a specific interface (IP) the server should listens on,

@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/08 17:43:27 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/23 21:44:58 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/25 21:59:45 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,9 +35,9 @@ typedef enum e_config_block_level {
 
 typedef struct s_conf_block {
     t_config_block_level				level;
-    std::string							block_name;
 	std::map<std::string, std::string>	directives;
     std::vector<struct s_conf_block>	sub_blocks;
+	bool								invalidated;
 
 	s_conf_block(
 		t_config_block_level lvl = e_root_block,

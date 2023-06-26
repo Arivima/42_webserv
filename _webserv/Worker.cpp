@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/06 21:15:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/23 20:24:00 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/26 12:33:28 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,13 +16,37 @@
 
 Worker::Worker(const t_conf_block& conf_enclosing_block) : servers(), edata()
 {
-	const t_conf_block&	http = conf_enclosing_block.sub_blocks[0];
+	const t_conf_block&							http = conf_enclosing_block.sub_blocks[0];
+	std::vector<t_conf_block>::const_iterator	server;
+	std::string									debug_server_name;
 
-	// if (http.level == e_http_block)
-	// 	COUT_DEBUG_INSERTION("Worker block is root" << std::endl);
-	for (size_t i = 0; i < http.sub_blocks.size(); i++)
-		this->_server_init(http.sub_blocks[i]);
-	_init_io_multiplexing();
+	for (
+		server = http.sub_blocks.begin();
+		server != http.sub_blocks.end();
+		server++
+	)
+	{
+		try {
+			this->_server_init(*server);
+		}
+		catch (const std::exception& e) {//*	should never come here if all conflicts are handled in configuration
+										//*		catch is entered iff a socket syscall (e.g.: bind throws an error)
+			if ((*server).directives.end() != (*server).directives.find("server_name"))
+				debug_server_name = (*server).directives.at("server_name");
+			else
+				debug_server_name = "N/A";
+			std::cout << BOLDRED
+				<< "server creation failed " << std::endl
+				<< "listen : " << (*server).sub_blocks[0].directives.at("listen") << std::endl
+				<< "server_name : " << debug_server_name << std::endl
+				<< "reason : " << e.what() << std::endl
+				<< RESET;
+		}
+	}
+	if (0 == this->servers.size())
+		throw (std::runtime_error("Worker::Worker() : no server could be started"));
+	else
+		_init_io_multiplexing();
 }
 
 Worker::~Worker() {

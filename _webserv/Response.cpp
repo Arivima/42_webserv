@@ -152,6 +152,7 @@ void	Response::generateGETResponse( void )
 				std::istreambuf_iterator<char>());
 		}
 		catch (const std::exception& e) {
+			COUT_DEBUG_INSERTION("throwing Internal Server Error\n")
 			throw HttpError(500, matching_directives, take_location_root());
 		}
 		headers = getHeaders(200, "OK", filePath, page.size());

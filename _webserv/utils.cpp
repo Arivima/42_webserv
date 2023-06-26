@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/18 10:41:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/25 16:37:48 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/26 12:25:19 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,10 +20,8 @@ t_conf_block::	s_conf_block(
 		t_config_block_level lvl,
 		std::map<std::string, std::string> dir
 	)
-	: level(lvl), block_name(block_get_name(lvl)), directives(dir), sub_blocks()
+	: level(lvl), directives(dir), sub_blocks(), invalidated(false)
 {
-	// if (e_root_block == lvl)
-	// 	this->directives.erase(this->directives.begin(), this->directives.end());
 	COUT_DEBUG_INSERTION("Build a new : " << this->level << std::endl);
 }
 
@@ -43,8 +41,7 @@ void						print_block(t_conf_block& block, size_t level) {
 	std::string	tabs(level, '\t');
 	
     COUT_DEBUG_INSERTION(tabs << "--------------------------------------" << std::endl)
-    COUT_DEBUG_INSERTION(tabs << "| Printing print_level #" << block.level << " | " << block.block_name << std::endl)
-    COUT_DEBUG_INSERTION(tabs << "| Printing block_level #" << level << " |" << std::endl)
+    COUT_DEBUG_INSERTION(tabs << "| Printing print_level #" << block.level << std::endl)
     print_directives(block.directives, level);
     for (std::vector<t_conf_block>::iterator it = block.sub_blocks.begin(); it != block.sub_blocks.end(); it++)
         print_block(*it, level + 1);
@@ -213,8 +210,8 @@ std::vector<std::string> split_str_to_vector( std::string s, const std::string& 
 	std::vector<std::string>	new_vector;
 	std::string 				tmp;
 	size_t 						pos;
-	COUT_DEBUG_INSERTION(MAGENTA "split_str_to_vector" RESET<< std::endl);
-	COUT_DEBUG_INSERTION("inital s : |" << s << "|" << std::endl);
+	// COUT_DEBUG_INSERTION(MAGENTA "split_str_to_vector" RESET<< std::endl);
+	// COUT_DEBUG_INSERTION("inital s : |" << s << "|" << std::endl);
 	while ( s.size() > 0 ){
 		strip_trailing_and_leading_spaces(s);
 		if (s.empty())
@@ -226,11 +223,11 @@ std::vector<std::string> split_str_to_vector( std::string s, const std::string& 
 		s.erase(0, pos);
 		new_vector.push_back(tmp);
 	}
-	COUT_DEBUG_INSERTION(YELLOW"final vector : " RESET << std::endl);
-	if (new_vector.empty() == false){
-		for (std::vector<std::string>::iterator it = new_vector.begin(); it != new_vector.end(); it++)
-			COUT_DEBUG_INSERTION(YELLOW "|" << *it << "|" RESET << std::endl);
-	}
+	// COUT_DEBUG_INSERTION(YELLOW"final vector : " RESET << std::endl);
+	// if (new_vector.empty() == false){
+	// 	for (std::vector<std::string>::iterator it = new_vector.begin(); it != new_vector.end(); it++)
+	// 		COUT_DEBUG_INSERTION(YELLOW "|" << *it << "|" RESET << std::endl);
+	// }
 	return (new_vector);
 }
 

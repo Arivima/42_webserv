@@ -13,7 +13,7 @@
 #include "include/Config.hpp"
 #include <algorithm>	//remove_if
 #include <cstring>		//strncmp
-#include <set>			//isDirective()
+#include <set>			//check_directive_validity()
 
 //TODO
 //TODO	1. controllare che non ci siano più http block.
@@ -55,13 +55,17 @@ Config::		~Config( void ) {
 //*		main Functionalities
 void					Config::parse_config( void ) {
 
+	//*		parsing
 	if (false == parenthesis_balanced(this->raw_content))
 		throw (std::invalid_argument("Config::parse_config: unbalanced parenthesis"));
 	this->parse(this->conf);
-	//*	maybe make it a function
-	if (this->conf.sub_blocks[0].sub_blocks.empty())
-		throw (std::runtime_error("Config::parse_config() : no server defined"));
-	print_block(this->conf, this->conf.level);
+
+	//*		validation
+	const t_conf_block&	http = this->conf.sub_blocks[0];
+	if (http.sub_blocks.empty())//*	maybe make it a function
+		throw (std::runtime_error("Config::parse_config() : no server could be started"));
+	else
+		print_block(this->conf, this->conf.level);
 }
 
 const t_conf_block&		Config::getConf( void ) {
@@ -167,11 +171,11 @@ void	Config::parse( t_conf_block& current ) {
 		else if (std::string::npos != cur_line.find("}")) {
 			if ("}" != cur_line)
 				throw (std::invalid_argument("Config::parse() : \'}\' must be on its own line"));
+			if (current.invalidated)
+				throw (std::invalid_argument("Config::parse() : current block invalidated (contained failed or invalid directive)"));
 			return ;
 		}
 		else if (false == cur_line.empty()) {
-			if (e_root_block == current.level)
-				throw (std::invalid_argument("Config::parse(): directive found outisde http"));
 			parse_directive(current, cur_line);
 		}
 	}
@@ -184,17 +188,34 @@ void	Config::parse_sub_block( t_conf_block& current, std::string& cur_line )
 	t_config_block_level	next_level;
 
 	next_level = next_conf_block_level(current.level);
-	if (static_cast<int>(next_level) != block_get_level(cur_line))
-		throw (std::invalid_argument("Config::parse() : block found at wrong level"));
-	
 	COUT_DEBUG_INSERTION("sub block found" << std::endl)
 	COUT_DEBUG_INSERTION("next level: " << next_level << std::endl);
-	if (e_server_block == next_level)
-		parse_server_block(current);
-	if (e_location_block == next_level)
-		parse_location_block(current, cur_line);
-	if (e_http_block == next_level)
-		parse_http_block(current);
+	try {
+		if (static_cast<int>(next_level) != block_get_level(cur_line))
+			throw (std::invalid_argument("Config::parse_sub_block() : block found at wrong level"));
+		if (e_server_block == next_level)
+			parse_server_block(current);
+		if (e_location_block == next_level)
+			parse_location_block(current, cur_line);
+		if (e_http_block == next_level)
+			parse_http_block(current);
+	}
+	catch (const std::invalid_argument& e) {
+		std::cout << BOLDRED
+			<< "configuration block instantiation failed " << std::endl
+			<< "containing block level : " << current.level << std::endl
+			<< "level : " << next_level << std::endl
+			<< "reason : " << e.what() << std::endl
+			<< RESET;
+		if (e_http_block != current.level) {
+			std::cout << "block invalidated" << std::endl;
+			current.invalidated = true;
+			// std::cout << "block invalidated : rethrowing..." << std::endl;
+			// throw (std::invalid_argument("containing block failed"));
+		}
+		else
+			std::cout << "block NOT invalidated" << std::endl;
+	}
 }
 
 //TODO
@@ -220,21 +241,31 @@ void	Config::parse_directive( t_conf_block& current, std::string& cur_line )
 	// if (11 == i)
 	// 	throw (std::invalid_argument("illegal directive found"));
 	
-	//*		removing directive semicolon
-	if (';' == cur_line[cur_line.length() - 1])
-		cur_line = cur_line.substr(0, cur_line.length() - 1);
-	else
-		throw (std::invalid_argument("Config::parse_directive() : ';' missing"));
-	//*		//////////////////////////////////////////////////
+	try {
+		//*		removing directive semicolon
+		if (';' == cur_line[cur_line.length() - 1])
+			cur_line = cur_line.substr(0, cur_line.length() - 1);
+		else
+			throw (std::invalid_argument("Config::parse_directive() : ';' missing"));
+		//*		//////////////////////////////////////////////////
 
-	COUT_DEBUG_INSERTION("Parsing directive : " << cur_line << std::endl);
-	linestream.str(cur_line);
-	std::getline(linestream, key, ' ');
-	std::getline(linestream, value);
-	if (isDirective(key))
+		COUT_DEBUG_INSERTION("Parsing directive : " << cur_line << std::endl);
+		linestream.str(cur_line);
+		std::getline(linestream, key, ' ');
+		std::getline(linestream, value);
+		check_directive_validity(key, current.level);
 		add_directive(current, key, value);
-	else
-		throw (std::invalid_argument("Config::parse_directive() : unrecognized directive found"));
+	}
+	catch (const std::invalid_argument& e) {
+		std::cout << "Config::parse_directive() : catched exception >> " << e.what() << std::endl;
+		current.invalidated = true;
+	}
+		
+	// OLD
+	// if (check_directive_validity(key))
+		// add_directive(current, key, value);
+	// else
+		// throw (std::invalid_argument("Config::parse_directive() : unrecognized directive found"));
 }
 
 void	Config::add_directive(t_conf_block& current, std::string& key, std::string& value)
@@ -257,16 +288,47 @@ void	Config::add_directive(t_conf_block& current, std::string& key, std::string&
 	}
 }
 
-bool	Config::isDirective(const std::string& directive)
-{
-	static const char* strings[] = {
-		"listen", "location", "server_name", "host", "index", "body_size", 
-		"error_page", "method", "root", "return", "autoindex", "exec_cgi", "extension_cgi"
+void	Config::check_directive_validity(const std::string& directive, t_config_block_level level){
+	std::cout << " check_directive_validity | directive : " << directive << " | level : " << level << std::endl;
+
+	static const char*					allowed_directives[] = {
+		"listen", "location", "server_name", "host", "index", "body_size",
+		"error_page", "method", "root", "return", "autoindex",
+		"exec_cgi", "extension_cgi"
 	};
+	static const char*					virtual_server_directives[] = {
+		"listen", "location", "server_name", "host", "index",
+		"body_size", "error_page", "method", "root", "return",
+		"autoindex", "exec_cgi", "extension_cgi"
+	};
+	static const char*					location_directives[] = {
+		"location", "index", "body_size", "error_page", "method", "root",
+		"return", "autoindex", "exec_cgi", "extension_cgi"
+	};
+	static const std::set<std::string>	dictionnary_all_directives(allowed_directives, allowed_directives + sizeof(allowed_directives) / sizeof(allowed_directives[0]));
+	static std::set<std::string>		dictionnary_block_directives;
+	size_t								dict_size;
 
-	static std::set<std::string> dictionnary_directives(strings, strings + sizeof(strings) / sizeof(strings[0]));
+	if (dictionnary_all_directives.count(directive) == 0)
+		throw (std::invalid_argument("Config::check_directive_validity() : " +  directive  + " is an unrecognized directive within the" + block_get_name(level) + " block."));
 
-	return (dictionnary_directives.count(directive));
+	const char** block_directives;
+	switch(level) {
+		case e_virtual_server_block:
+			block_directives = virtual_server_directives;
+			dict_size = sizeof(virtual_server_directives) / sizeof(virtual_server_directives[0]);
+			break;
+        case e_location_block: 
+			block_directives = location_directives;
+			dict_size = sizeof(location_directives) / sizeof(location_directives[0]);
+			break;
+		default:
+			throw (std::invalid_argument("Config::check_directive_validity() : " +  directive  + " directive declared on the wrong scope ( declared in the" + block_get_name(level) + " block.)"));
+    }
+
+	dictionnary_block_directives = std::set<std::string>(block_directives, block_directives + dict_size);
+	if (dictionnary_block_directives.count(directive) == 0)
+		throw (std::invalid_argument("Config::check_directive_validity() : " +  directive  + " directive declared on the wrong scope ( declared in the" + block_get_name(level) + " block.)"));
 }
 
 void	Config::parse_http_block( t_conf_block& current ) {
@@ -288,20 +350,31 @@ void	Config::parse_location_block( t_conf_block& current, std::string& cur_line 
 	COUT_DEBUG_INSERTION(MAGENTA "parse_location_block()" RESET << std::endl);
 	
 	std::stringstream	linestream(cur_line);
-	std::string			keyword;
-	std::string			path;
+	std::string			location_keyword;
+	std::string			location_path;
 
-	std::getline(linestream, keyword, ' ');
-	std::getline(linestream, path);
+	std::getline(linestream, location_keyword, ' ');
+	std::getline(linestream, location_path);
 	t_conf_block		location(
 		e_location_block,
 		current.directives
 	);
-	location.directives[keyword] = path;
+	location.directives[location_keyword] = location_path;
+	
 	parse(location);
 	COUT_DEBUG_INSERTION(
 		GREEN "pushing a new location block into virtual server sub-blocks" RESET << std::endl
 	);
+	//**	check if location block already exists within server
+	//*		we add a fake directive with key location<location_path> and check for the existence of this key
+	//TODO	may need to trim leading and trailing spaces in both
+	if (
+		current.directives.end() != current.directives.find(location_keyword + location_path)
+	)
+		throw (std::invalid_argument("Config::parse_location_block() : found two conflicting location blocks"));
+	else
+		current.directives[location_keyword + location_path] = location_path;
+	//**	////////////////////////////////////////////////////
 	current.sub_blocks.push_back(location);
 }
 
@@ -331,7 +404,7 @@ void	Config::parse_server_block( t_conf_block& current ) {
 			)
 				if (same_host(*virtual_serv, new_virtual_serv))
 					throw (std::invalid_argument("Config::parse_server_block() : \
-							found two servers with conflicting server_names")
+							 found two servers with conflicting server_names")
 					);
 			COUT_DEBUG_INSERTION(
 				GREEN "pushing a new virtual server block into existing server sub-blocks" RESET << std::endl

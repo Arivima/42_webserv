@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 15:41:58 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/23 11:31:03 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/26 12:11:07 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,17 +74,5 @@ private:
 	void			read_header( void );
 	void			read_body( void );
 };
-
-//TODO
-//TODO	1.	Write Request.cpp...continue refactoring (making of Request class)
-//TODO	2.	change req map as being object not ref inside Response
-//TODO	3.	write switch_state function in ConnectionSocket (pay attention first creating the new
-//TODO		and then deleting the old one as the new may need results from the old)
-//TODO	4. use exceptions in types.h (remove SockEof and other exceptions inside classes
-//TODO	ConnectionSocket, Request and Response )
-//TODO	5. handle SockEof exception inside Worker serve_clientS loop. (Not inside ConnectionSocket!)
-//TODO	6. Refactor ConenctionSocket.
-//TODO
-//TODO
 
 #endif

@@ -6,17 +6,17 @@ togliere set buffer size del socket nel Worker (setsockopt)
 Prioritaria
 	7.	Check against subject, correction sheet, tester, write tests with python, Postman 
 Arielle
-	3.	refactoring isDirective : prendere current block and check if valid in that block.
 	10.	Give different HTTP response status code depending on errors - throughout the response class, every where there is a 
 		Response (dirlisting, etc.) : give different error codes based on reading of errno
 		10.1	file not found
 		10.2	unauthorized
-	3.util : fare funzione che, presa una stringa, rimuove tutti i caratteri a partire da uno dato,
-		se esiste nella stringa.
+	5. POST
+
 Matteo
 	4.	gesite location matching : exact & prefix : prendere il blocco più specifico
 	8.	implement timers
 	12	If a server creation fails, throw but not close all servers.
+	13	valutare se contollare la presenza di location block ripetuti
 
 To assign
 	1.	implementare redirections in GET
@@ -47,3 +47,21 @@ Overall at the end:
 - use errno ?
 - clean all comments
 - put all implementations in .cpp
+
+ARCHIVES not yet done but useless (maybe) !
+	3.util : fare funzione che, presa una stringa, rimuove tutti i caratteri a partire da uno dato,
+		se esiste nella stringa.
+
+
+to short
+//TODO Request.hpp
+//TODO	1.	Write Request.cpp...continue refactoring (making of Request class)
+//TODO	2.	change req map as being object not ref inside Response
+//TODO	3.	write switch_state function in ConnectionSocket (pay attention first creating the new
+//TODO		and then deleting the old one as the new may need results from the old)
+//TODO	4. use exceptions in types.h (remove SockEof and other exceptions inside classes
+//TODO	ConnectionSocket, Request and Response )
+//TODO	5. handle SockEof exception inside Worker serve_clientS loop. (Not inside ConnectionSocket!)
+//TODO	6. Refactor ConenctionSocket.
+//TODO
+//TODO
