@@ -19,10 +19,34 @@
 
 # include "Webserv.hpp"
 # include "EpollData.hpp"
+# include "CGI.hpp"
 
 //*	this class should be responsible for generating the response of a http request.
 class Response
 {
+	//*		TYPEDEFS (private)
+private:
+	/**
+	 * @brief this structure represents location matching data.
+	 * It has a variable "match_score" indicating the number of characters matching
+	 * the location block path. This variable is npos (maximum) for exact matches.
+	 * 
+	 */
+	typedef struct s_location_match
+	{
+		const t_conf_block&	location;
+		size_t				match_score;
+
+		s_location_match(const t_conf_block& location, size_t match_score)
+		: location(location)
+		{
+			this->match_score = match_score;
+		}
+		bool	operator<(const s_location_match& other) {
+			return (this->match_score < other.match_score);
+		}
+	}	t_location_match;
+
 private:
 	const t_conf_block&							matching_directives;
 	const std::map<std::string, std::string>	req;
@@ -30,8 +54,9 @@ private:
 	const int									sock_fd;
 	const t_epoll_data&							edata;
 	std::vector<char>							response;
+	// CGI 										cgi;
 
-public:
+public: 
 	//*		main constructors and destructors
 							Response(
 								const std::map<std::string, std::string>& req,
@@ -49,26 +74,29 @@ public:
 private:
 	//*		Private Helper functions
 	void							generateGETResponse( void );
+	void							GETStatic( const std::string& reqRelativePath );
+	void							generatePOSTResponse( void );
+	// void							generateDELETEResponse( void );
 	std::string						getHeaders(
 		int status, std::string description, std::string& filepath,
 		size_t	body_size
 	);
-	bool							locationMatch(
+	size_t							locationMatch(
 		const t_conf_block& location, const std::string& req_url
 		);
 	const t_conf_block&				takeMatchingDirectives(
 		const t_conf_block& conf_server_block,
 		const std::map<std::string, std::string>& req
 		);
-	const t_conf_block&	takeMatchingServer(
+	const t_conf_block&				takeMatchingServer(
 		const std::vector<t_conf_block>&	virtual_servers,
 		const std::map<std::string, std::string>& req
 		);
-	std::string			take_location_root( void );
-	std::string			http_req_take_url_path(
+	std::string						take_location_root( void );
+	std::string						http_req_complete_url_path(
 		const std::string& url, const std::string& root
 		);
-	std::string			getIndexPage( const std::string& root, std::string path );
+	std::string						getIndexPage( const std::string& root, std::string path );
 };
 
 

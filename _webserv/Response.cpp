@@ -15,6 +15,7 @@
 #include <fstream>		//open requested files
 #include <sstream>		//stringstream
 #include <cstring>		//memeset
+#include <list>			//location matches sorting
 
 //*		non-member helper functions
 //*		/////////////////////////////////////////////////
@@ -105,16 +106,31 @@ void	Response::send_line( void )
 // refactor to clean + test and make sure all cases are covered
 void	Response::generateGETResponse( void )
 {
-	const std::string				root
-		= take_location_root();
-	const std::string				reqPath(
-		http_req_take_url_path(req.at("url"), root)
-	);;
+	size_t		query_string_pos;
+	std::string	reqRelativePath;
+
+	reqRelativePath = req.at("url");
+	if (std::string::npos != reqRelativePath.find(".php")) {
+		this->cgi = new CGI(req);
+		this->cgi->launch();
+		this->response = this->cgi->getResponse();
+	}
+	else {
+		query_string_pos = reqRelativePath.find("?");
+		if (std::string::npos != query_string_pos)
+			reqRelativePath.substr(0, query_string_pos);
+		GETStatic(reqRelativePath);
+	}
+}
+
+void	Response::GETStatic( const std::string& reqRelativePath )
+{
+	const std::string				root = take_location_root();
+	const std::string				reqPath(http_req_complete_url_path(reqRelativePath, root));
 	std::string						headers;
 	std::vector<char>				page;
 	std::string						filePath = "";
 
-	//TODO autoindex (CHECK that path refers to directory and not a regular file)
 	std::cout << "Path of the request : " << (reqPath.empty()? "EMPTY" : reqPath ) << std::endl;
 	if (reqPath.empty()) {
 		if (
@@ -209,11 +225,20 @@ std::string		Response::getHeaders(
 
 //*		helper functions
 
-//TODO	TEST 
-bool	Response::locationMatch(
+//TODO	Matteo TEST 
+/**
+ * @brief this function returns matching information of a location block for a request url.
+ * 
+ * @param location 
+ * @param req_url 
+ * @return size_t match score. 0 for no match, npos (maximum) for exact match,
+ * or length of the block's location otherwise.
+ */
+size_t	Response::locationMatch(
 	const t_conf_block& location, const std::string& req_url
 	)
 {
+	size_t		match_score;
 	size_t		path_begin;
 	size_t		query_arguments_start;
 	std::string	location_path;
@@ -229,25 +254,32 @@ bool	Response::locationMatch(
 		//*		exact match
 		location_path = location.directives.at("location").substr(1);
 		strip_trailing_and_leading_spaces(location_path);
-		return (
+		if (
 			0 == reqUrl.find("http://") &&
 			std::string::npos != (path_begin = reqUrl.substr(7).find("/")) &&
 			0 == reqUrl.substr(7 + path_begin).compare(location_path)
-		);
+		)
+			return (std::string::npos);
+		else
+			return (0);
 	}
 	else
 	{
 		//*		prefix match
 		location_path = location.directives.at("location");
 		strip_trailing_and_leading_spaces(location_path);
-		return (
+		if (
 			0 == reqUrl.find("http://") &&
 			std::string::npos != (path_begin = reqUrl.substr(7).find("/")) &&
 			0 == reqUrl.substr(7 + path_begin).find(location_path)
-		);
+		)
+			return (location_path.length());
+		else
+			return (0);
 	}
 }
 
+//TODO	Matteo TEST
 /**
  * @brief This function returns a handle to a generic block holding directives.
  * Given a server block, it returns the inner location block that matches
@@ -260,9 +292,12 @@ const t_conf_block&	Response::takeMatchingDirectives(
 	const std::map<std::string, std::string>& req
 	)
 {
-	const t_conf_block&							virtual_server 
-		= takeMatchingServer(conf_server_block.sub_blocks, req);
+	const t_conf_block&							virtual_server  = takeMatchingServer(
+		conf_server_block.sub_blocks, req
+	);
 	std::vector<t_conf_block>::const_iterator	location;
+	std::list<t_location_match>					matches;
+	size_t										match_score;
 	
 	for (
 		location = virtual_server. sub_blocks.begin();
@@ -270,14 +305,16 @@ const t_conf_block&	Response::takeMatchingDirectives(
 		location ++
 	)
 	{
-		if (locationMatch(*location, req.at("url")))
-			break ;
+		if ( (match_score = locationMatch(*location, req.at("url"))) )
+			matches.push_back(t_location_match(*location, match_score));
 	}
 
-	if (virtual_server.sub_blocks.end() == location)
+	if (matches.empty())
 		return (virtual_server);
-	else
-		return (*location);
+	else {
+		matches.sort();
+		return (matches.back().location);
+	}
 }
 
 /**
@@ -320,7 +357,16 @@ const t_conf_block&	Response::takeMatchingServer(
 //*	Se non è settata la directive index oppure le pagine indicate non esistono,
 //*	getIndexPage() ritorna vuoto.
 //*	Nel caso di reqPath vuota, generateGETResponse() deve gestire directive autoindex)
-std::string		Response::http_req_take_url_path(
+
+// if path points to directory 	
+//		-> if index configured & indexpage exists -> returns index 
+//		-> else returns empty path
+	// to be checked in parent function
+	//		-> if empty && if autoindex is on -> returns directory listing
+	//		-> else -> throws 404
+// else if path points to a regular file -> returns filepath
+//TODO remove dead code and change name to http_complete_url_path
+std::string		Response::http_req_complete_url_path(
 	const std::string& url, const std::string& root
 	)
 {
@@ -328,24 +374,27 @@ std::string		Response::http_req_take_url_path(
 	size_t			path_start;
 	size_t			path_end;
 
-	if (
-		std::string::npos == (path_start = url.find("/"))
-	)
-	{
-		COUT_DEBUG_INSERTION("throwing url : " << url << std::endl)
-		throw HttpError(400, matching_directives, take_location_root());
-	}
+	//*	uesless ?
+	// if (
+	// 	std::string::npos == (path_start = url.find("/"))
+	// )
+	// {
+	// 	COUT_DEBUG_INSERTION("throwing url : " << url << std::endl)
+	// 	throw HttpError(400, matching_directives, take_location_root());
+	// }
 
-	//*		remove query string
-	path_end = url.rfind("?");
-	if (std::string::npos == path_end)
-		path_end = url.length();
+	//*	useless with new architecture //TODO remove everywhere
+	// //*		remove query string
+	// path_end = url.rfind("?");
+	// if (std::string::npos == path_end)
+	// 	path_end = url.length();
 	
-	path = url.substr(path_start, path_end - path_start);
+	// path = url.substr(path_start, path_end - path_start);
 
 	if ( true == isDirectory( root, path, this->matching_directives) ) {
 		path = getIndexPage(root, path);
 	}
+	// TODO check that path points to a regular file ? crash if other types ?
 	// else path refers to a file and is already correct
 
 	path_remove_leading_slash(path);
@@ -400,30 +449,27 @@ std::string		Response::take_location_root( void )
 	return (root);
 }
 
-
-POST /test/demo_form.php HTTP/1.1
-Host: w3schools.com
-
-name1=value1&name2=value2
-
-
-
-POST /api/endpoint HTTP/1.1
-Host: example.com
-Content-Type: application/json
-Content-Length: 26
-
-{
-  "key1": "value1",
-  "key2": "value2"
-}
-
-
 void	Response::generatePOSTResponse( void )
 {
 	std::cout << "Response::generatePOSTResponse" << std::endl;
-	// const std::string				root
-	// 	= take_location_root();
+	const std::string				root = take_location_root();
+
+	if ( // checks if POST is an allowed method in the configuration file at this location
+		(this->matching_directives.directives.find("method") != this->matching_directives.directives.end()) \
+		&& (this->matching_directives.directives.at("method").find("POST") == std::string::npos)){
+			throw HttpError(403, this->matching_directives, take_location_root());
+	}
+std::string get_cgi_extension(const std::string& path, const std::map<std::string, std::string>& cgi_directive){
+	if ( // checks if CGI is a set directive in the configuration file at this location && is valid
+		(this->matching_directives.directives.find("enable_cgi") != this->matching_directives.directives.end())
+		&& (this->matching_directives.directives.find("enable_cgi") != )
+	)
+
+
+
+
+
+
 	// const std::string				reqPath(
 	// 	http_req_take_url_path(req.at("url"), root)
 	// );;
@@ -434,27 +480,6 @@ void	Response::generatePOSTResponse( void )
 	// //TODO autoindex (CHECK that path refers to directory and not a regular file)
 	// std::cout << "Path of the request : " << (reqPath.empty()? "EMPTY" : reqPath ) << std::endl;
 	// if (reqPath.empty()) {
-	// 	if (
-	// 		(this->matching_directives.directives.find("autoindex") != this->matching_directives.directives.end())
-	// 		&& (this->matching_directives.directives.at("autoindex") == "on" ))
-	// 	{
-	// 		std::string	path = req.at("url");
-	// 		path_remove_leading_slash(path);
-	// 		COUT_DEBUG_INSERTION("showing dir listing for " << root + path << std::endl)
-	// 		std::string dir_listing_page = createHtmlPage(
-	// 			getDirectoryContentList(root + path) //wip
-	// 		);
-	// 		page.insert(
-	// 			page.begin(),
-	// 			dir_listing_page.begin(),
-	// 			dir_listing_page.end()
-	// 		);
-	// 		headers = getHeaders(200, "OK", filePath, page.size());
-	// 		// throw (std::runtime_error("not yet implemented"));
-	// 		// finire gestire ls
-	// 	}
-	// 	else
-	// 		throw HttpError(404, this->matching_directives, root);
 	// }
 	// else {
 	// 	COUT_DEBUG_INSERTION("serving page : " << root + reqPath << std::endl)
@@ -480,4 +505,3 @@ void	Response::generatePOSTResponse( void )
 	// response.insert(response.begin(), headers.begin(), headers.end());
 	// response.insert(response.end(), page.begin(), page.end());
 }
-//*		non-member helper functions

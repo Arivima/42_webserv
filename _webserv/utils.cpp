@@ -6,7 +6,7 @@
 /*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/18 10:41:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/26 12:25:19 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/28 13:49:38 by earendil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -363,4 +363,15 @@ std::string	createHtmlPage(const std::string& body)
 ";
 
 	return (pageStream.str());
+}
+
+std::string	get_cgi_extension(
+	const std::string& path,
+	const std::map<std::string, std::string>& cgi_directive
+)
+{
+	std::string	extension;
+
+
+	return extension
 }
