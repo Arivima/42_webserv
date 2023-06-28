@@ -50,6 +50,9 @@ void	Response::generateResponse( void ) {
 		// if ("DELETE" == this->req.at("method"))
 		// 	return (generateDELETEResponse());
 		throw (std::runtime_error("Response::generateResponse() : case not yet implemented"));
+		// 501 Not Implemented
+		// The request method is not supported by the server and cannot be handled. 
+		// The only methods that servers are required to support (and therefore that must not return this code) are GET and HEAD.
 	}
 	catch (const HttpError& e) {
 		this->response = e.getErrorPage();
@@ -398,4 +401,83 @@ std::string		Response::take_location_root( void )
 }
 
 
+POST /test/demo_form.php HTTP/1.1
+Host: w3schools.com
+
+name1=value1&name2=value2
+
+
+
+POST /api/endpoint HTTP/1.1
+Host: example.com
+Content-Type: application/json
+Content-Length: 26
+
+{
+  "key1": "value1",
+  "key2": "value2"
+}
+
+
+void	Response::generatePOSTResponse( void )
+{
+	std::cout << "Response::generatePOSTResponse" << std::endl;
+	// const std::string				root
+	// 	= take_location_root();
+	// const std::string				reqPath(
+	// 	http_req_take_url_path(req.at("url"), root)
+	// );;
+	// std::string						headers;
+	// std::vector<char>				page;
+	// std::string						filePath = "";
+
+	// //TODO autoindex (CHECK that path refers to directory and not a regular file)
+	// std::cout << "Path of the request : " << (reqPath.empty()? "EMPTY" : reqPath ) << std::endl;
+	// if (reqPath.empty()) {
+	// 	if (
+	// 		(this->matching_directives.directives.find("autoindex") != this->matching_directives.directives.end())
+	// 		&& (this->matching_directives.directives.at("autoindex") == "on" ))
+	// 	{
+	// 		std::string	path = req.at("url");
+	// 		path_remove_leading_slash(path);
+	// 		COUT_DEBUG_INSERTION("showing dir listing for " << root + path << std::endl)
+	// 		std::string dir_listing_page = createHtmlPage(
+	// 			getDirectoryContentList(root + path) //wip
+	// 		);
+	// 		page.insert(
+	// 			page.begin(),
+	// 			dir_listing_page.begin(),
+	// 			dir_listing_page.end()
+	// 		);
+	// 		headers = getHeaders(200, "OK", filePath, page.size());
+	// 		// throw (std::runtime_error("not yet implemented"));
+	// 		// finire gestire ls
+	// 	}
+	// 	else
+	// 		throw HttpError(404, this->matching_directives, root);
+	// }
+	// else {
+	// 	COUT_DEBUG_INSERTION("serving page : " << root + reqPath << std::endl)
+	// 									filePath = root + reqPath;
+	// 	std::ifstream					docstream(filePath.c_str(), std::ios::binary);
+
+	// 	if (false == docstream.is_open()) {
+	// 		COUT_DEBUG_INSERTION("throwing page not found\n")
+	// 		throw HttpError(404, matching_directives, take_location_root());
+	// 	}
+	// 	try {
+	// 		page.insert(
+	// 			page.begin(),
+	// 			std::istreambuf_iterator<char>(docstream),
+	// 			std::istreambuf_iterator<char>());
+	// 	}
+	// 	catch (const std::exception& e) {
+	// 		COUT_DEBUG_INSERTION("throwing Internal Server Error\n")
+	// 		throw HttpError(500, matching_directives, take_location_root());
+	// 	}
+	// 	headers = getHeaders(200, "OK", filePath, page.size());
+	// }
+	// response.insert(response.begin(), headers.begin(), headers.end());
+	// response.insert(response.end(), page.begin(), page.end());
+}
 //*		non-member helper functions

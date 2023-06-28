@@ -10,6 +10,10 @@ Arielle
 		Response (dirlisting, etc.) : give different error codes based on reading of errno
 		10.1	file not found
 		10.2	unauthorized
+		// https://www.restapitutorial.com/httpstatuscodes.html
+		// https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
+		// https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
+		
 	5. POST
 
 Matteo
