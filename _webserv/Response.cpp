@@ -106,20 +106,27 @@ void	Response::send_line( void )
 // refactor to clean + test and make sure all cases are covered
 void	Response::generateGETResponse( void )
 {
-	size_t		query_string_pos;
 	std::string	reqRelativePath;
+	std::string	requested_file_cgi_extension;
+	size_t		query_string_pos;
 
 	reqRelativePath = req.at("url");
-	if (std::string::npos != reqRelativePath.find(".php")) {
-		this->cgi = new CGI(req);
-		this->cgi->launch();
-		this->response = this->cgi->getResponse();
-	}
-	else {
+	requested_file_cgi_extension = get_cgi_extension(
+		reqRelativePath, this->matching_directives.directives
+	);
+
+	if (requested_file_cgi_extension.empty()) {
+		//*		STATIC GET
 		query_string_pos = reqRelativePath.find("?");
 		if (std::string::npos != query_string_pos)
 			reqRelativePath.substr(0, query_string_pos);
 		GETStatic(reqRelativePath);
+	}
+	else {
+		//*		QUERY STRING GET (DYNAMIC)
+		this->cgi = new CGI(req);
+		this->cgi->launch();
+		this->response = this->cgi->getResponse();
 	}
 }
 
@@ -365,7 +372,16 @@ const t_conf_block&	Response::takeMatchingServer(
 	//		-> if empty && if autoindex is on -> returns directory listing
 	//		-> else -> throws 404
 // else if path points to a regular file -> returns filepath
-//TODO remove dead code and change name to http_complete_url_path
+//*// TODO remove dead code and change name to http_complete_url_path
+/**
+ * @brief this function completes the path-part of a request URL.
+ * That means it´s going to fecth a index file if the requested resource is a directory.
+ * 
+ * @param url 
+ * @param root the root directory for the requested location (i.e.: var/www/html)
+ * @return std::string : a relative path (any leading slash will be cleaned) pointing to a static resource
+ * or empty in case of error (e.g.: no index file could be found)
+ */
 std::string		Response::http_req_complete_url_path(
 	const std::string& url, const std::string& root
 	)
@@ -451,21 +467,28 @@ std::string		Response::take_location_root( void )
 
 void	Response::generatePOSTResponse( void )
 {
-	std::cout << "Response::generatePOSTResponse" << std::endl;
+	COUT_DEBUG_INSERTION("Response::generatePOSTResponse" << std::endl);
 	const std::string				root = take_location_root();
+	const std::string				path = this->req.at("url");
+	std::string						extension;
 
 	if ( // checks if POST is an allowed method in the configuration file at this location
 		(this->matching_directives.directives.find("method") != this->matching_directives.directives.end()) \
 		&& (this->matching_directives.directives.at("method").find("POST") == std::string::npos)){
 			throw HttpError(403, this->matching_directives, take_location_root());
 	}
-std::string get_cgi_extension(const std::string& path, const std::map<std::string, std::string>& cgi_directive){
-	if ( // checks if CGI is a set directive in the configuration file at this location && is valid
-		(this->matching_directives.directives.find("enable_cgi") != this->matching_directives.directives.end())
-		&& (this->matching_directives.directives.find("enable_cgi") != )
-	)
 
+	// checks if CGI is a set directive in the configuration file at this location 
+	// && path is matching with a valid extension
+	extension = get_cgi_extension(path, this->matching_directives.directives);
+	if (extension.empty() == true)
+		throw HttpError(405, this->matching_directives, take_location_root());
 
+	// create CGI object
+	CGI = new cgi(req, extension);
+	cgi.launch();
+	this->response = cgi.getResponse();
+}
 
 
 
@@ -504,4 +527,4 @@ std::string get_cgi_extension(const std::string& path, const std::map<std::strin
 	// }
 	// response.insert(response.begin(), headers.begin(), headers.end());
 	// response.insert(response.end(), page.begin(), page.end());
-}
+

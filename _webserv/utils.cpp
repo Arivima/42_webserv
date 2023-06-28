@@ -3,16 +3,17 @@
 /*                                                        :::      ::::::::   */
 /*   utils.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/18 10:41:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/28 13:49:38 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/28 15:38:34 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "include/Webserv.hpp"
 #include <algorithm>
 #include <cstring>
+#include <sstream>//splitting : get_cgi_extension(), etc.
 
 // BLOCK HPP
 //*		TYPES CONSTRUCTORS
@@ -367,11 +368,79 @@ std::string	createHtmlPage(const std::string& body)
 
 std::string	get_cgi_extension(
 	const std::string& path,
-	const std::map<std::string, std::string>& cgi_directive
+	const std::map<std::string, std::string>& directives
 )
 {
-	std::string	extension;
+	std::stringstream	cgiExtensionsStream;
+	std::string			extension;
+	size_t				semicolon_pos;
+	bool				stop;
 
-
-	return extension
+	if (directives.end() == directives.find("cgi_enable"))
+		return ("");
+	cgiExtensionsStream.str(directives.at("cgi_enable"));
+	stop = false;
+	while (false == stop)
+	{
+		std::getline(cgiExtensionsStream, extension, ' ');
+		semicolon_pos = extension.find(";");
+		if (std::string::npos != semicolon_pos) {
+			stop = true;
+			extension.erase(semicolon_pos);
+		}
+		
+		if (std::string::npos != path.find(extension))
+			return (extension);
+	}
+	return "";
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Webserv.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/05 15:27:54 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/25 19:55:04 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/28 15:40:20 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,5 +93,6 @@ void						path_remove_leading_slash(std::string& pathname);
 bool						isDirectory(const std::string root, std::string path, const t_conf_block& matching_directives);
 std::string					getDirectoryContentList(const std::string directoryPath);
 std::string					createHtmlPage(const std::string& body);
+std::string					get_cgi_extension(const std::string& path, const std::map<std::string, std::string>& directives);
 
 #endif
