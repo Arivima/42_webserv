@@ -10,17 +10,17 @@ void	Config::check_directive_validity(const std::string& directive, t_config_blo
 
 	static const char*					allowed_directives[] = {
 		"listen", "location", "server_name", "host", "index", "body_size",
-		"error_page", "method", "root", "return", "autoindex",
+		"error_page", "method", "root", "return", "autoindex", "cgi_enable"
 		"exec_cgi", "extension_cgi"
 	};
 	static const char*					virtual_server_directives[] = {
 		"listen", "location", "server_name", "host", "index",
 		"body_size", "error_page", "method", "root", "return",
-		"autoindex", "exec_cgi", "extension_cgi"
+		"autoindex", "exec_cgi", "extension_cgi", "cgi_enable"
 	};
 	static const char*					location_directives[] = {
 		"location", "index", "body_size", "error_page", "method", "root",
-		"return", "autoindex", "exec_cgi", "extension_cgi"
+		"return", "autoindex", "exec_cgi", "extension_cgi", "cgi_enable"
 	};
 	static const std::set<std::string>	dictionnary_all_directives(allowed_directives, allowed_directives + sizeof(allowed_directives) / sizeof(allowed_directives[0]));
 	static std::set<std::string>		dictionnary_block_directives;
