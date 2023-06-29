@@ -19,7 +19,7 @@
 
 # include "Webserv.hpp"
 # include "EpollData.hpp"
-# include "CGI.hpp"
+// # include "CGI.hpp"
 
 //*	this class should be responsible for generating the response of a http request.
 class Response
@@ -85,6 +85,7 @@ private:
 		int status, std::string description, std::string& filepath,
 		size_t	body_size
 	);
+	//TODO		forse move in utils
 	size_t							locationMatch(
 		const t_conf_block& location, const std::string& req_url
 		);
@@ -96,7 +97,7 @@ private:
 		const std::vector<t_conf_block>&	virtual_servers,
 		const std::map<std::string, std::string>& req
 		);
-	std::string						take_location_root( void );
+	//TODO		forse move in utils
 	std::string						http_req_complete_url_path(
 		const std::string& url, const std::string& root
 		);

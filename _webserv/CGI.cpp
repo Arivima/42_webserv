@@ -4,7 +4,9 @@
 # include	<sstream>
 # include	<sys/socket.h>
 # include	<arpa/inet.h>
-# include	<unistd.h>			// fork, dup2
+# include	<unistd.h>			// fork, dup2, execve, write
+# include	<sys/wait.h>		// wait
+# include	<fcntl.h>			// open
 
 //*		Public member functions
 CGI::CGI(
@@ -31,27 +33,53 @@ CGI::~CGI()
 void CGI::launch()
 {
 	pid_t pid = 0;
-	
+
+	// need to chose where to put the creation of files
+
 	pid = fork();
 	if (pid == -1){			// error
 		throw SystemCallException("fork()");
 	}
 	else if (pid == 0){		// child -> CGI
-		// create cmd to give to execve
-		// create an input file and write body/query to it
-		// create an output file
-		// put the body in the file
+	// create cmd to give to execve
+		char ** av = 
+
+	// create an input file
+		int file_in = open("cgi_input.txt", O_RDWR | O_CREAT | O_TRUNC, 0666);
+		if (file_in == -1)
+			throw SystemCallException("open()");
+		// file_in = open("cgi_input.txt", O_RDONLY);
+	// write to the input file the content of the request body/query
+		size_t ret = write(inFile, av.c_str(), av.size());
+		if (ret == -1)
+			throw SystemCallException("write()");
+	// create an output file
+		int file_out = open("cgi_output.txt", O_RDWR | O_CREAT | O_TRUNC, 0666);
+		if (file_out == -1)
+			throw SystemCallException("open()");	// put the body in the file
+		
+	// duping fd
 		// if no body ? dup or not ?
-		if (dup2(stdin, file_in) == -1)
+		if (dup2(file_in, stdin) == -1)
 			throw SystemCallException("dup2()");
-		dup2(stdout, file_out);            
+		if (dup2(file_out, stdout) == -1)
+			throw SystemCallException("dup2()");
+
+	// executing cgi
+		if (execve(av[0], av, this->cgi_env) == -1)
+			throw SystemCallException("execve()");
+	// close fd, free resources
+
 	}
 	else {              	// parent
-		wait(); //check
-		open fileout;
-		read fileout;
-		update response
-		free resources
+		if (wait(0) == -1)
+			throw SystemCallException("wait()");
+		
+		// use file_out to write the response
+			// open fileout;
+			// read fileout;
+			// update response
+			// free resources
 	}
 }
 

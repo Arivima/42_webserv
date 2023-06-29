@@ -47,6 +47,14 @@ Response::~Response() {
 //TODO inside the conf block (i.e.: "method" directive)
 void	Response::generateResponse( void ) {
 	try {
+		if (isCGI(this->req, this->matching_directives))
+		{
+			throw (std::runtime_error("CGI not implemented"));
+			// this->cgi = new CGI(req);
+			// this->cgi->launch();
+			// this->response = this->cgi->getResponse();
+			return ;
+		}
 		if ("GET" == this->req.at("method"))
 			return (generateGETResponse());
 		// if ("POST" == this->req.at("method"))
@@ -55,10 +63,7 @@ void	Response::generateResponse( void ) {
 		// 	return (generatePUTResponse());
 		// if ("DELETE" == this->req.at("method"))
 		// 	return (generateDELETEResponse());
-		throw (std::runtime_error("Response::generateResponse() : case not yet implemented"));
-		// 501 Not Implemented
-		// The request method is not supported by the server and cannot be handled. 
-		// The only methods that servers are required to support (and therefore that must not return this code) are GET and HEAD.
+		throw (HttpError(501, this->matching_directives, take_location_root(this->matching_directives)));
 	}
 	catch (const HttpError& e) {
 		this->response = e.getErrorPage();
@@ -451,24 +456,6 @@ std::string		Response::getIndexPage( const std::string& root, std::string path )
 	}
 	else
 		return ("");
-}
-
-//TODO	move to utils with ref to matching directives as argument
-std::string		Response::take_location_root( void )
-{
-	std::string											root;
-	std::map<std::string, std::string>::const_iterator	root_pos
-		= matching_directives.directives.find("root");
-
-	if (matching_directives.directives.end() != root_pos) {
-		root = matching_directives.directives.at("root");
-		path_remove_leading_slash(root);
-		root += "/";
-	}
-	else
-		root = "./";
-	
-	return (root);
 }
 
 void	Response::generatePOSTResponse( void )

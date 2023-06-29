@@ -1,7 +1,14 @@
+
+Matteo
+	-Config : rimuovi tab nel file di configurazione
+	-NO//Response : rimuovi subito query string se non é GET
+	-Respone : make req a reference
+	-check for every member that should be a reference
+
 Giovedi
 	Arielle
 		DONE	4. mettere .hpp functions of cgi class in .cpp
-		WIP		5. launch
+		DONE WIP		5. launch
 
 	Matteo
 	DONE//1.	Refactor Classes so that Request Response and CGI can have client ip

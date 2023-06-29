@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/06 21:15:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/29 16:11:27 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/06/29 19:07:07 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,23 +14,25 @@
 
 //*		main constructors and destructor
 
-Worker::Worker(const t_conf_block& conf_enclosing_block) : servers(), edata()
+Worker::Worker(const t_conf_block& root_block) : servers(), edata()
 {
-	const t_conf_block&							http = conf_enclosing_block.sub_blocks[0];
+	const t_conf_block&							http_block = root_block.sub_blocks[0];
 	std::vector<t_conf_block>::const_iterator	server;
 	std::string									debug_server_name;
 
 	for (
-		server = http.sub_blocks.begin();
-		server != http.sub_blocks.end();
+		server = http_block.sub_blocks.begin();
+		server != http_block.sub_blocks.end();
 		server++
 	)
 	{
 		try {
 			this->_server_init(*server);
 		}
-		catch (const std::exception& e) {//*	should never come here if all conflicts are handled in configuration
-										//*		catch is entered iff a socket syscall (e.g.: bind throws an error)
+		catch (const std::exception& e) {
+			//*	We should never be able to get here if all conflicts are handled in config parsing (class Config)
+			//*	catch is entered iff a socket syscall (e.g.: bind throws an error)
+			
 			if ((*server).directives.end() != (*server).directives.find("server_name"))
 				debug_server_name = (*server).directives.at("server_name");
 			else
@@ -50,19 +52,23 @@ Worker::Worker(const t_conf_block& conf_enclosing_block) : servers(), edata()
 }
 
 Worker::~Worker() {
+	//*	VectorServ is a vector of statically allocated t_server objects.
+	//*	Each t_server object has a vector of dynamically allocated open connections
 	for (
 		VectorServ::iterator serv_it = this->servers.begin();
 		serv_it != this->servers.end();
-		serv_it++)
+		serv_it++
+	)
 	{
 		for (
-			VectorCli::iterator cli_it = (*serv_it).requests.begin();
-			cli_it != (*serv_it).requests.end();
-			cli_it++)
+			VectorCli::iterator conn_it = (*serv_it).open_connections.begin();
+			conn_it != (*serv_it).open_connections.end();
+			conn_it++//TODO remove
+		)
 		{
-			(*serv_it).requests.erase(cli_it);
+			/** conn_it = */(*serv_it).open_connections.erase(conn_it);
 		}
-		(*serv_it).requests.clear();
+		(*serv_it).open_connections.clear();
 		std::cout << "Closing server: " << (*serv_it).server_fd << std::endl;
 		close((*serv_it).server_fd);
 	}
@@ -95,12 +101,13 @@ void	Worker::_serve_clientS( void ) {
 	for (
 		VectorServ::iterator serv_it = servers.begin();
 		serv_it != servers.end();
-		serv_it++)
+		serv_it++
+	)
 	{
 		for (
-			VectorCli::iterator cli_it = (*serv_it).requests.begin();
-			cli_it != (*serv_it).requests.end();
-			)
+			VectorCli::iterator cli_it = (*serv_it).open_connections.begin();
+			cli_it != (*serv_it).open_connections.end();
+		)
 		{
 			try {
 				(*(*cli_it)).serve_client();//_serve_client(*(*cli_it));
@@ -108,7 +115,7 @@ void	Worker::_serve_clientS( void ) {
 			}
 			catch (const SockEof& e) {
 				std::cout << std::endl << BOLDRED "Exception >>" << e.what() << RESET << std::endl;
-				cli_it = (*serv_it).requests.erase(cli_it);
+				cli_it = (*serv_it).open_connections.erase(cli_it);
 			}
 		}
 	}
@@ -121,24 +128,24 @@ void	Worker::_io_multiplexing_using_epoll(){
 	memset(this->edata.eeventS, 0, sizeof(struct epoll_event) * MAX_EVENTS);
 	this->edata.n_events = epoll_wait(this->edata.epoll_fd, this->edata.eeventS, MAX_EVENTS, -1);
 	if (-1 == this->edata.n_events) {
-		COUT_DEBUG_INSERTION(RED "throwing\n" RESET)
 		throw SystemCallException("epoll_wait()");
 	}
 }
 
 void	Worker::_handle_new_connectionS() {
 	
-	int				cli_socket;
-	std::string		client_IP;
-	std::string		server_IP;
+	int							cli_socket;
+	std::string					client_IP;
+	std::string					server_IP;
+	const struct epoll_event*	eevent;
 	
 	for (
 		VectorServ::iterator serv_it = servers.begin();
 		serv_it != servers.end();
 		serv_it++)
 	{
-		if (this->edata.getEpollEvent((*serv_it).server_fd) &&
-		this->edata.getEpollEvent((*serv_it).server_fd)->events & EPOLLIN)
+		eevent = this->edata.getEpollEvent((*serv_it).server_fd);
+		if ( eevent && eevent->events & EPOLLIN)
 		{
 			cli_socket = _create_ConnectionSocket((*serv_it), client_IP, server_IP);
 			_epoll_register_ConnectionSocket(cli_socket);
@@ -151,18 +158,16 @@ void	Worker::_handle_new_connectionS() {
 				-1 == setsockopt(cli_socket, SOL_SOCKET, SO_SNDBUF, &snd_buffer_size, sizeof(snd_buffer_size))
 			)
 			{
+				//TODO throw exception
 				return ;
-				// close(server_fd);
-				// ftError("setsockopt() failed : setting rcv buffer size");
 			}
 			
-			//*		adding to list of clients
-			(*serv_it).requests.push_back(
+			//*		adding to list of open connections
+			(*serv_it).open_connections.push_back(
 				new ConnectionSocket(cli_socket, client_IP, server_IP, *serv_it, edata)
 			);
 		}
 	}
-	// std::cout << std::endl;
 }
 
 /**
@@ -220,49 +225,14 @@ void	Worker::_epoll_register_ConnectionSocket(int cli_socket) {
 	}
 }
 
-// void	Worker::_serve_client( ConnectionSocket& request ) {
-	
-// 	const struct epoll_event*	eevent = edata.getEpollEvent(request.getSockFD());
-	
-// 	if (ConnectionSocket::e_READING_REQ == request.getStatus())
-// 	{
-// 		request.parse_line();
-// 	}
-// 	else {
-// 		if (0 == request.flag) {
-// 			if (!eevent || !(eevent->events & EPOLLOUT))
-// 				return ;
-// 	        std::cout << "end of request" << std::endl;
-// 	        request.print_req();
-// 	        std::cout << "response mode" << std::endl;
-// 	        ssize_t bytes_sent = send(request.getSockFD(), SIMPLE_HTML_RESP, SIMPLE_HTML_RESP_SIZE, 0);
-// 	        std::cout << "send done" << std::endl;
-// 			if (bytes_sent > 0){
-// 	        	std::cout << "Response sent to the client.";
-// 	        	std::cout << "| bytes_sent : " << bytes_sent << std::endl;
-// 			}
-// 			else if (-1 == bytes_sent){
-// 	            std::cout << "HERE" << std::endl;
-// 	            close(request.getSockFD());//TODO		forse la metto dentro il distruttore del client
-// 	            // clit = clients.erase(clit);
-// 			}
-// 	        else {
-// 	            std::cout << "Maremma li mortacci" << std::endl;
-// 	        }
-// 	        request.flag = 1;
-// 		}
-// 	}
-// }
-
-
-
 //*		private initialization functions
 
 void	Worker::_server_init(const t_conf_block& conf_server_block) {
 	
-	//*		this is actually the first contained virtual server directives
-	//*		we only care about the common directives
-	//*		among all contained virtual servers
+	//*		conf_server_block has a vector of all its virtual servers.
+	//*		Each virtual server has some directives shared across all other virtual servers,
+	//*		which are server-common directives, + some specific ones for the specific virtual server.
+	//*		we only care about the common directives.
 	const std::map<std::string, std::string>&	server_directives
 		= conf_server_block.sub_blocks[0].directives;
 	
@@ -278,7 +248,6 @@ void	Worker::_server_init(const t_conf_block& conf_server_block) {
 	_init_server_addr(server_directives);
 	_print_server_ip_info();
 	_bind_server_socket_to_ip();
-	// exit(0);
 	_make_server_listening();
 	_make_socket_non_blocking(this->servers.back().server_fd);
 	COUT_DEBUG_INSERTION("end of server init\n");

@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/08 17:43:27 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/29 15:54:47 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/06/29 18:54:26 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,7 +56,7 @@ typedef struct s_server {
 	struct sockaddr_in			server_addr;
 	socklen_t					server_addr_len;
 
-	VectorCli					requests;
+	VectorCli					open_connections;
 	
 	s_server(const t_conf_block& server_block) : conf_server_block(server_block) {}
 }	t_server;

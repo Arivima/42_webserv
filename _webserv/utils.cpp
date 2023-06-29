@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/18 10:41:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/29 13:46:14 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/06/29 20:37:01 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -166,6 +166,85 @@ bool	same_host(
 		)
 	);
 }
+
+std::string		take_location_root( const t_conf_block& matching_directives )
+{
+	std::string											root;
+	std::map<std::string, std::string>::const_iterator	root_pos
+		= matching_directives.directives.find("root");
+
+	if (matching_directives.directives.end() != root_pos) {
+		root = matching_directives.directives.at("root");
+		path_remove_leading_slash(root);
+		root += "/";
+	}
+	else
+		root = "./";
+	
+	return (root);
+}
+
+bool	isCGI(
+	const std::map<std::string, std::string>&	req,
+	const t_conf_block&							matching_directives
+)
+{
+	const std::string cgi_extension = take_cgi_extension(
+			req.at("url"),
+			matching_directives.directives
+		);
+		
+	return (
+		false == cgi_extension.empty()
+	);
+}
+
+/**
+ * @brief 
+ * 
+ * @param url 
+ * @param directives 
+ * @return std::string 
+ */
+std::string	take_cgi_extension(
+	const std::string& url,
+	const std::map<std::string, std::string>& directives
+)
+{
+	size_t				cur_dot_pos;
+	std::string			cur_extension;
+	size_t				ext_found_at_pos;
+	std::string			cgi_enable_directive;
+	std::stringstream	cgiDirectiveStream;
+
+	if (directives.end() == directives.find("cgi_enable"))
+		return ("");
+	cgi_enable_directive = directives.at("cgi_enable");
+	cur_dot_pos = 0;
+	while (true)
+	{
+		cur_dot_pos = cgi_enable_directive.find(".", cur_dot_pos);
+		if (std::string::npos == cur_dot_pos)
+			break ;
+		
+		cgiDirectiveStream.str(cgi_enable_directive.substr(cur_dot_pos));
+		std::getline(cgiDirectiveStream, cur_extension, ' ');
+		ext_found_at_pos = url.find(cur_extension);
+		if (
+			//*script at the end
+			ext_found_at_pos + cur_extension.length() == url.length() ||
+			//*additional url info
+			'/' == url[ext_found_at_pos + cur_extension.length()]
+		)
+			return (cur_extension);
+			
+		cur_dot_pos += 1;
+	}
+	return "";
+}
+
+
+
 
 //*		GENERAL PURPOSE UTILITIES
 std::string					strip_spaces(std::string& str) {
@@ -366,34 +445,35 @@ std::string	createHtmlPage(const std::string& body)
 	return (pageStream.str());
 }
 
-std::string	get_cgi_extension(
-	const std::string& path,
-	const std::map<std::string, std::string>& directives
-)
-{
-	std::stringstream	cgiExtensionsStream;
-	std::string			extension;
-	size_t				semicolon_pos;
-	bool				stop;
+//!	NON PIU UTILE
+// std::string	get_cgi_extension(
+// 	const std::string& path,
+// 	const std::map<std::string, std::string>& directives
+// )
+// {
+// 	std::stringstream	cgiExtensionsStream;
+// 	std::string			extension;
+// 	size_t				semicolon_pos;
+// 	bool				stop;
 
-	if (directives.end() == directives.find("cgi_enable"))
-		return ("");
-	cgiExtensionsStream.str(directives.at("cgi_enable"));
-	stop = false;
-	while (false == stop)
-	{
-		std::getline(cgiExtensionsStream, extension, ' ');
-		semicolon_pos = extension.find(";");
-		if (std::string::npos != semicolon_pos) {
-			stop = true;
-			extension.erase(semicolon_pos);
-		}
+// 	if (directives.end() == directives.find("cgi_enable"))
+// 		return ("");
+// 	cgiExtensionsStream.str(directives.at("cgi_enable"));
+// 	stop = false;
+// 	while (false == stop)
+// 	{
+// 		std::getline(cgiExtensionsStream, extension, ' ');
+// 		semicolon_pos = extension.find(";");
+// 		if (std::string::npos != semicolon_pos) {
+// 			stop = true;
+// 			extension.erase(semicolon_pos);
+// 		}
 		
-		if (std::string::npos != path.find(extension))
-			return (extension);
-	}
-	return "";
-}
+// 		if (std::string::npos != path.find(extension))
+// 			return (extension);
+// 	}
+// 	return "";
+// }
 
 
 

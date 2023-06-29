@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 18:07:39 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/29 16:11:50 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/06/29 19:09:10 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,6 +47,8 @@ void	ConnectionSocket::status_switch( void ) {
 			request->getRequest(),
 			assigned_server,
 			sock_fd,
+			client_IP,
+			server_IP,
 			edata
 		);
 		response->generateResponse();

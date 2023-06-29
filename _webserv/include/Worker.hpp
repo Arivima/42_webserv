@@ -38,18 +38,15 @@
 // #include "Exceptions.hpp"
 
 class Worker{
-
-	//*		TYPEDEFS
-public:
-
-	//*		Member variables
 private:
+	//*	vector holding t_serv (server conf block with virtual servers sub_blocks + server port and sock fd
+	//*	+ vector of open connections) objects.
 	VectorServ				servers;
-	t_epoll_data			edata;
+	t_epoll_data			edata;		//*	epoll instance fd + epoll current events 
 
 	//*		Member functions
 public:
-	Worker(const t_conf_block& conf_enclosing_block);
+	Worker(const t_conf_block& root_block);
 	~Worker();
 	
 	void workerLoop();
@@ -58,7 +55,6 @@ private:
 	//*		private helper functions
 	void	_io_multiplexing_using_epoll();
 	void	_serve_clientS( void );
-	// void	_serve_client( ConnectionSocket& request );
 	void	_handle_new_connectionS( void );
 	void	_handle_new_connection();
 
