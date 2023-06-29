@@ -448,6 +448,7 @@ std::string		Response::getIndexPage( const std::string& root, std::string path )
 		return ("");
 }
 
+//TODO	move to utils with ref to matching directives as argument
 std::string		Response::take_location_root( void )
 {
 	std::string											root;
@@ -470,7 +471,7 @@ void	Response::generatePOSTResponse( void )
 	COUT_DEBUG_INSERTION("Response::generatePOSTResponse" << std::endl);
 	const std::string				root = take_location_root();
 	const std::string				path = this->req.at("url");
-	std::string						extension;
+	std::string						cgi_extension;
 
 	if ( // checks if POST is an allowed method in the configuration file at this location
 		(this->matching_directives.directives.find("method") != this->matching_directives.directives.end()) \
@@ -479,13 +480,13 @@ void	Response::generatePOSTResponse( void )
 	}
 
 	// checks if CGI is a set directive in the configuration file at this location 
-	// && path is matching with a valid extension
-	extension = get_cgi_extension(path, this->matching_directives.directives);
-	if (extension.empty() == true)
+	// && path is matching with a valid cgi_extension
+	cgi_extension = get_cgi_extension(path, this->matching_directives.directives);
+	if (cgi_extension.empty() == true)
 		throw HttpError(405, this->matching_directives, take_location_root());
 
 	// create CGI object
-	CGI = new cgi(req, extension);
+	CGI = new cgi(req, this->matching_directives, cgi_extension);
 	cgi.launch();
 	this->response = cgi.getResponse();
 }

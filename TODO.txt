@@ -1,3 +1,11 @@
+Giovedi
+4. mettere .hpp functions of cgi class in .cpp
+1.	Refactor Classes so that Request Response and CGI can have client ip
+2.	move take_location_root in utils
+3. update REMOTE_ADDR
+5. launch
+
+
 togliere set buffer size del socket nel Worker (setsockopt)
 
 

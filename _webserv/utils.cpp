@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/18 10:41:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/28 15:38:34 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/06/29 13:46:14 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -266,7 +266,7 @@ bool	str_compare_words(const std::string& str_haystack, const std::string& str_n
 
 void	path_remove_leading_slash(std::string& pathname)
 {
-	if ('/' == pathname[0])
+	if (pathname.empty() == false && '/' == pathname[0])
 		pathname = pathname.substr(1);
 }
 
