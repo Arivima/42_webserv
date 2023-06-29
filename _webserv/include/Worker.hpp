@@ -65,7 +65,10 @@ private:
 	//*		private initialization functions
 	void	_server_init(const t_conf_block& conf_server_block);
 	void	_create_server_socket();
-	int		_create_ConnectionSocket(t_server& server);	
+	int		_create_ConnectionSocket(
+		t_server& server,
+		std::string& client_IP, std::string& server_IP
+	);
 	void	_epoll_register_ConnectionSocket(int cli_socket);
 	void	_set_socket_as_reusable();
 	void	_init_server_addr(

@@ -3,15 +3,18 @@
 /*                                                        :::      ::::::::   */
 /*   ConnectionSocket.hpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 17:56:31 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/23 11:31:04 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/29 16:11:40 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef CONNECTIONSOCKET_HPP
 # define CONNECTIONSOCKET_HPP
+
+#include <sys/socket.h>	// socket, AF_INET, SOCK_STREAM, recv, bind, socklen_t
+#include <arpa/inet.h>	//	sockaddr_in
 
 # include "Webserv.hpp"
 # include "Response.hpp"
@@ -35,17 +38,22 @@ public:
 private:
 	t_CONNECTION_STATUS						status;						//*	REQUEST or RESPONSE
 	const int								sock_fd;					//*	connetction socket fd
-	const t_server&							assigned_server;
+	const std::string						client_IP;					//*	ip of remote client
+	const std::string						server_IP;					//*	the interface, among all the assigned_server utilized interfaces, where the connection got accepted.
+	const t_server&							assigned_server;			//* struct containing server + requests + conf block
 	const t_epoll_data&						edata;						//*	epoll data reference
 	Response*								response;					//*	response data of current request
-	Request*								request;					//*	response data of current request
+	Request*								request;					//*	request data of current request
 
 public:
 	//*		main Constructors and Destructors
 						ConnectionSocket(
-							int sock_fd,
-							const t_server& assigned_server,
-							const t_epoll_data& edata);
+								int							sock_fd,
+								const std::string&			client_IP,
+								const std::string&			server_IP,
+								const t_server&				assigned_server,
+								const t_epoll_data&			edata
+						);
 	//*		main Functions
 	void				serve_client( void );
 	int					getSockFD( void );

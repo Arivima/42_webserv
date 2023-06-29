@@ -1,9 +1,12 @@
 Giovedi
-4. mettere .hpp functions of cgi class in .cpp
-1.	Refactor Classes so that Request Response and CGI can have client ip
-2.	move take_location_root in utils
-3. update REMOTE_ADDR
-5. launch
+	Arielle
+		DONE	4. mettere .hpp functions of cgi class in .cpp
+		WIP		5. launch
+
+	Matteo
+	DONE//1.	Refactor Classes so that Request Response and CGI can have client ip
+	2.	move take_location_root in utils
+	DONE//3. update REMOTE_ADDR
 
 
 togliere set buffer size del socket nel Worker (setsockopt)

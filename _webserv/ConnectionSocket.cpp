@@ -3,23 +3,28 @@
 /*                                                        :::      ::::::::   */
 /*   ConnectionSocket.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 18:07:39 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/23 11:02:02 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/29 16:11:50 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "include/ConnectionSocket.hpp"
-#include <iostream>	//cout
+#include <iostream>		//cout
 #include <unistd.h>
 
 //*		Main Constructor
 ConnectionSocket::ConnectionSocket(
-								int sock_fd,
-								const t_server& assigned_server,
-								const t_epoll_data& edata) :
+								int							sock_fd,
+								const std::string&			client_IP;
+								const std::string&			server_IP;
+								const t_server&				assigned_server,
+								const t_epoll_data&			edata
+) :
 	sock_fd(sock_fd),
+	client_IP(client_IP),
+	server_IP(server_IP),
 	assigned_server(assigned_server),
 	edata(edata)
 {

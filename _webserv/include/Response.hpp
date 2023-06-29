@@ -52,6 +52,8 @@ private:
 	const std::map<std::string, std::string>	req;
 	const t_server&								assigned_server;
 	const int									sock_fd;
+	const std::string&							client_IP;				//*	ip of remote client
+	const std::string&							server_IP;				//*	the interface, among all the assigned_server utilized interfaces, where the connection got accepted.
 	const t_epoll_data&							edata;
 	std::vector<char>							response;
 	// CGI 										cgi;
@@ -62,6 +64,8 @@ public:
 								const std::map<std::string, std::string>& req,
 								const t_server& assigned_server,
 								const int sock_fd,
+								const std::string& client_IP,
+								const std::string& server_IP,
 								const t_epoll_data& edata);
 
 	//*		main functionalities

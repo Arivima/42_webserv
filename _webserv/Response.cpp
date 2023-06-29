@@ -24,12 +24,17 @@ Response::Response(
 	const std::map<std::string, std::string>& req,
 	const t_server& assigned_server,
 	const int sock_fd,
-	const t_epoll_data& edata)
+	const std::string& client_IP,
+	const std::string& server_IP,
+	const t_epoll_data& edata
+)
 		:
 		matching_directives(takeMatchingDirectives(assigned_server.conf_server_block, req)),
 		req(req),
 		assigned_server(assigned_server),
 		sock_fd(sock_fd),
+		client_IP(client_IP),
+		server_IP(server_IP),
 		edata(edata)
 {
 }

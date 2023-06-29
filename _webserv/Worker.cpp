@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Worker.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/06 21:15:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/26 12:33:28 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/29 16:11:27 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -127,7 +127,10 @@ void	Worker::_io_multiplexing_using_epoll(){
 }
 
 void	Worker::_handle_new_connectionS() {
-	int						cli_socket;
+	
+	int				cli_socket;
+	std::string		client_IP;
+	std::string		server_IP;
 	
 	for (
 		VectorServ::iterator serv_it = servers.begin();
@@ -137,34 +140,51 @@ void	Worker::_handle_new_connectionS() {
 		if (this->edata.getEpollEvent((*serv_it).server_fd) &&
 		this->edata.getEpollEvent((*serv_it).server_fd)->events & EPOLLIN)
 		{
-			cli_socket = _create_ConnectionSocket((*serv_it));
+			cli_socket = _create_ConnectionSocket((*serv_it), client_IP, server_IP);
 			_epoll_register_ConnectionSocket(cli_socket);
-		    //*     modifying rcv buffer
-		    int buffer_size = 512000;
-		    int snd_buffer_size = 512000;
-		    if (
+			
+			//*		modifying rcv buffer
+			int buffer_size = 512000;
+			int snd_buffer_size = 512000;
+			if (
 				-1 == setsockopt(cli_socket, SOL_SOCKET, SO_RCVBUF, &buffer_size, sizeof(buffer_size)) ||
 				-1 == setsockopt(cli_socket, SOL_SOCKET, SO_SNDBUF, &snd_buffer_size, sizeof(snd_buffer_size))
 			)
-		    {
+			{
 				return ;
-		        // close(server_fd);
-		        // ftError("setsockopt() failed : setting rcv buffer size");
-		    }
-						
-			//*     adding to list of clients
-			(*serv_it).requests.push_back(new ConnectionSocket(cli_socket, *serv_it, edata));
+				// close(server_fd);
+				// ftError("setsockopt() failed : setting rcv buffer size");
+			}
+			
+			//*		adding to list of clients
+			(*serv_it).requests.push_back(
+				new ConnectionSocket(cli_socket, client_IP, server_IP, *serv_it, edata)
+			);
 		}
 	}
 	// std::cout << std::endl;
 }
 
-int	Worker::_create_ConnectionSocket( t_server& server ) {
-	
+/**
+ * @brief this function accepts a new connection and sets client and server selected interface IPs.
+ * 
+ * @param server 
+ * @param client_IP 
+ * @param server_IP 
+ * @return int : the socket file descriptor for the new connection.
+ */
+int	Worker::_create_ConnectionSocket(
+	t_server& server,
+	std::string& client_IP, std::string& server_IP
+	)
+{
 	int						cli_socket;
 	struct sockaddr_in		cli_addr;
-	socklen_t				cli_addr_len = sizeof(cli_addr);
+	socklen_t				cli_addr_len 		= sizeof(cli_addr);
+	struct sockaddr_in		server_addr;
+	socklen_t				server_addr_len		= sizeof(server_addr);
 
+	//*		Accepting
 	std::cout  << std::endl << "\033[1m\033[32m""handle_new_connection() called()""\033[0m" << std::endl;
 	COUT_DEBUG_INSERTION("accept on port " << server.server_port << std::endl)
 	std::cout << "---------------accept()" << std::endl;
@@ -172,8 +192,18 @@ int	Worker::_create_ConnectionSocket( t_server& server ) {
 	if (-1 == cli_socket){
 		throw (SystemCallException("accept()"));
 	}
+	
+	//*		Making non-blocking
 	_make_socket_non_blocking(cli_socket);
 	std::cout << "new connection socket : " << cli_socket << std::endl;
+
+	//*		Setting Client IP
+	client_IP = inet_ntoa(cli_addr.sin_addr);
+	
+	//*		Setting Server selected interface IP
+	if (-1 == getsockname(cli_socket, (struct sockaddr*)&server_addr, &server_addr_len))
+		throw (SystemCallException("getsockname()"));
+	serverIP = inet_ntoa(server_addr);
 
 	return (cli_socket);
 }
