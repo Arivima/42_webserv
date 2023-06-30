@@ -85,6 +85,7 @@ private:
 		int status, std::string description, std::string& filepath,
 		size_t	body_size
 	);
+	bool	isMethodAllowed(void);
 	//TODO		forse move in utils
 	size_t							locationMatch(
 		const t_conf_block& location, const std::string& req_url

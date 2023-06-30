@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/18 10:41:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/29 20:37:01 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/06/30 12:40:11 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -167,14 +167,22 @@ bool	same_host(
 	);
 }
 
-std::string		take_location_root( const t_conf_block& matching_directives )
+/**
+ * @brief this function takes the root for the current location block.
+ * Directive 'upload_path' for file upload requests,
+ * directive 'root' for all other requests.
+ * 
+ * @param matching_directives 
+ * @return std::string 
+ */
+std::string		take_location_root( const t_conf_block& matching_directives, bool file_upload )
 {
+	std::string											directive = file_upload ? "upload_path" : "root";
 	std::string											root;
-	std::map<std::string, std::string>::const_iterator	root_pos
-		= matching_directives.directives.find("root");
+	std::map<std::string, std::string>::const_iterator	root_pos = matching_directives.directives.find(directive);
 
 	if (matching_directives.directives.end() != root_pos) {
-		root = matching_directives.directives.at("root");
+		root = matching_directives.directives.at(directive);
 		path_remove_leading_slash(root);
 		root += "/";
 	}

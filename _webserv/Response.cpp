@@ -46,10 +46,20 @@ Response::~Response() {
 //TODO check that the request method is inside the list of accepted method
 //TODO inside the conf block (i.e.: "method" directive)
 void	Response::generateResponse( void ) {
-	try {
-		if (isCGI(this->req, this->matching_directives))
+
+	std::string		cgi_extension;
+	size_t			method_found_at_pos;
+	
+	try
+	{
+		if (false == isMethodAllowed())
+			throw (HttpError(405, matching_directives, take_location_root(matching_directives, false)));
+		
+		cgi_extension = take_cgi_extension(
+			req.at("url"), matching_directives.directives
+		);
+		if (false == cgi_extension.empty())
 		{
-			throw (std::runtime_error("CGI not implemented"));
 			// this->cgi = new CGI(req);
 			// this->cgi->launch();
 			// this->response = this->cgi->getResponse();
@@ -63,11 +73,30 @@ void	Response::generateResponse( void ) {
 		// 	return (generatePUTResponse());
 		// if ("DELETE" == this->req.at("method"))
 		// 	return (generateDELETEResponse());
-		throw (HttpError(501, this->matching_directives, take_location_root(this->matching_directives)));
+		throw (HttpError(501, this->matching_directives, take_location_root(matching_directives, false)));
 	}
 	catch (const HttpError& e) {
 		this->response = e.getErrorPage();
 	}
+}
+
+bool	Response::isMethodAllowed(void)
+{
+	std::stringstream	methodDirectiveStream;
+	std::string			cur_method;
+
+	if ("GET" == req.at("method"))
+		return (true);
+	if (matching_directives.directives.end() == matching_directives.directives.find("method"))
+		return (false);
+	
+	methodDirectiveStream.str(matching_directives.directives.at("method"));
+	while (std::getline(methodDirectiveStream, cur_method, ' '))
+	{
+		if (req.at("method") == cur_method)
+			return (true);
+	}
+	return (false);
 }
 
 //TODO	TOMORROW
@@ -101,7 +130,7 @@ void	Response::send_line( void )
 				this->sock_fd, response.data(), response.size(), 0
 			);
 			if (bytes_sent < 0)
-				throw HttpError(500, matching_directives, take_location_root());
+				throw HttpError(500, matching_directives, take_location_root(matching_directives, false));
 			else
 			if (0 == bytes_sent)
 				throw TaskFulfilled();
@@ -116,34 +145,25 @@ void	Response::send_line( void )
 // refactor to clean + test and make sure all cases are covered
 void	Response::generateGETResponse( void )
 {
-	std::string	reqRelativePath;
-	std::string	requested_file_cgi_extension;
+	std::string	reqRelativePath = req.at("url");
 	size_t		query_string_pos;
 
-	reqRelativePath = req.at("url");
-	requested_file_cgi_extension = get_cgi_extension(
-		reqRelativePath, this->matching_directives.directives
-	);
-
-	if (requested_file_cgi_extension.empty()) {
-		//*		STATIC GET
-		query_string_pos = reqRelativePath.find("?");
-		if (std::string::npos != query_string_pos)
-			reqRelativePath.substr(0, query_string_pos);
-		GETStatic(reqRelativePath);
-	}
-	else {
-		//*		QUERY STRING GET (DYNAMIC)
-		this->cgi = new CGI(req);
-		this->cgi->launch();
-		this->response = this->cgi->getResponse();
-	}
+	//*		STATIC GET discards query parameters
+	query_string_pos = reqRelativePath.find("?");
+	if (std::string::npos != query_string_pos)
+		reqRelativePath.substr(0, query_string_pos);
+	
+	GETStatic(reqRelativePath);
 }
 
 void	Response::GETStatic( const std::string& reqRelativePath )
 {
-	const std::string				root = take_location_root();
-	const std::string				reqPath(http_req_complete_url_path(reqRelativePath, root));
+	const std::string				root = take_location_root(matching_directives, false);
+	const std::string				reqPath(http_req_complete_url_path(
+										remove_query_string(reqRelativePath),
+										root
+										)
+									);
 	std::string						headers;
 	std::vector<char>				page;
 	std::string						filePath = "";
@@ -179,7 +199,7 @@ void	Response::GETStatic( const std::string& reqRelativePath )
 
 		if (false == docstream.is_open()) {
 			COUT_DEBUG_INSERTION("throwing page not found\n")
-			throw HttpError(404, matching_directives, take_location_root());
+			throw HttpError(404, matching_directives, take_location_root(matching_directives, false));
 		}
 		try {
 			page.insert(
@@ -189,7 +209,7 @@ void	Response::GETStatic( const std::string& reqRelativePath )
 		}
 		catch (const std::exception& e) {
 			COUT_DEBUG_INSERTION("throwing Internal Server Error\n")
-			throw HttpError(500, matching_directives, take_location_root());
+			throw HttpError(500, matching_directives, take_location_root(matching_directives, false));
 		}
 		headers = getHeaders(200, "OK", filePath, page.size());
 	}
@@ -460,27 +480,18 @@ std::string		Response::getIndexPage( const std::string& root, std::string path )
 
 void	Response::generatePOSTResponse( void )
 {
-	COUT_DEBUG_INSERTION("Response::generatePOSTResponse" << std::endl);
-	const std::string				root = take_location_root();
-	const std::string				path = this->req.at("url");
-	std::string						cgi_extension;
+	const std::string				upload_path = take_location_root(matching_directives, true);
+	std::string						reqPath(req.at("url"));
+	std::string						headers;
+	std::vector<char>				page;
+	std::string						filePath = "";
 
-	if ( // checks if POST is an allowed method in the configuration file at this location
-		(this->matching_directives.directives.find("method") != this->matching_directives.directives.end()) \
-		&& (this->matching_directives.directives.at("method").find("POST") == std::string::npos)){
-			throw HttpError(403, this->matching_directives, take_location_root());
-	}
+	path_remove_leading_slash(reqPath);
+	filePath = upload_path + reqPath;
+	
+	COUT_DEBUG_INSERTION("trying to create file : " << upload_path + reqPath << std::endl)
+	std::ifstream					newFileStream(filePath.c_str(), std::ios_binary);
 
-	// checks if CGI is a set directive in the configuration file at this location 
-	// && path is matching with a valid cgi_extension
-	cgi_extension = get_cgi_extension(path, this->matching_directives.directives);
-	if (cgi_extension.empty() == true)
-		throw HttpError(405, this->matching_directives, take_location_root());
-
-	// create CGI object
-	CGI = new cgi(req, this->matching_directives, cgi_extension);
-	cgi.launch();
-	this->response = cgi.getResponse();
 }
 
 

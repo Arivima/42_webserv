@@ -4,7 +4,7 @@
 # include	<sstream>
 # include	<sys/socket.h>
 # include	<arpa/inet.h>
-# include	<unistd.h>			// fork, dup2, execve, write
+# include	<unistd.h>			// fork, dup2, execve, write, close
 # include	<sys/wait.h>		// wait
 # include	<fcntl.h>			// open
 
@@ -17,7 +17,8 @@ CGI::CGI(
 	const t_conf_block&							matching_directives,
 	std::string									cgi_ext
 )
-: sock_fd(sock_fd), client_IP(client_IP), server_IP(server_IP), url(req.at("url")), cgi_extension(cgi_ext), path_info(), script_name(), query_str(), response() 
+: sock_fd(sock_fd), client_IP(client_IP), server_IP(server_IP), url(req.at("url")),\
+ cgi_extension(cgi_ext), path_info(), script_name(), query_str(), response(), req(req)
 {
 	init_paths();	// initialize path_info, script_name and query_str
 	init_env();		// initialize environment variables
@@ -30,48 +31,80 @@ CGI::~CGI()
 		free(cgi_env[i]);
 }
 
+std::string CGI::get_env_value(const std::string & key){
+	for (int i = 0; this->cgi_env[i]; ++i){
+		std::string line = std::string(this->cgi_env[i]);
+		size_t pos_key = line.find(key + "=");
+		if (pos_key == 0) // should always be at the beginning of line
+			return line.substr(key.size() + 1);
+	}
+	return std::string("");
+}
+
+
+		#include <fstream>
+		#include <iostream>
 void CGI::launch()
 {
 	pid_t pid = 0;
 
 	// need to chose where to put the creation of files
+		// file_in = open("cgi-bin/cgi_input.txt", O_RDONLY);
 
 	pid = fork();
-	if (pid == -1){			// error
+	if (pid == -1){
 		throw SystemCallException("fork()");
 	}
 	else if (pid == 0){		// child -> CGI
-	// create cmd to give to execve
-		char ** av = 
+	// do we need 0666 mode ?
+	// create an input stream
 
-	// create an input file
-		int file_in = open("cgi_input.txt", O_RDWR | O_CREAT | O_TRUNC, 0666);
-		if (file_in == -1)
-			throw SystemCallException("open()");
-		// file_in = open("cgi_input.txt", O_RDONLY);
-	// write to the input file the content of the request body/query
-		size_t ret = write(inFile, av.c_str(), av.size());
-		if (ret == -1)
-			throw SystemCallException("write()");
-	// create an output file
-		int file_out = open("cgi_output.txt", O_RDWR | O_CREAT | O_TRUNC, 0666);
-		if (file_out == -1)
-			throw SystemCallException("open()");	// put the body in the file
+
+		std::string input;
+		if (req.find("body") != std::string::npos)
+			input = req["body"];
+		input += "\n" + get_env_value("QUERY_STRING") + "\n";
+		// write to the input file the content of the request body/query
 		
-	// duping fd
-		// if no body ? dup or not ?
-		if (dup2(file_in, stdin) == -1)
-			throw SystemCallException("dup2()");
-		if (dup2(file_out, stdout) == -1)
-			throw SystemCallException("dup2()");
+		std::fstream		instream(".cgi_input.txt", std::ios::in | std::ios::out | std::ios::trunc);
+		if (false == instream.is_open())
+			throw SystemCallException("is_open()"); // where, which function, which object
+		instream << input;
+		if (true == instream.fail())
+			throw SystemCallException("<<()"); // where, which function, which object
 
+
+
+	// create an output stream
+		std::fstream		outstream(".cgi_output.txt", std::ios::in | std::ios::out | std::ios::trunc);
+		if (false == outstream.is_open()) {
+			throw SystemCallException("is_open()"); // where, which function, which object
+		}
+	// duping fd // if no body ? dup or not ? -> handled by CGI ?
+		int fd_in = instream.rdbuf()->fd();
+		int fd_out = outstream.rdbuf()->fd();
+
+		if (dup2(fd_in, stdin) == -1)
+			throw SystemCallException("dup2()");
+		if (dup2(fd_out, stdout) == -1)
+			throw SystemCallException("dup2()");
+	// creates arguments for execve
+			char ** cmd = 
 	// executing cgi
-		if (execve(av[0], av, this->cgi_env) == -1)
+		if (execve(cmd[0], cmd, this->cgi_env) == -1)
 			throw SystemCallException("execve()");
 	// close fd, free resources
+		instream.close(); // not necessary, destructor when out of scope
 
+		if (close(file_in) == -1)
+			throw SystemCallException("close()");
+		if (close(file_out) == -1)
+			throw SystemCallException("close()");
+		free_arr(av);
+		free_arr(cmd);
+		// put unlink 
 	}
-	else {              	// parent
+	else {              	// back to parent
 		if (wait(0) == -1)
 			throw SystemCallException("wait()");
 		
@@ -79,7 +112,8 @@ void CGI::launch()
 			// open fileout;
 			// read fileout;
 			// update response
-			// free resources
+		// free resources, close fd
+		instream.close(); // not necessary, destructor when out of scope
 	}
 }
 

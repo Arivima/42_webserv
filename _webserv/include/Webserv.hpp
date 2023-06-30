@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/05 15:27:54 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/29 20:16:54 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/06/30 12:38:28 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,7 +74,7 @@ std::string 				block_get_name(t_config_block_level level);
 bool						mandatory_server_directives_present(const t_conf_block& current);
 bool						same_server( const t_conf_block& server, const t_conf_block& virtual_serv2);
 bool						same_host( const t_conf_block& virtual_serv1, const t_conf_block& virtual_serv2);
-std::string					take_location_root( const t_conf_block& matching_directives );
+std::string					take_location_root( const t_conf_block& matching_directives, bool file_upload );
 bool						isCGI(
 								const std::map<std::string, std::string>&	req,
 								const t_conf_block&							matching_directives

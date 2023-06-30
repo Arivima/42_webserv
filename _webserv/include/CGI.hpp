@@ -19,6 +19,7 @@ class CGI {
 		std::string			url, cgi_extension, path_info, script_name, query_str; //! refactor if not used after constructor
 		char*				cgi_env[CGI_ENV_SIZE + 1];
 		std::vector<char>	response;
+		const std::map<std::string, std::string> &	req;
 
 	//*		Private member functions
 	private:
