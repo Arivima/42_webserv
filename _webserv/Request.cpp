@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 17:19:26 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/23 11:02:14 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/30 16:16:27 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,70 +62,14 @@ void	Request::parse_line( void ) { //std::cout  << std::endl << "\033[1m\033[32m
 	// std::cout << std::endl;
 }
 
-void	Request::parse_body( void ) {
-	if (0 == cur_body_size) {
-		req["body"] = cur_line;
-		cur_line.erase(0);
-		throw TaskFulfilled();
-	}
-}
-
-void	Request::parse_req_line( std::string& req_line ) {
-
-	std::stringstream	reqline_stream(req_line);
-	std::string			method;
-	std::string			url;
-	std::string			http_version;
-
-	std::getline(reqline_stream, method, ' ');
-	std::getline(reqline_stream, url, ' ');
-	std::getline(reqline_stream, http_version);
-	req["method"] = method;
-	req["url"] = url;
-	req["http_version"] = http_version;
-}
-
-void	Request::parse_header( void ) { //std::cout << "reading headers" << std::endl;
-	
-	if (std::string::npos != cur_line.find("\r\n")) {
-		if ("\r\n" == cur_line) {
-			if (req.end() != req.find("Content-Length"))
-			{
-				parser_status = e_READING_BODY;
-				cur_body_size = std::atol(req["Content-Length"].c_str());
-			}
-			else {
-				throw TaskFulfilled();
-			}
-		}
-		else {
-			cur_line.erase(std::remove(cur_line.begin(), cur_line.end(), '\r'),  cur_line.end());
-			cur_line.erase(std::remove(cur_line.begin(), cur_line.end(), '\n'),  cur_line.end());
-			if (req.empty()) {
-				parse_req_line(cur_line);
-			}
-			else {
-				std::stringstream	str_stream(cur_line);
-				std::string			key;
-				std::string			value;
-				
-				std::getline(str_stream, key, ':');
-				std::getline(str_stream, value);
-				req[key] = value;
-			}
-		}
-		cur_line.erase(0);
-	}
-	// std::cout << "reading headers---END" << std::endl;
-}
-
 void	Request::read_line( void ) { //std::cout  << std::endl << "\033[1m\033[32m""read_line() called()""\033[0m" << std::endl;
 
 	const struct epoll_event*	eevent = edata.getEpollEvent(this->sock_fd);
 
 	if (NULL != eevent && (eevent->events & EPOLLIN)) {
 		memset(rcv_buf, '\0', RCV_BUF_SIZE + 1);
-		if (recv(sock_fd, rcv_buf, RCV_BUF_SIZE, 0) <= 0)
+		bytes_read = recv(sock_fd, rcv_buf, RCV_BUF_SIZE, 0);
+		if ( bytes_read <= 0)
 			throw (SockEof());
 		sock_stream << rcv_buf;
 	}
@@ -137,19 +81,6 @@ void	Request::read_line( void ) { //std::cout  << std::endl << "\033[1m\033[32m"
 		read_body();
 	}
 	// std::cout << std::endl;
-}
-
-void	Request::read_body( void ) {
-
-	std::streamsize		buf_len = sock_stream.str().length();//()->in_avail();
-	std::streamsize		bytes_read;
-	char				buf[buf_len + 1];
-
-	memset(buf, '\0', buf_len + 1);
-	sock_stream.read(buf, buf_len);
-	bytes_read = sock_stream.gcount();
-	cur_line += buf;
-	cur_body_size -= bytes_read;
 }
 
 void	Request::read_header( void ) {
@@ -168,6 +99,85 @@ void	Request::read_header( void ) {
 	// std::cout << "line_read: " << debug_string << " has_eol: " << has_eol << std::endl;
 }
 
+void	Request::read_body( void ) {
+	this->body.insert(
+		this->body.end(),
+		this->rcv_buf,
+		this->rcv_buf + bytes_read
+	);
+	cur_body_size -= bytes_read;
+}
+
+void	Request::parse_header( void ) { //std::cout << "reading headers" << std::endl;
+	
+	if (std::string::npos != cur_line.find("\r\n")) {
+		if ("\r\n" == cur_line) {
+			if (req.end() != req.find("Content-Length"))
+			{
+				parser_status = e_READING_BODY;
+				cur_body_size = std::atol(req["Content-Length"].c_str());
+			}
+			else {
+				throw TaskFulfilled();
+			}
+		}
+		else {
+			cur_line.erase(std::remove(cur_line.begin(), cur_line.end(), '\r'),  cur_line.end());
+			cur_line.erase(std::remove(cur_line.begin(), cur_line.end(), '\n'),  cur_line.end());
+			
+			if (req.empty()) {
+				//*		first element in the request ...req line
+				parse_req_line(cur_line);
+			}
+			else {
+				//*		header line
+				std::stringstream	str_stream(cur_line);
+				std::string			key;
+				std::string			value;
+				
+				std::getline(str_stream, key, ':');
+				std::getline(str_stream, value);
+				req[key] = value;
+			}
+		}
+		cur_line.erase(0);
+	}
+	// std::cout << "reading headers---END" << std::endl;
+}
+
+void	Request::parse_req_line( std::string& req_line ) {
+
+	std::stringstream	reqline_stream(req_line);
+	std::string			method;
+	std::string			url;
+	std::string			http_version;
+
+	std::getline(reqline_stream, method, ' ');
+	std::getline(reqline_stream, url, ' ');
+	std::getline(reqline_stream, http_version);
+	req["method"] = method;
+	req["url"] = url;
+	req["http_version"] = http_version;
+}
+
+void	Request::parse_body( void ) {
+	//!	Inserting charatcers in std::string using ranges it's the only
+	//!	way to make it work when there are multiple nul bytes (/0) in the char buffer.
+	//!	The end() iterator and string length() will be set with respect to the buffer length.
+	//!	
+	//!	All other forms of initialization will set the end() iterator and string length()
+	//!	with respect to the position of the first nul byte (/0)
+	if (0 == cur_body_size) {
+		req["body"].insert(
+			req["body"].begin(),
+			body.begin(),
+			body.end()
+		);
+		body.clear();
+		throw TaskFulfilled();
+	}
+}
+
 void	Request::print_req( void ) {
 	std::cout << "| START print_req |" << std::endl;
 	for (std::map<std::string, std::string>::iterator it = req.begin(); it != req.end(); it++) {
@@ -175,4 +185,3 @@ void	Request::print_req( void ) {
 	}
 	std::cout << "| END print_req |" << std::endl;
 }
-

@@ -3,19 +3,21 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 15:41:58 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/26 12:11:07 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/30 15:15:24 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef REQUEST_HPP
 # define REQUEST_HPP
 
-# include <map>
+# include <map>//*request object
+# include <vector>//*body
+
 # include <string>
-# include <sstream>
+# include <sstream>//*stringstream for getline
 
 # include "Webserv.hpp"
 # include "EpollData.hpp"
@@ -24,6 +26,7 @@
  * @brief The purpose of this class is to parse a http request into a more convenient format.
  * When parsing is done, a fulfillment exception is thrown; after a fulfillment exception is thrown,
  * only getters may be used.
+ * A fulfillment exception is an exception that signals done work for an object.
  */
 class Request {
 private:
@@ -38,9 +41,17 @@ private:
 	const int								sock_fd;
 	const t_epoll_data&						edata;
 	std::map<std::string, std::string>		req;
-	char									rcv_buf[RCV_BUF_SIZE + 1];	//*	
+
+	//*	low level recv buffer data
+	char									rcv_buf[RCV_BUF_SIZE + 1];
+	int										bytes_read;
+
+	//*	header handling variables
 	std::stringstream						sock_stream;
-	std::string								cur_line;					//*	current req line
+	std::string								cur_line;	//*	current header req line
+
+	//*	body handling variables
+	std::vector<char>						body;
 	int										cur_body_size;
 
 public:

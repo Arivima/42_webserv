@@ -14,26 +14,9 @@ class CGI {
 	//*		Private member attributes
 	private:
 		const int			sock_fd;
-		const std::string&	client_IP;	//*	ip of remote client
-		const std::string&	server_IP;	//*	the interface, among all the assigned_server utilized interfaces, where the connection got accepted.
-		std::string			url, cgi_extension, path_info, script_name, query_str; //! refactor if not used after constructor
 		char*				cgi_env[CGI_ENV_SIZE + 1];
 		std::vector<char>	response;
 		const std::map<std::string, std::string> &	req;
-
-	//*		Private member functions
-	private:
-		void				init_paths();
-		void				init_env();
-		
-		//* Unused default/copy constructor, copy operator
-		CGI();
-		CGI(const CGI & c);
-		CGI&				operator=(const CGI & c);
-
-		//* Debug
-		void				print_arr(std::string& title);
-
 
 	//*		Public member functions
 	public:
@@ -43,12 +26,27 @@ class CGI {
 			const std::string&							server_IP,
 			const std::map<std::string, std::string>	req,
 			const t_conf_block&							matching_directives,
-			std::string									cgi_ext
+			const std::string &							interpreter_path,
+			const std::string &							cgi_ext
 		);
 		~CGI();
 		void				launch();
 		std::vector<char>	getResponse();
-	}
+		std::string			get_env_value(const std::string & key);
+
+	//*		Private member functions
+	private:
+		void				init_env_paths(std::string root, std::string cgi_extension);
+		void				init_env(const t_conf_block& matching_directives, const std::string& client_IP, const std::string& server_IP);
+
+		//* Unused default/copy constructor, copy operator
+		CGI();
+		CGI(const CGI & c);
+		CGI&				operator=(const CGI & c);
+
+		//* Debug
+		void				print_arr(char ** arr, const std::string & title);
+}
 #endif
 
 // DICTIONNARY OF ALL CGI PROTOCOL ENVIRONMENT VARIABLES

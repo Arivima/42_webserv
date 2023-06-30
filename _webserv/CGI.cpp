@@ -7,6 +7,9 @@
 # include	<unistd.h>			// fork, dup2, execve, write, close
 # include	<sys/wait.h>		// wait
 # include	<fcntl.h>			// open
+# include	<fstream>
+# include	<iostream>
+# include	<cstdio>
 
 //*		Public member functions
 CGI::CGI(
@@ -15,14 +18,14 @@ CGI::CGI(
 	const std::string&							server_IP,
 	const std::map<std::string, std::string>	req,
 	const t_conf_block&							matching_directives,
-	std::string									cgi_ext
+	std::string									cgi_extension
 )
-: sock_fd(sock_fd), client_IP(client_IP), server_IP(server_IP), url(req.at("url")),\
- cgi_extension(cgi_ext), path_info(), script_name(), query_str(), response(), req(req)
+: sock_fd(sock_fd), response(), req(req)
 {
-	init_paths();	// initialize path_info, script_name and query_str
-	init_env();		// initialize environment variables
-	print_arr(cgi_env, "CGI Environment");
+	std::cout << "CGI Constructor" << std::endl;
+	init_env_paths(take_location_root(matching_directives, false), cgi_extension);
+	init_env(matching_directives, client_IP, server_IP);
+	print_arr(this->cgi_env, std::string("CGI Environment"));
 }
 
 CGI::~CGI()
@@ -31,96 +34,90 @@ CGI::~CGI()
 		free(cgi_env[i]);
 }
 
+std::vector<char> CGI::getResponse()
+{
+	return this->response;
+}
+
 std::string CGI::get_env_value(const std::string & key){
 	for (int i = 0; this->cgi_env[i]; ++i){
 		std::string line = std::string(this->cgi_env[i]);
 		size_t pos_key = line.find(key + "=");
-		if (pos_key == 0) // should always be at the beginning of line
+		if (pos_key == 0)
 			return line.substr(key.size() + 1);
 	}
 	return std::string("");
 }
 
-
-		#include <fstream>
-		#include <iostream>
+// interpreter
 void CGI::launch()
 {
 	pid_t pid = 0;
 
-	// need to chose where to put the creation of files
-		// file_in = open("cgi-bin/cgi_input.txt", O_RDONLY);
-
 	pid = fork();
-	if (pid == -1){
+
+	if (pid == -1)
 		throw SystemCallException("fork()");
-	}
-	else if (pid == 0){		// child -> CGI
-	// do we need 0666 mode ?
-	// create an input stream
-
-
+	else if (pid == 0)  // child -> CGI
+	{		
+	// create the input string
 		std::string input;
-		if (req.find("body") != std::string::npos)
-			input = req["body"];
-		input += "\n" + get_env_value("QUERY_STRING") + "\n";
-		// write to the input file the content of the request body/query
+		input = get_env_value("QUERY_STRING");
+		if (this->req.find("body") != this->req.end())
+			input += this->req.at("body"); // redo
 		
-		std::fstream		instream(".cgi_input.txt", std::ios::in | std::ios::out | std::ios::trunc);
-		if (false == instream.is_open())
+	// create an input file and write the content of body and query string
+	// update input
+		std::ofstream	stream_cgi_input(".cgi_input.txt", std::ios::out | std::ios::trunc);
+		if (false == stream_cgi_input.is_open())
 			throw SystemCallException("is_open()"); // where, which function, which object
-		instream << input;
-		if (true == instream.fail())
-			throw SystemCallException("<<()"); // where, which function, which object
 
+		// add input to stream
+		
 
+		if (stream_cgi_input.fail())
+			throw SystemCallException("<<"); // where, which function, which object
+		stream_cgi_input.close();
 
-	// create an output stream
-		std::fstream		outstream(".cgi_output.txt", std::ios::in | std::ios::out | std::ios::trunc);
-		if (false == outstream.is_open()) {
-			throw SystemCallException("is_open()"); // where, which function, which object
-		}
+	// open input and output files
+		int fd_in = open(".cgi_input.txt", O_RDONLY, 0666);
+		if (fd_in == -1)
+			throw SystemCallException("open()");
+		int fd_out = open(".cgi_output.txt", O_RDWR | O_CREAT | O_TRUNC, 0666);
+		if (fd_out == -1)
+			throw SystemCallException("open()");
+
 	// duping fd // if no body ? dup or not ? -> handled by CGI ?
-		int fd_in = instream.rdbuf()->fd();
-		int fd_out = outstream.rdbuf()->fd();
-
-		if (dup2(fd_in, stdin) == -1)
-			throw SystemCallException("dup2()");
-		if (dup2(fd_out, stdout) == -1)
-			throw SystemCallException("dup2()");
+		if (dup2(fd_in, STDIN_FILENO) == -1)
+			throw SystemCallException("dup2(fd_in, STDIN_FILENO");
+		if (dup2(fd_out, STDOUT_FILENO) == -1)
+			throw SystemCallException("dup2(fd_out, STDOUT_FILENO)");
 	// creates arguments for execve
-			char ** cmd = 
+		char* const cmd[] = {
+			get_env_value("SCRIPT_NAME").c_str(), // INTERPRETER
+			get_env_value("REQUEST_URI").c_str(), // ROOT + SCRIPT-NAME
+			nullptr
+		};
 	// executing cgi
 		if (execve(cmd[0], cmd, this->cgi_env) == -1)
 			throw SystemCallException("execve()");
-	// close fd, free resources
-		instream.close(); // not necessary, destructor when out of scope
-
-		if (close(file_in) == -1)
-			throw SystemCallException("close()");
-		if (close(file_out) == -1)
-			throw SystemCallException("close()");
-		free_arr(av);
-		free_arr(cmd);
-		// put unlink 
 	}
-	else {              	// back to parent
+	else 	// back to parent
+	{              
 		if (wait(0) == -1)
 			throw SystemCallException("wait()");
-		
-		// use file_out to write the response
-			// open fileout;
-			// read fileout;
-			// update response
-		// free resources, close fd
-		instream.close(); // not necessary, destructor when out of scope
+		// Update the response
+		std::ifstream	stream_cgi_output(".cgi_output.txt", std::ios::in);
+		if (false == stream_cgi_output.is_open())
+			throw SystemCallException("is_open()"); // where, which function, which object
+        
+		response.assign(std::istreambuf_iterator<char>(stream_cgi_output), std::istreambuf_iterator<char>());
+        
+		unlink(".cgi_output.txt"); // remove output file	}
+		unlink(".cgi_input.txt"); // remove input file	}
 	}
 }
 
-std::vector<char> CGI::getResponse()
-{
-	return this->response;
-}
 
 //*		Private member functions
 
@@ -135,38 +132,43 @@ std::vector<char> CGI::getResponse()
 // PATH_INFO        would be "path/to/resource"
 // QUERY_STRING     would be "query=string"
 
-void CGI::init_paths(){
-	size_t		pos_ext, pos_query;
+void CGI::init_env_paths(std::string root, std::string cgi_extension){
+	std::string	url(req.at("url"));
+	std::string	path_info; 
+	std::string	script_name; 
+	std::string	query_str; 
+	size_t		pos_ext;
+	size_t		pos_query;
 
-	pos_ext = this->url.find(this->cgi_extension); // cannot failed because checked before CGI obj created
-	this->script_name = this->url.substr(0, pos_ext + this->cgi_extension.size());
+	pos_ext = url.find(cgi_extension);
+	script_name = url.substr(0, pos_ext + cgi_extension.size());
 	
-	if (this->url.size() > (pos_ext + this->cgi_extension.size())){
-		this->path_info = this->url.substr(pos_ext + this->cgi_extension.size());
+	if (url.size() > (pos_ext + cgi_extension.size())){
+		path_info = url.substr(pos_ext + cgi_extension.size());
 		
-		pos_query = this->path_info.find("?");
-		if ((pos_query != std::string::npos) && (pos_query == this->path_info.size() - 1))
-			this->query_str = this->path_info.substr(pos_query + 1);
+		pos_query = path_info.find("?");
+		if ((pos_query != std::string::npos) && (pos_query == path_info.size() - 1))
+			query_str = path_info.substr(pos_query + 1);
 			
-		this->path_info = this->path_info.substr(0, pos_query);
+		path_info = path_info.substr(0, pos_query);
 	}
+	path_remove_leading_slash(script_name);
+	path_remove_leading_slash(path_info);
+	path_remove_leading_slash(query_str);
+	
+	cgi_env[22] = strdup(   (std::string("REQUEST_URI=")               + 	url).c_str()	);
+	cgi_env[23] = strdup(   (std::string("SCRIPT_NAME=")               + 	script_name).c_str()   );
+	cgi_env[16] = strdup(   (std::string("QUERY_STRING=")              + 	query_str).c_str()   );
+	cgi_env[14] = strdup(   (std::string("PATH_INFO=")                 + 	path_info).c_str()   );
+	cgi_env[15] = strdup(   (std::string("PATH_TRANSLATED=")           + 	root + path_info).c_str()   );
 
-	path_remove_leading_slash(this->script_name);
-	path_remove_leading_slash(this->path_info);
-	path_remove_leading_slash(this->query_str);
 }
 
-void	CGI::init_env(){
-	//*	we don't need to free it since the inet_toa function returns a statically allocated buffer
-	char*				serverIP;
-	struct sockaddr_in	sock_addr;
-	socklen_t			len 		= sizeof(sock_addr);
+void	CGI::init_env(const t_conf_block& matching_directives, const std::string& client_IP, const std::string& server_IP){
+	// const std::string&	client_IP;	//*	ip of remote client
+	// const std::string&	server_IP;	//*	the interface, among all the assigned_server utilized interfaces, where the connection got accepted.
 
-	//! devo ricordarmi di toglierla da qui
-	if (-1 == getsockname(sock_fd, (struct sockaddr*)&sock_addr, &len))
-		throw (std::runtime_error("CGI() : getsockname() failed"));
-	serverIP = inet_ntoa(sock_addr);
-
+	// Path environment variables declared in init_env_paths();
 	cgi_env[0] = strdup(    (std::string("AUTH_TYPE=")                 +	std::string("")).c_str()  );
 	cgi_env[1] = strdup(    (std::string("CONTENT_LENGTH=")            +	(req.find("Content-Length") != req.end()) ? req.at("Content-Length") : "").c_str()  );
 	cgi_env[2] = strdup(    (std::string("CONTENT_TYPE=")              +	(req.find("Content-Type") != req.end()) ? req.at("Content-Type") : "").c_str()  );
@@ -180,14 +182,6 @@ void	CGI::init_env(){
 	cgi_env[11] = strdup(   (std::string("HTTP_PROXY_AUTHORIZATION=")  +	(req.find("Proxy-Authorization") != req.end()) ? req.at("Proxy-Authorization") : "").c_str()	);
 	cgi_env[12] = strdup(   (std::string("HTTP_USER_AGENT=")           +	(req.find("User-Agent") != req.end()) ? req.at("User-Agent") : "").c_str()	);
 	cgi_env[13] = strdup(   (std::string("NCHOME=")                    + 	std::string("")).c_str()   );
-
-	cgi_env[22] = strdup(   (std::string("REQUEST_URI=")               + 	this->url).c_str()	);
-	cgi_env[23] = strdup(   (std::string("SCRIPT_NAME=")               + 	this->script_name).c_str()   );
-	cgi_env[16] = strdup(   (std::string("QUERY_STRING=")              + 	this->query_str).c_str()   );
-	cgi_env[14] = strdup(   (std::string("PATH_INFO=")                 + 	this->path_info).c_str()   );
-	cgi_env[15] = strdup(   (std::string("PATH_TRANSLATED=")           + 	take_location_root(matching_directives) + this->path_info : "").c_str()   );
-
-//TODO
 	cgi_env[17] = strdup(   (std::string("REMOTE_ADDR=")               + 	std::string(client_IP)).c_str()	);
 	cgi_env[18] = strdup(   (std::string("REMOTE_HOST=")               + 	std::string("")).c_str()   );
 	cgi_env[19] = strdup(   (std::string("REMOTE_IDENT=")              + 	std::string("")).c_str()   );
@@ -202,25 +196,10 @@ void	CGI::init_env(){
 }
 
 //* Debug
-void CGI::print_arr(char ** arr, std::string& title){
+void CGI::print_arr(char ** arr, const std::string& title){
 	if (!arr)
 		return;
 	std::cout << "Printing " << title << std::endl;
 	for(int i = 0; arr[i]; ++i)
 		std::cout << i << " : " << arr[i] << std::endl;
 }
-
-
-//*		Unused default/copy constructor, copy operator
-CGI() 
-: sock_fd(), url(), cgi_extension(), path_info(), script_name(), query_str(), response() 
-{}
-
-CGI(const CGI & c)
-: sock_fd(c.sock_fd), url(c.url), cgi_extension(c.cgi_extension), \
-path_info(c.path_info), script_name(c.script_name), query_str(c.query_str), response(c.response) 
-{}
-
-CGI& operator=(const CGI & c){*this = c; return *this;}
-
-
