@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/18 10:41:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/30 12:40:11 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/06/30 20:45:23 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -192,6 +192,7 @@ std::string		take_location_root( const t_conf_block& matching_directives, bool f
 	return (root);
 }
 
+//*		HTTP utilities
 bool	isCGI(
 	const std::map<std::string, std::string>&	req,
 	const t_conf_block&							matching_directives
@@ -251,7 +252,16 @@ std::string	take_cgi_extension(
 	return "";
 }
 
+std::string		uri_remove_queryString(const std::string& uri)
+{
+	std::string		uri_path = uri;
+	size_t			queryString_pos = uri_path.find("?");
 
+	if (std::string::npos != queryString_pos)
+		uri_path.substr(0, queryString_pos);
+	
+	return (uri_path);
+}
 
 
 //*		GENERAL PURPOSE UTILITIES
@@ -359,7 +369,10 @@ void	path_remove_leading_slash(std::string& pathname)
 
 #include <cerrno>
 #include <sys/stat.h>
+#include <sys/types.h>
+
 bool			isDirectory(const std::string root, std::string path, const t_conf_block& matching_directives) {
+   
     struct stat fileStat;
 
 	path_remove_leading_slash(path);

@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 17:56:31 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/29 16:11:40 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/06/30 19:58:08 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,7 @@ private:
 	const int								sock_fd;					//*	connetction socket fd
 	const std::string						client_IP;					//*	ip of remote client
 	const std::string						server_IP;					//*	the interface, among all the assigned_server utilized interfaces, where the connection got accepted.
-	const t_server&							assigned_server;			//* struct containing server + requests + conf block
+	const t_server&							assigned_server;			//* struct containing server + open connections + server conf block
 	const t_epoll_data&						edata;						//*	epoll data reference
 	Response*								response;					//*	response data of current request
 	Request*								request;					//*	request data of current request
@@ -54,15 +54,15 @@ public:
 								const t_server&				assigned_server,
 								const t_epoll_data&			edata
 						);
+						~ConnectionSocket();
 	//*		main Functions
 	void				serve_client( void );
 	int					getSockFD( void );
 	t_CONNECTION_STATUS	getStatus( void );
 	const t_server&		getAssignedServer( void ) const;
 
-	//*		CANONICAL FORM
-						~ConnectionSocket();
 private:
+	//*		CANONICAL FORM
 						ConnectionSocket( void );
 						ConnectionSocket( const ConnectionSocket & sock );
 	ConnectionSocket&	operator=(const ConnectionSocket& sock);

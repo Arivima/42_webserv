@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Exceptions.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/30 12:37:05 by avilla-m          #+#    #+#             */
-/*   Updated: 2023/06/23 11:00:13 by earendil         ###   ########.fr       */
+/*   Updated: 2023/06/30 20:51:06 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,6 +74,7 @@ class TimerExpired : public std::exception {
 # include <vector>
 # include <map>
 # include <string>
+# include <cstring>//*	memset
 
 # include <sstream>     // stringstream
 # include <fstream>     // ifstream
@@ -106,9 +107,10 @@ public:
 	}
 
 	virtual const char*	what( void ) const throw() {
-		char buf[3];
+		char buf[5];
 
-		sprintf(buf, "%u ", err_code);
+		memset(buf, '\0', 5);
+		sprintf(buf, "%03hu ", err_code);
 		return ((buf + std::string(" ") + msg).c_str());
 	}
 

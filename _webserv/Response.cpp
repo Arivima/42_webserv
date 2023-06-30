@@ -48,7 +48,7 @@ Response::~Response() {
 void	Response::generateResponse( void ) {
 
 	std::string		cgi_extension;
-	size_t			method_found_at_pos;
+	// size_t			method_found_at_pos;
 	
 	try
 	{
@@ -60,15 +60,16 @@ void	Response::generateResponse( void ) {
 		);
 		if (false == cgi_extension.empty())
 		{
-			// this->cgi = new CGI(req);
-			// this->cgi->launch();
-			// this->response = this->cgi->getResponse();
+			throw (std::runtime_error("not implemented"));
+			this->cgi = new CGI(sock_fd, client_IP, server_IP, req, matching_directives, std::string(""));
+			this->cgi->launch();
+			this->response = this->cgi->getResponse();
 			return ;
 		}
 		if ("GET" == this->req.at("method"))
-			return (generateGETResponse());
+			return (generateGETResponse(uri_remove_queryString(req.at("url"))));
 		// if ("POST" == this->req.at("method"))
-		// 	return (generatePOSTResponse());
+		// 	return (generatePOSTResponse(uri_remove_queryString(req.at("url"))));
 		// if ("PUT" == this->req.at("method"))
 		// 	return (generatePUTResponse());
 		// if ("DELETE" == this->req.at("method"))
@@ -143,27 +144,10 @@ void	Response::send_line( void )
 }
 
 // refactor to clean + test and make sure all cases are covered
-void	Response::generateGETResponse( void )
-{
-	std::string	reqRelativePath = req.at("url");
-	size_t		query_string_pos;
-
-	//*		STATIC GET discards query parameters
-	query_string_pos = reqRelativePath.find("?");
-	if (std::string::npos != query_string_pos)
-		reqRelativePath.substr(0, query_string_pos);
-	
-	GETStatic(reqRelativePath);
-}
-
-void	Response::GETStatic( const std::string& reqRelativePath )
+void	Response::generateGETResponse(  const std::string uri_path  )
 {
 	const std::string				root = take_location_root(matching_directives, false);
-	const std::string				reqPath(http_req_complete_url_path(
-										remove_query_string(reqRelativePath),
-										root
-										)
-									);
+	const std::string				reqPath(http_req_complete_url_path(uri_path, root));
 	std::string						headers;
 	std::vector<char>				page;
 	std::string						filePath = "";
@@ -275,7 +259,7 @@ size_t	Response::locationMatch(
 	const t_conf_block& location, const std::string& req_url
 	)
 {
-	size_t		match_score;
+	// size_t		match_score;
 	size_t		path_begin;
 	size_t		query_arguments_start;
 	std::string	location_path;
@@ -416,9 +400,10 @@ std::string		Response::http_req_complete_url_path(
 	const std::string& url, const std::string& root
 	)
 {
+	(void)url;
 	std::string		path;
-	size_t			path_start;
-	size_t			path_end;
+	// size_t			path_start;
+	// size_t			path_end;
 
 	//*	uesless ?
 	// if (
@@ -478,21 +463,21 @@ std::string		Response::getIndexPage( const std::string& root, std::string path )
 		return ("");
 }
 
-void	Response::generatePOSTResponse( void )
-{
-	const std::string				upload_path = take_location_root(matching_directives, true);
-	std::string						reqPath(req.at("url"));
-	std::string						headers;
-	std::vector<char>				page;
-	std::string						filePath = "";
+// void	Response::generatePOSTResponse( const std::string uri_path )
+// {
+// 	const std::string				upload_path = take_location_root(matching_directives, true);
+// 	std::string						reqPath(req.at("url"));
+// 	std::string						headers;
+// 	std::vector<char>				page;
+// 	std::string						filePath = "";
 
-	path_remove_leading_slash(reqPath);
-	filePath = upload_path + reqPath;
+// 	path_remove_leading_slash(reqPath);
+// 	filePath = upload_path + reqPath;
 	
-	COUT_DEBUG_INSERTION("trying to create file : " << upload_path + reqPath << std::endl)
-	std::ifstream					newFileStream(filePath.c_str(), std::ios_binary);
+// 	COUT_DEBUG_INSERTION("trying to create file : " << upload_path + reqPath << std::endl)
+// 	std::ifstream					newFileStream(filePath.c_str(), std::ios_binary);
 
-}
+// }
 
 
 

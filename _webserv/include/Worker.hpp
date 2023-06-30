@@ -37,6 +37,12 @@
 #include "EpollData.hpp"
 // #include "Exceptions.hpp"
 
+/**
+ * @brief The Purpose of this class is to manage multiple servers using a event-driven model.
+ * For each server, the worker serves the open connections if there is data to be processed
+ * and checks for the accept of new incoming ones.
+ * 
+ */
 class Worker{
 private:
 	//*	vector holding t_serv (server conf block with virtual servers sub_blocks + server port and sock fd

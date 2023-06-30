@@ -19,9 +19,12 @@
 
 # include "Webserv.hpp"
 # include "EpollData.hpp"
-// # include "CGI.hpp"
+# include "CGI.hpp"
 
-//*	this class should be responsible for generating the response of a http request.
+/**
+ * @brief this class is responsible for generating the response of a http request.
+ * 
+*/
 class Response
 {
 	//*		TYPEDEFS (private)
@@ -47,19 +50,20 @@ private:
 		}
 	}	t_location_match;
 
+	//*		MEMBER FIELDS
 private:
 	const t_conf_block&							matching_directives;
-	const std::map<std::string, std::string>	req;
+	const std::map<std::string, std::string>&	req;
 	const t_server&								assigned_server;
 	const int									sock_fd;
 	const std::string&							client_IP;				//*	ip of remote client
 	const std::string&							server_IP;				//*	the interface, among all the assigned_server utilized interfaces, where the connection got accepted.
 	const t_epoll_data&							edata;
 	std::vector<char>							response;
-	// CGI 										cgi;
+	CGI* 										cgi;
 
 public: 
-	//*		main constructors and destructors
+	//*		main Constructors and Destructors
 							Response(
 								const std::map<std::string, std::string>& req,
 								const t_server& assigned_server,
@@ -67,19 +71,16 @@ public:
 								const std::string& client_IP,
 								const std::string& server_IP,
 								const t_epoll_data& edata);
+							~Response();
 
 	//*		main functionalities
 	void					send_line( void );
 	void					generateResponse( void );
 
-	//*		Canonical Form Shit
-							~Response();
-	
 private:
 	//*		Private Helper functions
-	void							generateGETResponse( void );
-	void							GETStatic( const std::string& reqRelativePath );
-	void							generatePOSTResponse( void );
+	void							generateGETResponse( const std::string uri_path );
+	void							generatePOSTResponse( const std::string uri_path );
 	// void							generateDELETEResponse( void );
 	std::string						getHeaders(
 		int status, std::string description, std::string& filepath,

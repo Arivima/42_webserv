@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 18:07:39 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/29 19:09:10 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/06/30 19:58:35 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,8 +17,8 @@
 //*		Main Constructor
 ConnectionSocket::ConnectionSocket(
 								int							sock_fd,
-								const std::string&			client_IP;
-								const std::string&			server_IP;
+								const std::string&			client_IP,
+								const std::string&			server_IP,
 								const t_server&				assigned_server,
 								const t_epoll_data&			edata
 ) :

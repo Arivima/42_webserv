@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 17:19:26 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/30 16:16:27 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/06/30 20:08:33 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,25 +51,24 @@ void	Request::parse_line( void ) { //std::cout  << std::endl << "\033[1m\033[32m
 		(NULL != eevent &&  eevent->events & EPOLLIN))
 	{
 		read_line();
-		if (e_READING_BODY == parser_status) {
-			parse_body();
-		}
-		else
 		if (e_READING_HEADS == parser_status) {
 			parse_header();
+		}
+		else
+		if (e_READING_BODY == parser_status) {
+			parse_body();
 		}
 	}
 	// std::cout << std::endl;
 }
 
-void	Request::read_line( void ) { //std::cout  << std::endl << "\033[1m\033[32m""read_line() called()""\033[0m" << std::endl;
-
+void	Request::read_line( void )
+{ //std::cout  << std::endl << "\033[1m\033[32m""read_line() called()""\033[0m" << std::endl;
 	const struct epoll_event*	eevent = edata.getEpollEvent(this->sock_fd);
 
 	if (NULL != eevent && (eevent->events & EPOLLIN)) {
 		memset(rcv_buf, '\0', RCV_BUF_SIZE + 1);
-		bytes_read = recv(sock_fd, rcv_buf, RCV_BUF_SIZE, 0);
-		if ( bytes_read <= 0)
+		if (recv(sock_fd, rcv_buf, RCV_BUF_SIZE, 0) <= 0)
 			throw (SockEof());
 		sock_stream << rcv_buf;
 	}
@@ -83,8 +82,8 @@ void	Request::read_line( void ) { //std::cout  << std::endl << "\033[1m\033[32m"
 	// std::cout << std::endl;
 }
 
-void	Request::read_header( void ) {
-	
+void	Request::read_header( void )
+{
 	std::string			line_read;
 	bool				has_eol = (std::string::npos != sock_stream.str().find("\r\n"));
 
@@ -100,18 +99,23 @@ void	Request::read_header( void ) {
 }
 
 void	Request::read_body( void ) {
-	this->body.insert(
-		this->body.end(),
-		this->rcv_buf,
-		this->rcv_buf + bytes_read
-	);
+
+	std::streamsize		buf_len = sock_stream.str().length();//()->in_avail();
+	std::streamsize		bytes_read;
+	char				buf[buf_len + 1];
+
+	memset(buf, '\0', buf_len + 1);
+	sock_stream.read(buf, buf_len);
+	bytes_read = sock_stream.gcount();
+	cur_line += buf;
 	cur_body_size -= bytes_read;
 }
 
-void	Request::parse_header( void ) { //std::cout << "reading headers" << std::endl;
-	
+void	Request::parse_header( void )
+{ //std::cout << "reading headers" << std::endl;
 	if (std::string::npos != cur_line.find("\r\n")) {
 		if ("\r\n" == cur_line) {
+			//*	end of headers, there may or not may be a body
 			if (req.end() != req.find("Content-Length"))
 			{
 				parser_status = e_READING_BODY;
@@ -124,13 +128,12 @@ void	Request::parse_header( void ) { //std::cout << "reading headers" << std::en
 		else {
 			cur_line.erase(std::remove(cur_line.begin(), cur_line.end(), '\r'),  cur_line.end());
 			cur_line.erase(std::remove(cur_line.begin(), cur_line.end(), '\n'),  cur_line.end());
-			
 			if (req.empty()) {
-				//*		first element in the request ...req line
+				//*		request is empty, first line is request line
 				parse_req_line(cur_line);
 			}
 			else {
-				//*		header line
+				//*		request is not empty, line is header line
 				std::stringstream	str_stream(cur_line);
 				std::string			key;
 				std::string			value;
@@ -161,19 +164,9 @@ void	Request::parse_req_line( std::string& req_line ) {
 }
 
 void	Request::parse_body( void ) {
-	//!	Inserting charatcers in std::string using ranges it's the only
-	//!	way to make it work when there are multiple nul bytes (/0) in the char buffer.
-	//!	The end() iterator and string length() will be set with respect to the buffer length.
-	//!	
-	//!	All other forms of initialization will set the end() iterator and string length()
-	//!	with respect to the position of the first nul byte (/0)
 	if (0 == cur_body_size) {
-		req["body"].insert(
-			req["body"].begin(),
-			body.begin(),
-			body.end()
-		);
-		body.clear();
+		req["body"] = cur_line;
+		cur_line.erase(0);
 		throw TaskFulfilled();
 	}
 }

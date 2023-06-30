@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/05 15:27:54 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/30 12:38:28 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/06/30 20:30:05 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,7 +64,7 @@ struct			IsSpacePredicate {
 };
 
 
-// BLOCK HPP
+//	BLOCK HPP
 t_config_block_level		next_conf_block_level(t_config_block_level lvl);
 std::ostream&				operator<<(std::ostream& stream, const t_config_block_level& block);
 void						print_block(t_conf_block& block, size_t level);
@@ -84,7 +84,10 @@ std::string					take_cgi_extension(
 								const std::map<std::string, std::string>& directives
 							);
 
-// UTILS HPP
+//	HTTP UTILS
+std::string					uri_remove_queryString(const std::string& uri);
+
+//	UTILS HPP
 std::string					strip_spaces(std::string& str);
 void						strip_trailing_and_leading_spaces(std::string& str);
 std::vector<std::string> 	split_str_to_vector(std::string s, const std::string& delimiter);

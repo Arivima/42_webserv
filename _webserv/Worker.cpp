@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/06 21:15:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/29 19:07:07 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/06/30 20:46:13 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -208,7 +208,7 @@ int	Worker::_create_ConnectionSocket(
 	//*		Setting Server selected interface IP
 	if (-1 == getsockname(cli_socket, (struct sockaddr*)&server_addr, &server_addr_len))
 		throw (SystemCallException("getsockname()"));
-	serverIP = inet_ntoa(server_addr);
+	server_IP = inet_ntoa(server_addr.sin_addr);
 
 	return (cli_socket);
 }

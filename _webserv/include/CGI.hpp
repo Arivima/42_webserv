@@ -1,12 +1,15 @@
-#ifndef		CGI_HPP
-# define	CGI_HPP
+#ifndef CGI_HPP
+# define CGI_HPP
 
 # include	"Webserv.hpp"
 # include	<map>
 # include	<vector>
 # include	<string>
 
-# define	CGI_ENV_SIZE	29
+# define	CGI_ENV_SIZE	31
+# define	CGI_INFILE		".cgi_input"
+# define	CGI_OUTFILE		".cgi_output"
+
 
 //? N.B : see dictionnary of all ENV variabbles at end of this file
 
@@ -22,12 +25,11 @@ class CGI {
 	public:
 		CGI(
 			int											sock_fd,
-			const std::string&							client_IP,
-			const std::string&							server_IP,
+			const std::string &							client_IP,
+			const std::string &							server_IP,
 			const std::map<std::string, std::string>	req,
-			const t_conf_block&							matching_directives,
-			const std::string &							interpreter_path,
-			const std::string &							cgi_ext
+			const t_conf_block &						matching_directives,
+			const std::string &							interpreter_path
 		);
 		~CGI();
 		void				launch();
@@ -36,7 +38,7 @@ class CGI {
 
 	//*		Private member functions
 	private:
-		void				init_env_paths(std::string root, std::string cgi_extension);
+		void				init_env_paths(const std::string & root, const std::string & cgi_extension, const std::string & interpreter_path);
 		void				init_env(const t_conf_block& matching_directives, const std::string& client_IP, const std::string& server_IP);
 
 		//* Unused default/copy constructor, copy operator
@@ -46,7 +48,7 @@ class CGI {
 
 		//* Debug
 		void				print_arr(char ** arr, const std::string & title);
-}
+};
 #endif
 
 // DICTIONNARY OF ALL CGI PROTOCOL ENVIRONMENT VARIABLES

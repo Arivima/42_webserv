@@ -6,27 +6,30 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 15:41:58 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/30 15:15:24 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/06/30 20:15:05 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef REQUEST_HPP
 # define REQUEST_HPP
 
-# include <map>//*request object
-# include <vector>//*body
-
+# include <map>//*	parsed request (body included)
 # include <string>
-# include <sstream>//*stringstream for getline
+# include <sstream>//*	socket stream
 
 # include "Webserv.hpp"
 # include "EpollData.hpp"
+
+
+//TODO
+//TODO	1.	handle Chuncked Encoding (Transfer-Encoding header)
+//TODO
 
 /**
  * @brief The purpose of this class is to parse a http request into a more convenient format.
  * When parsing is done, a fulfillment exception is thrown; after a fulfillment exception is thrown,
  * only getters may be used.
- * A fulfillment exception is an exception that signals done work for an object.
+ * A fulfillment exception is an exception that signals work done.
  */
 class Request {
 private:
@@ -41,18 +44,10 @@ private:
 	const int								sock_fd;
 	const t_epoll_data&						edata;
 	std::map<std::string, std::string>		req;
-
-	//*	low level recv buffer data
-	char									rcv_buf[RCV_BUF_SIZE + 1];
-	int										bytes_read;
-
-	//*	header handling variables
-	std::stringstream						sock_stream;
-	std::string								cur_line;	//*	current header req line
-
-	//*	body handling variables
-	std::vector<char>						body;
-	int										cur_body_size;
+	char									rcv_buf[RCV_BUF_SIZE + 1];	//*	buffer upon which we recv()
+	std::stringstream						sock_stream;				//*	stream where we dump all the data read in rcv buffer for a more convenient handling
+	std::string								cur_line;					//*	current req line
+	int										cur_body_size;				//*	remaining body bytes to be read
 
 public:
 
@@ -61,14 +56,12 @@ public:
 													const int sock_fd,
 													const t_epoll_data& edata
 												);
-
+												~Request( void );
+	
 	//*		main functionalities
 	void										parse_line( void );
 	const std::map<std::string, std::string>&	getRequest( void );
 	void										print_req( void );
-
-	//*		Canonical Form shit
-					~Request( void );
 
 private:
 
@@ -79,11 +72,11 @@ private:
 
 	//*		helper functions
 	void			read_line( void );
-	void			parse_req_line( std::string& req_line );
-	void			parse_header( void );
-	void			parse_body( void );
 	void			read_header( void );
 	void			read_body( void );
+	void			parse_header( void );
+	void			parse_req_line( std::string& req_line );
+	void			parse_body( void );
 };
 
 #endif

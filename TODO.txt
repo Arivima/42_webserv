@@ -1,22 +1,41 @@
 
+Arielle:
+	-	do many bisous to Matteo
+	-	do many hugs to Matteo    
+	- 	test CGI
+	-	Do DELETE
+
 Matteo
+	-	Change req url name to "uri"
+	-	Refactor Request class
+	-	Make sure, in every place, that we on't do any string functions on the body string except for insert
+	-	Do POST
+
 	-Config : rimuovi tab nel file di configurazione
-	-NO//Response : rimuovi subito query string se non é GET
-	-Respone : make req a reference
+	-Response : rimuovi subito query string se non é GET
+	-Respone : make req a reference                         
 	-check for every member that should be a reference
-
-Giovedi
-	Arielle
-		DONE	4. mettere .hpp functions of cgi class in .cpp
-		DONE WIP		5. launch
-
-	Matteo
-	DONE//1.	Refactor Classes so that Request Response and CGI can have client ip
-	2.	move take_location_root in utils
-	DONE//3. update REMOTE_ADDR
+	- (forse)togliere set buffer size del socket nel Worker (setsockopt)
 
 
-togliere set buffer size del socket nel Worker (setsockopt)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -32,22 +51,15 @@ Arielle
 		// https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
 		// https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
 		
-	5. POST
 
 Matteo
-	4.	gesite location matching : exact & prefix : prendere il blocco più specifico
 	8.	implement timers
-	12	If a server creation fails, throw but not close all servers.
 	13	valutare se contollare la presenza di location block ripetuti
 
 To assign
 	1.	implementare redirections in GET
 	2.	gestire client body_size
-	5.	HEAD, POST (prio), DELETE
-	6.	CGI
 	9.	Check compatibility with Chrome/Firefox (set right headers)
-	11	check that ifstreams are ALWAYS used to read response static files.
-		11.2	check that there is no read/recv send/write without going through epoll
 
 Meno Prioritario
 	1	refactoring HttpError ----> usare vector of char
