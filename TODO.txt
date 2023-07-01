@@ -6,6 +6,7 @@ Arielle:
 	-	Do DELETE
 
 Matteo
+	-	Mettere location root e upload_path come variabili di classe di Response
 	-	Change req url name to "uri"
 	-	Refactor Request class
 	-	Make sure, in every place, that we on't do any string functions on the body string except for insert
@@ -16,6 +17,15 @@ Matteo
 	-Respone : make req a reference                         
 	-check for every member that should be a reference
 	- (forse)togliere set buffer size del socket nel Worker (setsockopt)
+	- implement redirections
+	- implement client body_size
+	- implement chuncked Encoding
+	- implement timers
+	- scrivere script per le CGI
+	
+	- binary data
+	- fare un log
+	- cookie ?
 
 
 
@@ -99,3 +109,26 @@ to short
 //TODO	6. Refactor ConenctionSocket.
 //TODO
 //TODO
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+TroubleShooting
+
+Ideas
+
+Matteo
+Idea per handling binary data in body of request
+	1.	Splitta body e request
+		1.1	request resta una mappa
+		1.2	body diventa un vector<char>
+	2.	Request
+		2.1	Sostituisci gli stream con vector di char
+			2.1.1	recv_buf resta un array
+			2.1.2	vector<char> sostituisce lo stream e ci dumpiamo il contenuto letto dal buffer
+				2.1.2.1	possiamo usare le funzioni find(), erase(), etc. di vector per sostuire getline
+			2.1.3	passiamo il body e la richiesta alle varie classi come due variabili diverse
+			2.1.4	per scrivere il body in un file, apriamo il file con ofstream e open_mode std::ios_binary
+					e usiamo basic_ostream& write( const char_type* s, std::streamsize count )
+					con body.data() come const char*
+					e body.size() come count

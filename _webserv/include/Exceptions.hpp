@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/30 12:37:05 by avilla-m          #+#    #+#             */
-/*   Updated: 2023/06/30 20:51:06 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/01 18:14:36 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -190,11 +190,11 @@ private:
 			return ("");
 		//*		extract the page (path is at least "/")
 		directiveStream.str(directive.substr(err_page_pos));
-		std::getline(directiveStream, path, ' ');//! doesn't work with tabs (guarda TODO)
+		std::getline(directiveStream, path, ' ');
 
-		//*		return empty string in case of missing pathname or format errors
+		//*		return empty string in case of missing pathname
 		std::cout << "trying error page " << path << std::endl;
-		if ("/" == path || std::string::npos != path.find("\t"))
+		if ("/" == path)
 			return ("");
 		return (path);
 	}

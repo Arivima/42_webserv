@@ -20,6 +20,8 @@
 //*		non-member helper functions
 //*		/////////////////////////////////////////////////
 
+
+//*		Main Constructor and Destructor
 Response::Response(
 	const std::map<std::string, std::string>& req,
 	const t_server& assigned_server,
@@ -43,12 +45,39 @@ Response::~Response() {
 	response.clear();
 }
 
-//TODO check that the request method is inside the list of accepted method
-//TODO inside the conf block (i.e.: "method" directive)
-void	Response::generateResponse( void ) {
 
+//*		Main Functionalities
+
+void	Response::send_line( void )
+{
+	const struct epoll_event*	eevent = edata.getEpollEvent(this->sock_fd);
+	int							bytes_sent;
+
+	// COUT_DEBUG_INSERTION("send_line()\n")
+	if (response.empty())
+		throw TaskFulfilled();
+	else {
+		if (NULL != eevent && eevent->events & EPOLLOUT)
+		{
+			bytes_sent = send(
+				this->sock_fd, response.data(), response.size(), 0
+			);
+			if (bytes_sent < 0)
+				throw HttpError(500, matching_directives, take_location_root(matching_directives, false));
+			else
+			if (0 == bytes_sent)
+				throw TaskFulfilled();
+			else
+				response.erase(
+					response.begin(), response.begin() + bytes_sent
+				);
+		}
+	}
+}
+
+void	Response::generateResponse( void )
+{
 	std::string		cgi_extension;
-	// size_t			method_found_at_pos;
 	
 	try
 	{
@@ -81,72 +110,149 @@ void	Response::generateResponse( void ) {
 	}
 }
 
-bool	Response::isMethodAllowed(void)
-{
-	std::stringstream	methodDirectiveStream;
-	std::string			cur_method;
+//*		Main Helper Functions
 
-	if ("GET" == req.at("method"))
-		return (true);
-	if (matching_directives.directives.end() == matching_directives.directives.find("method"))
-		return (false);
+/**
+ * @brief This function returns a handle to a generic block holding directives.
+ * Given a server block, it returns the inner location block that matches
+ * the current request, or the server block itself if no location block matches.
+ * @param conf_server_block 
+ * @return const t_conf_block& - the block of directives that applies to the current http request
+ */
+const t_conf_block&	Response::takeMatchingDirectives(
+	const t_conf_block& conf_server_block,
+	const std::map<std::string, std::string>& req
+	)
+{
+	const t_conf_block&							virtual_server  = takeMatchingServer(
+		conf_server_block.sub_blocks, req
+	);
+	std::vector<t_conf_block>::const_iterator	location;
+	std::list<t_location_match>					matches;
+	size_t										match_score;
 	
-	methodDirectiveStream.str(matching_directives.directives.at("method"));
-	while (std::getline(methodDirectiveStream, cur_method, ' '))
+	for (
+		location = virtual_server. sub_blocks.begin();
+		location != virtual_server.sub_blocks.end();
+		location ++
+	)
 	{
-		if (req.at("method") == cur_method)
-			return (true);
+		if ( (match_score = locationMatch(*location, req.at("url"))) )
+			matches.push_back(t_location_match(*location, match_score));
 	}
-	return (false);
+
+	if (matches.empty()) {
+		COUT_DEBUG_INSERTION(
+			RED "no location for requested url" RESET
+			 << std::endl
+		)
+		return (virtual_server);
+	}
+	else {
+		matches.sort();
+		COUT_DEBUG_INSERTION(
+			BOLDGREEN "taking location : " << matches.back().location.directives.at("root") << RESET
+			<< std::endl
+		)
+		return (matches.back().location);
+	}
 }
 
-//TODO	TOMORROW
-//TODO
-//TODO	1.	refactor whole ConnectionSocket, make Request & Response classes
-//TODO	2.	each class should throw an exception when task is complete so that ConnectionSocket
-//TODO	can switch state with its switch-state functions
-//TODO		2.1 make only one switch-state function, that switches to response or request
-//TODO			depending on current status
-//TODO	3.	when the ConnectionSocket catches a fulfillment exception, it should call the
-//TODO		serve_client function again recursively (there will never be two consecutive
-//TODO		recursive calls)
-//*		....
-//*		Done
-//TODO	3.	make response field in Response class a string
-//TODO		and use bytes_read to get position of first unsent byte, then trim the string
-//TODO	4.	use SND_BUFFER_SIZE
-//TODO
-void	Response::send_line( void )
+/**
+ * @brief This function returns a handle to a generic block holding directives.
+ * This function returns server block that matches
+ * the current request.
+ * 
+ * @param virtual_servers 
+ * @return const t_virtual_server_block& 
+ */
+const t_conf_block&	Response::takeMatchingServer(
+		const std::vector<t_conf_block>&	virtual_servers,
+		const std::map<std::string, std::string>& req
+		)
 {
-	const struct epoll_event*	eevent = edata.getEpollEvent(this->sock_fd);
-	int							bytes_sent;
+	std::vector<t_conf_block>::const_iterator virtual_server;
 
-	// COUT_DEBUG_INSERTION("send_line()\n")
-	if (response.empty())
-		throw TaskFulfilled();
-	else {
-		if (NULL != eevent && eevent->events & EPOLLOUT)
-		{
-			bytes_sent = send(
-				this->sock_fd, response.data(), response.size(), 0
-			);
-			if (bytes_sent < 0)
-				throw HttpError(500, matching_directives, take_location_root(matching_directives, false));
-			else
-			if (0 == bytes_sent)
-				throw TaskFulfilled();
-			else
-				response.erase(
-					response.begin(), response.begin() + bytes_sent
-				);
-		}
+	for (
+		virtual_server = virtual_servers.begin();
+		virtual_server != virtual_servers.end();
+		virtual_server ++
+	)
+		if (
+			(*virtual_server).directives.end() != (*virtual_server).directives.find("server_name") &&
+			(*virtual_server).directives.at("server_name") == req.at("Host"))
+			break ;
+		
+	//*		if no Host is matched, choose the default server
+	return (
+		virtual_server == virtual_servers.end() \
+			? virtual_servers[0] \
+			: (*virtual_server)
+	);
+}
+
+/**
+ * @brief this function returns matching information of a location block for a request url.
+ * 
+ * @param location 
+ * @param req_url 
+ * @return size_t match score. 0 for no match, npos (maximum) for exact match
+ * or length of the block's location for prefix match.
+ */
+size_t	Response::locationMatch(
+	const t_conf_block& location, const std::string& req_url
+	)
+{
+	size_t		match_score;
+	size_t		query_arguments_start;
+	std::string	location_path;
+	std::string	reqUrl = req_url;
+
+	//*		removing optional query string part
+	query_arguments_start = reqUrl.find("?");
+	if (std::string::npos != query_arguments_start)
+		reqUrl = reqUrl.substr(0, query_arguments_start);
+
+	if (0 == location.directives.at("location").find("="))
+	{
+		//*		exact match
+		location_path = location.directives.at("location").substr(1);
+		strip_trailing_and_leading_spaces(location_path);
+		COUT_DEBUG_INSERTION(
+			"trying exact match on location |" << location_path << "|"
+			<< " with uri : |" << reqUrl << "|"
+			<< std::endl
+		)
+		if (0 == reqUrl.compare(location_path)
+		)
+			match_score = (std::string::npos);
+		else
+			match_score = (0);
 	}
+	else
+	{
+		location_path = location.directives.at("location");
+		COUT_DEBUG_INSERTION(
+			"trying prefix match on location |" << location_path << "|"
+			<< " with uri : |" << reqUrl << "|"
+			<< std::endl
+		)
+		//*		prefix match
+		if (0 == reqUrl.find(location_path))
+			match_score = (location_path.length());
+		else
+			match_score = (0);
+	}
+
+	COUT_DEBUG_INSERTION(
+		" match score : " << match_score << std::endl
+	)
+	return (match_score);
 }
 
 // refactor to clean + test and make sure all cases are covered
 void	Response::generateGETResponse(  const std::string uri_path  )
 {
-	std::cout << "uri_path : " << uri_path << std::endl;
 	const std::string				root = take_location_root(matching_directives, false);
 	const std::string				reqPath(http_req_complete_url_path(uri_path, root));
 	std::string						headers;
@@ -245,164 +351,58 @@ std::string		Response::getHeaders(
 	return (headersStream.str());
 }
 
-//*		helper functions
-
-//TODO	Matteo TEST 
-/**
- * @brief this function returns matching information of a location block for a request url.
- * 
- * @param location 
- * @param req_url 
- * @return size_t match score. 0 for no match, npos (maximum) for exact match,
- * or length of the block's location otherwise.
- */
-size_t	Response::locationMatch(
-	const t_conf_block& location, const std::string& req_url
-	)
+std::string		Response::getIndexPage( const std::string& root, std::string path )
 {
-	size_t		match_score;
-	size_t		query_arguments_start;
-	std::string	location_path;
-	std::string	reqUrl = req_url;
-
-	//*		removing optional query string part
-	query_arguments_start = reqUrl.find("?");
-	if (std::string::npos != query_arguments_start)
-		reqUrl = reqUrl.substr(0, query_arguments_start);
-
-	if (0 == location.directives.at("location").find("="))
+	std::string									indexes;
+	std::stringstream							indexesStream;
+	std::string									cur_index;
+	const std::map<std::string, std::string>&	directives
+		= this->matching_directives.directives;
+	
+	if ('/' != path[path.length() - 1])
+		path += "/";
+	if (directives.end() != directives.find("index"))
 	{
-		//*		exact match
-		location_path = location.directives.at("location").substr(1);
-		strip_trailing_and_leading_spaces(location_path);
-		COUT_DEBUG_INSERTION(
-			"trying exact match on location |" << location_path << "|"
-			<< " with uri : |" << reqUrl << "|"
-			<< std::endl
-		)
-		if (0 == reqUrl.compare(location_path)
-		)
-			match_score = (std::string::npos);
-		else
-			match_score = (0);
+		indexes = directives.at("index");
+		indexesStream.str(indexes);
+
+		while (indexesStream.good()) {
+			getline(indexesStream, cur_index, ' ');
+			path_remove_leading_slash(cur_index);
+			COUT_DEBUG_INSERTION("trying index file : "\
+				 << root + path + cur_index \
+				 << std::endl)
+			std::ifstream	file(root + path + cur_index);
+			if (file.is_open())
+				return (path + cur_index);
+		}
+		return ("");
 	}
 	else
-	{
-		location_path = location.directives.at("location");
-		COUT_DEBUG_INSERTION(
-			"trying prefix match on location |" << location_path << "|"
-			<< " with uri : |" << reqUrl << "|"
-			<< std::endl
-		)
-		//*		prefix match
-		if (0 == reqUrl.find(location_path))
-			match_score = (location_path.length());
-		else
-			match_score = (0);
-	}
-
-	COUT_DEBUG_INSERTION(
-		" match score : " << match_score << std::endl
-	)
-	return (match_score);
+		return ("");
 }
 
-//TODO	Matteo TEST
-/**
- * @brief This function returns a handle to a generic block holding directives.
- * Given a server block, it returns the inner location block that matches
- * the current request, or the server block itself if no location block matches.
- * @param conf_server_block 
- * @return const t_conf_block& 
- */
-const t_conf_block&	Response::takeMatchingDirectives(
-	const t_conf_block& conf_server_block,
-	const std::map<std::string, std::string>& req
-	)
+//*		Secondary Helper Functions
+
+bool	Response::isMethodAllowed(void)
 {
-	const t_conf_block&							virtual_server  = takeMatchingServer(
-		conf_server_block.sub_blocks, req
-	);
-	std::vector<t_conf_block>::const_iterator	location;
-	std::list<t_location_match>					matches;
-	size_t										match_score;
+	std::stringstream	methodDirectiveStream;
+	std::string			cur_method;
+
+	if ("GET" == req.at("method"))
+		return (true);
+	if (matching_directives.directives.end() == matching_directives.directives.find("method"))
+		return (false);
 	
-	for (
-		location = virtual_server. sub_blocks.begin();
-		location != virtual_server.sub_blocks.end();
-		location ++
-	)
+	methodDirectiveStream.str(matching_directives.directives.at("method"));
+	while (std::getline(methodDirectiveStream, cur_method, ' '))
 	{
-		if ( (match_score = locationMatch(*location, req.at("url"))) )
-			matches.push_back(t_location_match(*location, match_score));
+		if (req.at("method") == cur_method)
+			return (true);
 	}
-
-	if (matches.empty()) {
-		COUT_DEBUG_INSERTION(
-			RED "no location for requested url" RESET
-			 << std::endl
-		)
-		return (virtual_server);
-	}
-	else {
-		matches.sort();
-		COUT_DEBUG_INSERTION(
-			BOLDGREEN "taking location : " << matches.back().location.directives.at("root") << RESET
-			<< std::endl
-		)
-		return (matches.back().location);
-	}
+	return (false);
 }
 
-/**
- * @brief This function returns a handle to a generic block holding directives.
- * This function returns server block that matches
- * the current request.
- * 
- * @param virtual_servers 
- * @return const t_virtual_server_block& 
- */
-const t_conf_block&	Response::takeMatchingServer(
-		const std::vector<t_conf_block>&	virtual_servers,
-		const std::map<std::string, std::string>& req
-		)
-{
-	std::vector<t_conf_block>::const_iterator virtual_server;
-
-	for (
-		virtual_server = virtual_servers.begin();
-		virtual_server != virtual_servers.end();
-		virtual_server ++
-	)
-		if (
-			(*virtual_server).directives.end() != (*virtual_server).directives.find("server_name") &&
-			(*virtual_server).directives.at("server_name") == req.at("Host"))
-			break ;
-		
-	//*		if no Host is matched, choose the default server
-	return (
-		virtual_server == virtual_servers.end() \
-			? virtual_servers[0] \
-			: (*virtual_server)
-	);
-}
-
-//*		Private Member Helper functions
-
-//*	(la funzione http_req_take_url_path() deve controllare che il path sia una directory;
-//*	se lo è, deve tornare la getIndexPage().
-//*	Se non è settata la directive index oppure le pagine indicate non esistono,
-//*	getIndexPage() ritorna vuoto.
-//*	Nel caso di reqPath vuota, generateGETResponse() deve gestire directive autoindex)
-
-// if path points to directory 	
-//		-> if index configured & indexpage exists -> returns index 
-//		-> else returns empty path
-	// to be checked in parent function
-	//		-> if empty && if autoindex is on -> returns directory listing
-	//		-> else -> throws 404
-// else if path points to a regular file -> returns filepath
-//*// TODO remove dead code and change name to http_complete_url_path
 /**
  * @brief this function completes the path-part of a request URL.
  * That means it´s going to fecth a index file if the requested resource is a directory.
@@ -438,51 +438,3 @@ std::string		Response::http_req_complete_url_path(
 	path_remove_leading_slash(path);
 	return (path);//*	may be empty (a.k.a. "")
 }
-
-std::string		Response::getIndexPage( const std::string& root, std::string path )
-{
-	std::string									indexes;
-	std::stringstream							indexesStream;
-	std::string									cur_index;
-	const std::map<std::string, std::string>&	directives
-		= this->matching_directives.directives;
-	
-	if ('/' != path[path.length() - 1])
-		path += "/";
-	if (directives.end() != directives.find("index"))
-	{
-		indexes = directives.at("index");
-		indexesStream.str(indexes);
-
-		while (indexesStream.good()) {
-			getline(indexesStream, cur_index, ' ');
-			path_remove_leading_slash(cur_index);
-			COUT_DEBUG_INSERTION("trying index file : "\
-				 << root + path + cur_index \
-				 << std::endl)
-			std::ifstream	file(root + path + cur_index);
-			if (file.is_open())
-				return (path + cur_index);
-		}
-		return ("");
-	}
-	else
-		return ("");
-}
-
-// void	Response::generatePOSTResponse( const std::string uri_path )
-// {
-// 	const std::string				upload_path = take_location_root(matching_directives, true);
-// 	std::string						reqPath(req.at("url"));
-// 	std::string						headers;
-// 	std::vector<char>				page;
-// 	std::string						filePath = "";
-
-// 	path_remove_leading_slash(reqPath);
-// 	filePath = upload_path + reqPath;
-	
-// 	COUT_DEBUG_INSERTION("trying to create file : " << upload_path + reqPath << std::endl)
-// 	std::ifstream					newFileStream(filePath.c_str(), std::ios_binary);
-
-// }
-

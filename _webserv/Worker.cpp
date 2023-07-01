@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/06 21:15:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/01 11:35:42 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/01 16:14:26 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,8 +49,12 @@ Worker::Worker(const t_conf_block& root_block) : servers(), edata()
 	}
 	if (0 == this->servers.size())
 		throw (std::runtime_error("Worker::Worker() : no server could be started"));
-	else
+	else {
+		COUT_DEBUG_INSERTION(
+			this->servers.size() << " servers started" << std::endl;
+		);
 		_init_io_multiplexing();
+	}
 }
 
 Worker::~Worker() {
@@ -65,10 +69,10 @@ Worker::~Worker() {
 		for (
 			VectorCli::iterator conn_it = (*serv_it).open_connections.begin();
 			conn_it != (*serv_it).open_connections.end();
-			conn_it++//TODO remove
+			/*...no increment*/
 		)
 		{
-			/** conn_it = */(*serv_it).open_connections.erase(conn_it);
+			conn_it = (*serv_it).open_connections.erase(conn_it);
 		}
 		(*serv_it).open_connections.clear();
 		std::cout << "Closing server: " << (*serv_it).server_fd << std::endl;
@@ -94,32 +98,6 @@ void Worker::workerLoop() {
 		}
 		_handle_new_connectionS();
 		_serve_clientS();
-	}
-}
-
-void	Worker::_serve_clientS( void ) {
-	// COUT_DEBUG_INSERTION("Worker::serve_clientS" << std::endl);
-	
-	for (
-		VectorServ::iterator serv_it = servers.begin();
-		serv_it != servers.end();
-		serv_it++
-	)
-	{
-		for (
-			VectorCli::iterator cli_it = (*serv_it).open_connections.begin();
-			cli_it != (*serv_it).open_connections.end();
-		)
-		{
-			try {
-				(*(*cli_it)).serve_client();//_serve_client(*(*cli_it));
-				cli_it++;
-			}
-			catch (const SockEof& e) {
-				std::cout << std::endl << BOLDRED "Exception >>" << e.what() << RESET << std::endl;
-				cli_it = (*serv_it).open_connections.erase(cli_it);
-			}
-		}
 	}
 }
 
@@ -152,22 +130,49 @@ void	Worker::_handle_new_connectionS() {
 			cli_socket = _create_ConnectionSocket((*serv_it), client_IP, server_IP);
 			_epoll_register_ConnectionSocket(cli_socket);
 			
-			//*		modifying rcv buffer
-			int buffer_size = 512000;
-			int snd_buffer_size = 512000;
-			if (
-				-1 == setsockopt(cli_socket, SOL_SOCKET, SO_RCVBUF, &buffer_size, sizeof(buffer_size)) ||
-				-1 == setsockopt(cli_socket, SOL_SOCKET, SO_SNDBUF, &snd_buffer_size, sizeof(snd_buffer_size))
-			)
-			{
-				//TODO throw exception
-				return ;
-			}
+			// //*		modifying rcv buffer
+			// int buffer_size = 512000;
+			// int snd_buffer_size = 512000;
+			// if (
+			// 	-1 == setsockopt(cli_socket, SOL_SOCKET, SO_RCVBUF, &buffer_size, sizeof(buffer_size)) ||
+			// 	-1 == setsockopt(cli_socket, SOL_SOCKET, SO_SNDBUF, &snd_buffer_size, sizeof(snd_buffer_size))
+			// )
+			// {
+				// /TODO throw exception
+			// 	return ;
+			// }
 			
 			//*		adding to list of open connections
 			(*serv_it).open_connections.push_back(
 				new ConnectionSocket(cli_socket, client_IP, server_IP, *serv_it, edata)
 			);
+		}
+	}
+}
+
+void	Worker::_serve_clientS( void ) {
+	// COUT_DEBUG_INSERTION("Worker::serve_clientS" << std::endl);
+	
+	for (
+		VectorServ::iterator serv_it = servers.begin();
+		serv_it != servers.end();
+		serv_it++
+	)
+	{
+		for (
+			VectorCli::iterator cli_it = (*serv_it).open_connections.begin();
+			cli_it != (*serv_it).open_connections.end();
+			/*...no increment*/
+		)
+		{
+			try {
+				(*(*cli_it)).serve_client();//_serve_client(*(*cli_it));
+				cli_it++;
+			}
+			catch (const SockEof& e) {
+				std::cout << std::endl << BOLDRED "Exception >>" << e.what() << RESET << std::endl;
+				cli_it = (*serv_it).open_connections.erase(cli_it);
+			}
 		}
 	}
 }
@@ -204,7 +209,7 @@ int	Worker::_create_ConnectionSocket(
 	_make_socket_non_blocking(cli_socket);
 	std::cout << "new connection socket : " << cli_socket << std::endl;
 
-	//*		Setting Client IP
+	//*		Setting Remote Client IP
 	client_IP = inet_ntoa(cli_addr.sin_addr);
 	
 	//*		Setting Server selected interface IP
@@ -227,7 +232,30 @@ void	Worker::_epoll_register_ConnectionSocket(int cli_socket) {
 	}
 }
 
+
 //*		private initialization functions
+
+void	Worker::_init_io_multiplexing() {
+	struct epoll_event	eevent;
+	
+	this->edata.epoll_fd = epoll_create(1);
+	if (-1 == this->edata.epoll_fd) {
+		throw SystemCallException("epoll_create()");
+	}
+	eevent.events = EPOLLIN;
+	for (VectorServ::iterator it = servers.begin(); it != servers.end(); it++)
+	{
+		eevent.data.fd = (*it).server_fd;
+		if (-1 == epoll_ctl(
+			this->edata.epoll_fd,
+			EPOLL_CTL_ADD,
+			(*it).server_fd,
+			&eevent))
+		{
+			throw SystemCallException("epoll_ctl()");
+		}
+	}
+}
 
 void	Worker::_server_init(const t_conf_block& conf_server_block) {
 	
@@ -238,13 +266,21 @@ void	Worker::_server_init(const t_conf_block& conf_server_block) {
 	const std::map<std::string, std::string>&	server_directives
 		= conf_server_block.sub_blocks[0].directives;
 	
-	COUT_DEBUG_INSERTION("new server port is : " << std::atoi(
-		server_directives.at("listen").c_str()) << std::endl);
+	
 	this->servers.push_back(t_server(conf_server_block));
 	this->servers.back().server_port = std::atoi(
 		server_directives.at("listen").c_str()
 	);
-	COUT_DEBUG_INSERTION("adding new Connection Socket with port " << this->servers.back().server_port << std::endl)
+	COUT_DEBUG_INSERTION(
+		"new server port is : " << std::atoi(
+			server_directives.at("listen").c_str()
+		) << std::endl
+	);
+	COUT_DEBUG_INSERTION(
+		"adding new Connection Socket with port "
+		<< this->servers.back().server_port
+		<< std::endl
+	);
 	_create_server_socket();
 	_set_socket_as_reusable();
 	_init_server_addr(server_directives);
@@ -334,29 +370,6 @@ void	Worker::_make_socket_non_blocking(int sock_fd) {
 	if (-1 == fcntl(sock_fd, F_SETFL, flags))
 		throw SystemCallException("fcntl()");
 }
-
-void	Worker::_init_io_multiplexing() {
-	struct epoll_event	eevent;
-	
-	this->edata.epoll_fd = epoll_create(1);
-	if (-1 == this->edata.epoll_fd) {
-		throw SystemCallException("epoll_create()");
-	}
-	eevent.events = EPOLLIN;
-	for (VectorServ::iterator it = servers.begin(); it != servers.end(); it++)
-	{
-		eevent.data.fd = (*it).server_fd;
-		if (-1 == epoll_ctl(
-			this->edata.epoll_fd,
-			EPOLL_CTL_ADD,
-			(*it).server_fd,
-			&eevent))
-		{
-			throw SystemCallException("epoll_ctl()");
-		}
-	}
-}
-
 
 
 //*		Canonical Form Shit

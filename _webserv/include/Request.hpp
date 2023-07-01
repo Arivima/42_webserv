@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 15:41:58 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/30 20:15:05 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/01 16:26:30 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,7 @@
 
 //TODO
 //TODO	1.	handle Chuncked Encoding (Transfer-Encoding header)
+//TODO	2.	(optional) handle binary data in body
 //TODO
 
 /**

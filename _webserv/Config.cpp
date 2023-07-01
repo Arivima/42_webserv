@@ -11,28 +11,10 @@
 /* ************************************************************************** */
 
 #include "include/Config.hpp"
-#include <algorithm>	//remove_if
+#include <algorithm>	//remove_if, std::replace
 #include <cstring>		//strncmp
 #include <set>			//check_directive_validity()
 
-//TODO
-//TODO	1. controllare che non ci siano più http block.
-//TODO	N.B.: possiamo farlo direttamente in parenthesis_balanced()
-//TODO	facendo in modo che quando scendiamo a 0 col count,
-//TODO	non possiamo più né salire, né scendere.---------------DONE
-//TODO
-//TODO		multi-valued directives
-//TODO	2. Sistemare l'append dei valori per error_page e server name(non fare overwrite)
-//TODO
-//TODO
-//TODO	3. parse only accepted directives; define list of accepted directives.
-//TODO
-//TODO
-//TODO
-
-//TODO	add
-//TODO			isKeyword
-//TODO			directive_add (append or overwrite based on wether directive is multi-valued or not)
 //*		non member helper functions Prototypes
 static bool					parenthesis_balanced(const std::string& content);
 static std::string			get_whole_line(std::string& line, size_t i);
@@ -56,14 +38,20 @@ Config::		~Config( void ) {
 void					Config::parse_config( void ) {
 
 	//*		parsing
+
+		//*		pre-processing
 	if (false == parenthesis_balanced(this->raw_content))
 		throw (std::invalid_argument("Config::parse_config: unbalanced parenthesis"));
+	std::replace(this->raw_content.begin(), this->raw_content.end(), '\t', ' ');
+		//*		parsing
 	this->parse(this->conf);
 
 	//*		validation
+	if (this->conf.sub_blocks.empty())
+		throw (std::invalid_argument("Config::parse_config() : no blocks in file"));
 	const t_conf_block&	http = this->conf.sub_blocks[0];
-	if (http.sub_blocks.empty())//*	maybe make it a function
-		throw (std::runtime_error("Config::parse_config() : no server could be started"));
+	if (http.sub_blocks.empty())
+		throw (std::invalid_argument("Config::parse_config() : no valid server block found"));
 	else
 		print_block(this->conf, this->conf.level);
 }
@@ -162,7 +150,7 @@ void	Config::parse( t_conf_block& current ) {
 		std::getline(content_stream, cur_line);
 		strip_trailing_and_leading_spaces(cur_line);
 		COUT_DEBUG_INSERTION(
-			"line read: |" << cur_line << std::endl
+			"line read: |" << cur_line << "|" << std::endl
 		);
 		
 		if (std::string::npos != cur_line.find("{")) {
@@ -175,7 +163,7 @@ void	Config::parse( t_conf_block& current ) {
 				throw (std::invalid_argument("Config::parse() : current block invalidated (contained failed sub-block or invalid directive)"));
 			return ;
 		}
-		else if (false == cur_line.empty()) {
+		else {
 			parse_directive(current, cur_line);
 		}
 	}
@@ -208,39 +196,132 @@ void	Config::parse_sub_block( t_conf_block& current, std::string& cur_line )
 			<< "reason : " << e.what() << std::endl
 			<< RESET;
 		if (e_http_block != current.level) {
-			std::cout << "block invalidated" << std::endl;
+			COUT_DEBUG_INSERTION("block invalidated" << std::endl)
 			current.invalidated = true;
-			// std::cout << "block invalidated : rethrowing..." << std::endl;
-			// throw (std::invalid_argument("containing block failed"));
 		}
 		else
-			std::cout << "block NOT invalidated" << std::endl;
+			COUT_DEBUG_INSERTION("block NOT invalidated" << std::endl);
 	}
 }
 
-//TODO
-//TODO	1. gestire multi-valued directives (vedere quali sono)
-//TODO
-//TODO	2. definire lista di directive accettate e rifiutare ogni directive non riconosciuta
-//TODO
+void	Config::parse_http_block( t_conf_block& current ) {
+	
+	COUT_DEBUG_INSERTION(MAGENTA "parse_http_block()" RESET << std::endl);
+	t_conf_block	http(
+		e_http_block,
+		current.directives
+	);
+	parse(http);
+	COUT_DEBUG_INSERTION(
+		GREEN "pushing a new http block into root sub-blocks" RESET << std::endl
+	);
+	current.sub_blocks.push_back(http);
+}
+
+void	Config::parse_location_block( t_conf_block& current, std::string& cur_line  ) {
+	
+	COUT_DEBUG_INSERTION(MAGENTA "parse_location_block()" RESET << std::endl);
+	
+	std::stringstream	linestream(cur_line);
+	std::string			location_keyword;
+	std::string			location_path;
+
+	//*	splitting direvtive name and value
+	std::getline(linestream, location_keyword, ' ');
+	std::getline(linestream, location_path, '{');
+	strip_trailing_and_leading_spaces(location_keyword);
+	strip_trailing_and_leading_spaces(location_path);
+	t_conf_block		location(
+		e_location_block,
+		current.directives
+	);
+	location.directives[location_keyword] = location_path;
+	
+	//*	parsing block recursively
+	parse(location);
+
+	//*	check if location block already exists within the server
+	//*		we add a fake directive in the server
+	//*		with key location<location_path> and check for the existence of this key
+	if (
+		current.directives.end() != current.directives.find(location_keyword + location_path)
+	)
+		throw (std::invalid_argument("Config::parse_location_block() : found two conflicting location blocks"));
+	else
+		current.directives[location_keyword + location_path] = location_path;
+	//**	////////////////////////////////////////////////////
+
+	COUT_DEBUG_INSERTION(
+		GREEN "pushing a new location block into virtual server sub-blocks" RESET << std::endl
+	);
+	current.sub_blocks.push_back(location);
+}
+
+void	Config::parse_server_block( t_conf_block& current ) {
+	COUT_DEBUG_INSERTION(MAGENTA "parse_server_block()" RESET << std::endl);
+	
+	t_conf_block&							http = current;
+	std::vector<t_conf_block>::iterator		server;
+	std::vector<t_conf_block>::iterator		virtual_serv;
+	t_conf_block							new_virtual_serv(
+		e_virtual_server_block,
+		http.directives
+	);
+
+	//*	parsing block recursively
+	parse(new_virtual_serv);
+
+	//*	Checking block validity
+	if (false == mandatory_server_directives_present(new_virtual_serv))
+		throw (std::invalid_argument(
+			"Config::parse_server_block() : server block should have \"listen\" directive")
+		);
+	for (server = http.sub_blocks.begin(); server != http.sub_blocks.end(); server ++)
+		if (same_server(*server, new_virtual_serv))
+		{
+			for (
+				virtual_serv = (*server).sub_blocks.begin();
+				virtual_serv != (*server).sub_blocks.end();
+				virtual_serv++
+			)
+				if (same_host(*virtual_serv, new_virtual_serv))
+					throw (std::invalid_argument("Config::parse_server_block() : \
+							 found two servers with conflicting server_names")
+					);
+			COUT_DEBUG_INSERTION(
+				GREEN "pushing a new virtual server block into existing server sub-blocks" RESET << std::endl
+			);
+			(*server).sub_blocks.push_back(new_virtual_serv);
+			break ;
+		}
+
+	//*	New server block or virtual of existing one ?
+	if (http.sub_blocks.end() == server)
+	{
+		t_conf_block	server(
+			e_server_block,
+			http.directives
+		);
+		COUT_DEBUG_INSERTION(
+			GREEN "pushing a new virtual server block into new server sub-blocks" RESET << std::endl
+		);
+		server.sub_blocks.push_back(new_virtual_serv);
+		COUT_DEBUG_INSERTION(
+			GREEN "pushing new server block into http sub-blocks" RESET << std::endl
+		);
+		http.sub_blocks.push_back(server);
+	}
+	COUT_DEBUG_INSERTION(MAGENTA "parse_server_block() ----END" RESET << std::endl);
+}
+
 void	Config::parse_directive( t_conf_block& current, std::string& cur_line )
 {
 	std::stringstream	linestream;
 	std::string			key;
 	std::string			value;
-	// const std::string	keywords[] = {
-	// 	"listen", "location", "server_name",
-	// 	"index", "body_size", "error_page", "method",
-	// 	"root", "autoindex", "exec_cgi", "extension_cgi"
-	// };
-	
-	// size_t	i;
-	// for (i = 0; i < 11; i++)
-	// 	if (keywords[i] == key)
-	// 		break ;
-	// if (11 == i)
-	// 	throw (std::invalid_argument("illegal directive found"));
-	
+
+	if (cur_line.empty())
+		return ;
 	try {
 		//*		removing directive semicolon
 		if (';' == cur_line[cur_line.length() - 1])
@@ -260,32 +341,6 @@ void	Config::parse_directive( t_conf_block& current, std::string& cur_line )
 		std::cout << "Config::parse_directive() : catched exception >> " << e.what() << std::endl;
 		current.invalidated = true;
 	}
-		
-	// OLD
-	// if (check_directive_validity(key))
-		// add_directive(current, key, value);
-	// else
-		// throw (std::invalid_argument("Config::parse_directive() : unrecognized directive found"));
-}
-
-void	Config::add_directive(t_conf_block& current, std::string& key, std::string& value)
-{
-	const std::string	singleValued = "listen body_size root return autoindex location";
-	const std::string	multiValued = "server_name error_page method index";
-
-	if (
-		current.directives.end() != current.directives.find(key) &&
-		str_compare_words(multiValued, key))
-	{
-		if (str_compare_words(current.directives.at(key), value))
-			throw (std::invalid_argument("Config::add_directive() : found directive with repeated values"));
-		else
-			current.directives[key].append(" " + value);
-	}
-	else
-	{
-		current.directives[key] = value;
-	}
 }
 
 void	Config::check_directive_validity(const std::string& directive, t_config_block_level level){
@@ -293,17 +348,17 @@ void	Config::check_directive_validity(const std::string& directive, t_config_blo
 
 	static const char*					allowed_directives[] = {
 		"listen", "location", "server_name", "host", "index", "body_size",
-		"error_page", "method", "root", "return", "autoindex",
-		"exec_cgi", "extension_cgi"
+		"error_page", "method", "root", "upload_path", "return", "autoindex",
+		"cgi_enable"
 	};
 	static const char*					virtual_server_directives[] = {
 		"listen", "location", "server_name", "host", "index",
-		"body_size", "error_page", "method", "root", "return",
-		"autoindex", "exec_cgi", "extension_cgi"
+		"body_size", "error_page", "method", "root", "upload_path", "return",
+		"autoindex"
 	};
 	static const char*					location_directives[] = {
 		"location", "index", "body_size", "error_page", "method", "root",
-		"return", "autoindex", "exec_cgi", "extension_cgi"
+		"upload_path", "return", "autoindex", "cgi_enable"
 	};
 	static const std::set<std::string>	dictionnary_all_directives(allowed_directives, allowed_directives + sizeof(allowed_directives) / sizeof(allowed_directives[0]));
 	static std::set<std::string>		dictionnary_block_directives;
@@ -331,111 +386,27 @@ void	Config::check_directive_validity(const std::string& directive, t_config_blo
 		throw (std::invalid_argument("Config::check_directive_validity() : " +  directive  + " directive declared on the wrong scope ( declared in the" + block_get_name(level) + " block.)"));
 }
 
-void	Config::parse_http_block( t_conf_block& current ) {
-	
-	COUT_DEBUG_INSERTION(MAGENTA "parse_http_block()" RESET << std::endl);
-	t_conf_block	http(
-		e_http_block,
-		current.directives
-	);
-	parse(http);
-	COUT_DEBUG_INSERTION(
-		GREEN "pushing a new http block into root sub-blocks" RESET << std::endl
-	);
-	current.sub_blocks.push_back(http);
-}
+void	Config::add_directive(t_conf_block& current, std::string& key, std::string& value)
+{
+	const std::string	singleValued = "listen body_size root upload_path return autoindex location";
+	const std::string	multiValued = "server_name error_page method index cgi_enable";
 
-void	Config::parse_location_block( t_conf_block& current, std::string& cur_line  ) {
-	
-	COUT_DEBUG_INSERTION(MAGENTA "parse_location_block()" RESET << std::endl);
-	
-	std::stringstream	linestream(cur_line);
-	std::string			location_keyword;
-	std::string			location_path;
-
-	std::getline(linestream, location_keyword, ' ');
-	std::getline(linestream, location_path, '{');
-	strip_trailing_and_leading_spaces(location_keyword);
-	strip_trailing_and_leading_spaces(location_path);
-	t_conf_block		location(
-		e_location_block,
-		current.directives
-	);
-	location.directives[location_keyword] = location_path;
-	
-	parse(location);
-	COUT_DEBUG_INSERTION(
-		GREEN "pushing a new location block into virtual server sub-blocks" RESET << std::endl
-	);
-
-
-	//**	check if location block already exists within server
-	//*		we add a fake directive with key location<location_path> and check for the existence of this key
-	//TODO	may need to trim leading and trailing spaces in both
 	if (
-		current.directives.end() != current.directives.find(location_keyword + location_path)
-	)
-		throw (std::invalid_argument("Config::parse_location_block() : found two conflicting location blocks"));
-	else
-		current.directives[location_keyword + location_path] = location_path;
-	//**	////////////////////////////////////////////////////
-
-
-	current.sub_blocks.push_back(location);
-}
-
-void	Config::parse_server_block( t_conf_block& current ) {
-	COUT_DEBUG_INSERTION(MAGENTA "parse_server_block()" RESET << std::endl);
-	
-	t_conf_block&							http = current;
-	std::vector<t_conf_block>::iterator		server;
-	std::vector<t_conf_block>::iterator		virtual_serv;
-	t_conf_block							new_virtual_serv(
-		e_virtual_server_block,
-		http.directives
-	);
-
-	parse(new_virtual_serv);
-	if (false == mandatory_server_directives_present(new_virtual_serv))
-		throw (std::invalid_argument(
-			"Config::parse_server_block() : server block should have \"listen\" directive")
-		);
-	for (server = http.sub_blocks.begin(); server != http.sub_blocks.end(); server ++)
-		if (same_server(*server, new_virtual_serv))
-		{
-			for (
-				virtual_serv = (*server).sub_blocks.begin();
-				virtual_serv != (*server).sub_blocks.end();
-				virtual_serv++
-			)
-				if (same_host(*virtual_serv, new_virtual_serv))
-					throw (std::invalid_argument("Config::parse_server_block() : \
-							 found two servers with conflicting server_names")
-					);
-			COUT_DEBUG_INSERTION(
-				GREEN "pushing a new virtual server block into existing server sub-blocks" RESET << std::endl
-			);
-			(*server).sub_blocks.push_back(new_virtual_serv);
-			break ;
-		}
-	if (http.sub_blocks.end() == server)
+		//*	directive already present
+		current.directives.end() != current.directives.find(key) &&
+		//*	directive is multi-valued
+		str_compare_words(multiValued, key))
 	{
-		t_conf_block	server(
-			e_server_block,
-			http.directives
-		);
-		COUT_DEBUG_INSERTION(
-			GREEN "pushing a new virtual server block into new server sub-blocks" RESET << std::endl
-		);
-		server.sub_blocks.push_back(new_virtual_serv);
-		COUT_DEBUG_INSERTION(
-			GREEN "pushing new server block into http sub-blocks" RESET << std::endl
-		);
-		http.sub_blocks.push_back(server);
+		if (str_compare_words(current.directives.at(key), value))
+			throw (std::invalid_argument("Config::add_directive() : found directive with repeated values"));
+		else
+			current.directives[key].append(" " + value);
 	}
-	COUT_DEBUG_INSERTION(MAGENTA "parse_server_block() ----END" RESET << std::endl);
+	else
+	{
+		current.directives[key] = value;
+	}
 }
-
 
 //*		non member helper functions
 static bool					parenthesis_balanced(const std::string& content) {

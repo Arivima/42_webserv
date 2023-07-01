@@ -78,32 +78,38 @@ public:
 	void					generateResponse( void );
 
 private:
-	//*		Private Helper functions
+	//*		Main Private Helper functions
+	const t_conf_block&				takeMatchingDirectives(
+										const t_conf_block& conf_server_block,
+										const std::map<std::string, std::string>& req
+									);
+	const t_conf_block&				takeMatchingServer(
+										const std::vector<t_conf_block>&	virtual_servers,
+										const std::map<std::string, std::string>& req
+									);
+	size_t							locationMatch(
+										const t_conf_block& location,
+										const std::string& req_url
+									);
 	void							generateGETResponse( const std::string uri_path );
 	void							generatePOSTResponse( const std::string uri_path );
 	void							generateDELETEResponse( void ){}
 	std::string						getHeaders(
-		int status, std::string description, std::string& filepath,
-		size_t	body_size
-	);
-	bool	isMethodAllowed(void);
-	//TODO		forse move in utils
-	size_t							locationMatch(
-		const t_conf_block& location, const std::string& req_url
-		);
-	const t_conf_block&				takeMatchingDirectives(
-		const t_conf_block& conf_server_block,
-		const std::map<std::string, std::string>& req
-		);
-	const t_conf_block&				takeMatchingServer(
-		const std::vector<t_conf_block>&	virtual_servers,
-		const std::map<std::string, std::string>& req
-		);
+										int status, std::string description,
+										std::string& filepath,
+										size_t	body_size
+									);
+	std::string						getIndexPage( const std::string& root, std::string path );
+
+	//*		Secondary Helper Functions
+	bool							isMethodAllowed(void);
 	//TODO		forse move in utils
 	std::string						http_req_complete_url_path(
-		const std::string& uri, const std::string& root
-		);
-	std::string						getIndexPage( const std::string& root, std::string path );
+										const std::string& uri,
+										const std::string& root
+									);
+	void							deleteFile( const std::string pathname );
+	void							deleteDirectory( const std::string pathname );
 };
 
 

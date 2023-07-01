@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 18:07:39 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/30 19:58:35 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/01 16:18:30 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,12 +37,9 @@ ConnectionSocket::ConnectionSocket(
 //*		Main Functions
 
 void	ConnectionSocket::status_switch( void ) {
-	// COUT_DEBUG_INSERTION("ConnectionSocket::status_switch()" << std::endl)
 	if (e_REQ_MODE == this->status) {
-		// COUT_DEBUG_INSERTION("cur status is e_REQ_MODE" << std::endl)
 		if (response)
 			delete response;
-		// COUT_DEBUG_INSERTION("past delete" << std::endl)
 		response = new Response(
 			request->getRequest(),
 			assigned_server,
@@ -55,19 +52,16 @@ void	ConnectionSocket::status_switch( void ) {
 		status = e_RESP_MODE;
 	}
 	else {
-		// COUT_DEBUG_INSERTION("cur status is e_RESP_MODE" << std::endl)
 		if (request)
 			delete request;
 		request = new Request(sock_fd, edata);
 		status = e_REQ_MODE;
 	}
-	// COUT_DEBUG_INSERTION("ConnectionSocket::status_switch()----END" << std::endl)
 }
 
 void	ConnectionSocket::serve_client( void ) {
 	try {
 		if (e_REQ_MODE == status) {
-			// COUT_DEBUG_INSERTION(BOLDGREEN "serve_client()-->parse_line REQ_MODE" RESET << std::endl)
 			request->parse_line();
 		}
 		else {
@@ -75,7 +69,6 @@ void	ConnectionSocket::serve_client( void ) {
 		}
 	}
 	catch (const TaskFulfilled& e) {
-		// std::cout << e.what() << std::endl;
 		this->status_switch();
 		this->serve_client();
 	}

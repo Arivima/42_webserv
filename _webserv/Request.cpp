@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 17:19:26 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/30 20:08:33 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/01 16:34:29 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,12 +66,16 @@ void	Request::read_line( void )
 { //std::cout  << std::endl << "\033[1m\033[32m""read_line() called()""\033[0m" << std::endl;
 	const struct epoll_event*	eevent = edata.getEpollEvent(this->sock_fd);
 
+	//*	Checking for incoming data and writing into statically allocated recv buffer
 	if (NULL != eevent && (eevent->events & EPOLLIN)) {
 		memset(rcv_buf, '\0', RCV_BUF_SIZE + 1);
 		if (recv(sock_fd, rcv_buf, RCV_BUF_SIZE, 0) <= 0)
 			throw (SockEof());
+		//*	Dumping into dynamic entity for character handling (stream)
 		sock_stream << rcv_buf;
 	}
+
+	//*	Read characters from dynamic entity for character handling (stream)
 	if (e_READING_HEADS == parser_status) {
 		read_header();
 	}
