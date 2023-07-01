@@ -20,6 +20,7 @@ class CGI {
 		char*				cgi_env[CGI_ENV_SIZE + 1];
 		std::vector<char>	response;
 		const std::map<std::string, std::string> &	req;
+		const t_conf_block&	matching_directives;
 
 	//*		Public member functions
 	public:

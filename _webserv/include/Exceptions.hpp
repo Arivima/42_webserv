@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/30 12:37:05 by avilla-m          #+#    #+#             */
-/*   Updated: 2023/07/01 18:14:36 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/01 19:58:30 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -220,8 +220,14 @@ private:
 		switch (err_code) {
 			case 400:
 				return ("bad request");
+			case 403:
+				return ("forbidden");
 			case 404:
 				return ("not found");
+			case 409:
+				return ("conflict");
+			case 414:
+				return ("uri too long");
 			case 500:
 				return ("internal server error");
 			case 501:

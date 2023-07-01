@@ -19,7 +19,7 @@ CGI::CGI(
 	const t_conf_block&							matching_directives,
 	const std::string &							interpreter_path
 )
-: sock_fd(sock_fd), response(), req(req)
+: sock_fd(sock_fd), response(), req(req), matching_directives(matching_directives)
 {
 	std::cout << "CGI Constructor" << std::endl;
 
@@ -58,7 +58,7 @@ void CGI::launch()
 	pid = fork();
 
 	if (pid == -1)
-		throw SystemCallException("fork()");
+		throw_HttpError_debug("CGI::launch()", "fork()", 500, this->matching_directives);
 	else if (pid == 0)  // child -> CGI
 	{		
 	// create the input string
@@ -70,28 +70,28 @@ void CGI::launch()
 	// create an input file and write the content of body and query string
 		std::ofstream	stream_cgi_infile(CGI_INFILE, std::ios::out | std::ios::trunc);
 		if (false == stream_cgi_infile.is_open())
-			throw SystemCallException("is_open()"); // where, which function, which object
+			throw_HttpError_debug("CGI::launch()", "is_open()", 500, this->matching_directives);
 		
 		stream_cgi_infile << std::string("Hello from CGI.launch()");
 		stream_cgi_infile << input;
 		
 		if (stream_cgi_infile.fail())
-			throw SystemCallException("<<"); // where, which function, which object
+			throw_HttpError_debug("CGI::launch()", "stream <<", 500, this->matching_directives);
 		stream_cgi_infile.close();
 
 	// open input and output files
 		int fd_in = open(CGI_INFILE, O_RDONLY, 0666);
 		if (fd_in == -1)
-			throw SystemCallException("open()");
+			throw_HttpError_debug("CGI::launch()", "open CGI_INFILE", 500, this->matching_directives);
 		int fd_out = open(CGI_OUTFILE, O_RDWR | O_CREAT | O_TRUNC, 0666);
 		if (fd_out == -1)
-			throw SystemCallException("open()");
+			throw_HttpError_debug("CGI::launch()", "open CGI_OUTFILE", 500, this->matching_directives);
 
 	// duping fd // if no body ? dup or not ? -> handled by CGI ?
 		if (dup2(fd_in, STDIN_FILENO) == -1)
-			throw SystemCallException("dup2(fd_in, STDIN_FILENO");
+			throw_HttpError_debug("CGI::launch()", "dup2(fd_in, STDIN_FILENO)", 500, this->matching_directives);
 		if (dup2(fd_out, STDOUT_FILENO) == -1)
-			throw SystemCallException("dup2(fd_out, STDOUT_FILENO)");
+			throw_HttpError_debug("CGI::launch()", "dup2(fd_out, STDOUT_FILENO)", 500, this->matching_directives);
 	// creates arguments for execve
 		char* const cmd[3] = {
 			strdup(get_env_value("INTERPRETER_PATH").c_str()),
@@ -105,21 +105,24 @@ void CGI::launch()
         // };
 	// executing cgi
 		if (execve(cmd[0], cmd, this->cgi_env) == -1)
-			throw SystemCallException("execve()");
+			throw_HttpError_debug("CGI::launch()", "execve()", 500, this->matching_directives);
 	}
 	else 	// back to parent
 	{              
 		if (wait(0) == -1)
-			throw SystemCallException("wait()");
+			throw_HttpError_debug("CGI::launch()", "wait()", 500, this->matching_directives);
 		// Update the response
 		std::ifstream	stream_cgi_outfile(CGI_OUTFILE, std::ios::in);
 		if (false == stream_cgi_outfile.is_open())
-			throw SystemCallException("is_open()"); // where, which function, which object
+			throw_HttpError_debug("CGI::launch()", "is_open()", 500, this->matching_directives);
         
 		response.assign(std::istreambuf_iterator<char>(stream_cgi_outfile), std::istreambuf_iterator<char>());
         
-		unlink(CGI_OUTFILE); // remove outfile	
-		unlink(CGI_INFILE); // remove infile	
+	// delete files
+		if (unlink(CGI_OUTFILE) == -1) 
+			throw_HttpError_debug("CGI::launch()", "unlink(CGI_OUTFILE)", 500, this->matching_directives);
+		if (unlink(CGI_INFILE) == -1) 
+			throw_HttpError_debug("CGI::launch()", "unlink(CGI_INFILE)", 500, this->matching_directives);
 	}
 }
 

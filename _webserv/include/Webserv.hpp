@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/05 15:27:54 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/30 20:30:05 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/01 19:58:55 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,6 +86,9 @@ std::string					take_cgi_extension(
 
 //	HTTP UTILS
 std::string					uri_remove_queryString(const std::string& uri);
+
+//	UTILS EXCEPTIONS
+void throw_HttpError_debug(std::string function, std::string call, int httpStatusCode, const t_conf_block & matching_directives);
 
 //	UTILS HPP
 std::string					strip_spaces(std::string& str);

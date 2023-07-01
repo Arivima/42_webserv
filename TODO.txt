@@ -1,37 +1,55 @@
+Always		Check against subject, correction sheet, tester, write tests with python, Postman 
 
 Arielle:
-	-	do many bisous to Matteo
-	-	do many hugs to Matteo    
-	- 	test CGI
-	-	Do DELETE
+DONE	-	do many bisous to Matteo
+		-	do many hugs to Matteo    
+		- 	test CGI
+		- 	test DELETE
+		-	HTTP status code to check throughout all code
+		Give different HTTP response status code depending on errors - throughout the response class, every where there is a 
+		Response (dirlisting, etc.) : give different error codes based on reading of errno
+		10.1	file not found
+		10.2	unauthorized
+		// https://www.restapitutorial.com/httpstatuscodes.html
+		// https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
+		// https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
+		-	clean exceptions / error syntax to make it consistent throughout files
+		-	use errno ?
+		- clean delete and change isDirectory 
 
-Matteo
-	-	Mettere location root e upload_path come variabili di classe di Response
-	-	Change req url name to "uri"
-	-	Refactor Request class
-	-	Make sure, in every place, that we on't do any string functions on the body string except for insert
-	-	Do POST
+Matteo:
+		-	Mettere location root e upload_path come variabili di classe di Response
+		-	Change req url name to "uri"
+		-	Refactor Request class
+		-	Make sure, in every place, that we don't do any string functions on the body string except for insert
+		-	Do POST
 
-	-Config : rimuovi tab nel file di configurazione
-	-Response : rimuovi subito query string se non é GET
-	-Respone : make req a reference                         
-	-check for every member that should be a reference
-	- (forse)togliere set buffer size del socket nel Worker (setsockopt)
-	- implement redirections
-	- implement client body_size
-	- implement chuncked Encoding
-	- implement timers
-	- scrivere script per le CGI
-	
-	- binary data
-	- fare un log
-	- cookie ?
-
+Overall:
+		-Config : overwrite multi-valued directive if it comes from outer block
+		-Config : rimuovi spazi consecutivi
+DONE	-Response : rimuovi subito query string se non é GET
+		-Response : make req a reference                         
+		-check for every member that should be a reference
+		- (forse)togliere set buffer size del socket nel Worker (setsockopt)
+		- implement redirections
+		- implement client body_size
+		- implement chuncked Encoding
+		- implement timers
+		- scrivere script per le CGI
+		
 
 
 
 
+Overall at the end:
+		-	clean all comments
+		-	put all implementations in .cpp
 
+		- binary data
+		- fare un log
+		- cookie ?
+
+		Arielle : update Webserv.doc
 
 
 
@@ -50,25 +68,11 @@ Matteo
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Prioritaria
-	7.	Check against subject, correction sheet, tester, write tests with python, Postman 
-Arielle
-	10.	Give different HTTP response status code depending on errors - throughout the response class, every where there is a 
-		Response (dirlisting, etc.) : give different error codes based on reading of errno
-		10.1	file not found
-		10.2	unauthorized
-		// https://www.restapitutorial.com/httpstatuscodes.html
-		// https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
-		// https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
-		
-
 Matteo
-	8.	implement timers
 	13	valutare se contollare la presenza di location block ripetuti
 
 To assign
 	1.	implementare redirections in GET
-	2.	gestire client body_size
 	9.	Check compatibility with Chrome/Firefox (set right headers)
 
 Meno Prioritario
@@ -86,11 +90,6 @@ Config file:
 		3.4	directive for uploading files
 		3.4 CGI
 
-Overall at the end:
-- clean exceptions / error syntax to make it consistent throughout files
-- use errno ?
-- clean all comments
-- put all implementations in .cpp
 
 ARCHIVES not yet done but useless (maybe) !
 	3.util : fare funzione che, presa una stringa, rimuove tutti i caratteri a partire da uno dato,

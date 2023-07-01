@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/18 10:41:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/30 20:45:23 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/01 21:02:52 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -263,6 +263,12 @@ std::string		uri_remove_queryString(const std::string& uri)
 	return (uri_path);
 }
 
+//	UTILS EXCEPTIONS
+
+void throw_HttpError_debug(std::string function, std::string call, int httpStatusCode, const t_conf_block & matching_directives){
+	std::cout << RED << "Error : " << function << " : " << call << "http status code : " << httpStatusCode << RESET << std::endl;
+	throw (HttpError(httpStatusCode, matching_directives, take_location_root(matching_directives, false)));
+}
 
 //*		GENERAL PURPOSE UTILITIES
 std::string					strip_spaces(std::string& str) {
@@ -371,6 +377,10 @@ void	path_remove_leading_slash(std::string& pathname)
 #include <sys/stat.h>
 #include <sys/types.h>
 
+//TODO
+//TODO	check stat error with errno. Throw server internal error if it failed for something else than non-existent file.
+//TODO
+//TODO
 bool			isDirectory(const std::string root, std::string path, const t_conf_block& matching_directives) {
    
     struct stat fileStat;

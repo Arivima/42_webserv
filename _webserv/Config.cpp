@@ -199,8 +199,9 @@ void	Config::parse_sub_block( t_conf_block& current, std::string& cur_line )
 			COUT_DEBUG_INSERTION("block invalidated" << std::endl)
 			current.invalidated = true;
 		}
-		else
+		else {
 			COUT_DEBUG_INSERTION("block NOT invalidated" << std::endl);
+		}
 	}
 }
 

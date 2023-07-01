@@ -93,7 +93,7 @@ private:
 									);
 	void							generateGETResponse( const std::string uri_path );
 	void							generatePOSTResponse( const std::string uri_path );
-	void							generateDELETEResponse( void ){}
+	void							generateDELETEResponse( const std::string uri_path );
 	std::string						getHeaders(
 										int status, std::string description,
 										std::string& filepath,
@@ -103,13 +103,15 @@ private:
 
 	//*		Secondary Helper Functions
 	bool							isMethodAllowed(void);
+	void							deleteFile( const std::string pathname );
+	void							deleteDirectory( const std::string pathname );
+
 	//TODO		forse move in utils
 	std::string						http_req_complete_url_path(
 										const std::string& uri,
 										const std::string& root
 									);
-	void							deleteFile( const std::string pathname );
-	void							deleteDirectory( const std::string pathname );
+
 };
 
 
