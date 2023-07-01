@@ -81,7 +81,7 @@ private:
 	//*		Private Helper functions
 	void							generateGETResponse( const std::string uri_path );
 	void							generatePOSTResponse( const std::string uri_path );
-	// void							generateDELETEResponse( void );
+	void							generateDELETEResponse( void ){}
 	std::string						getHeaders(
 		int status, std::string description, std::string& filepath,
 		size_t	body_size
@@ -101,7 +101,7 @@ private:
 		);
 	//TODO		forse move in utils
 	std::string						http_req_complete_url_path(
-		const std::string& url, const std::string& root
+		const std::string& uri, const std::string& root
 		);
 	std::string						getIndexPage( const std::string& root, std::string path );
 };

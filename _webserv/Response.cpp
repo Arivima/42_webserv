@@ -146,6 +146,7 @@ void	Response::send_line( void )
 // refactor to clean + test and make sure all cases are covered
 void	Response::generateGETResponse(  const std::string uri_path  )
 {
+	std::cout << "uri_path : " << uri_path << std::endl;
 	const std::string				root = take_location_root(matching_directives, false);
 	const std::string				reqPath(http_req_complete_url_path(uri_path, root));
 	std::string						headers;
@@ -259,8 +260,7 @@ size_t	Response::locationMatch(
 	const t_conf_block& location, const std::string& req_url
 	)
 {
-	// size_t		match_score;
-	size_t		path_begin;
+	size_t		match_score;
 	size_t		query_arguments_start;
 	std::string	location_path;
 	std::string	reqUrl = req_url;
@@ -275,29 +275,36 @@ size_t	Response::locationMatch(
 		//*		exact match
 		location_path = location.directives.at("location").substr(1);
 		strip_trailing_and_leading_spaces(location_path);
-		if (
-			0 == reqUrl.find("http://") &&
-			std::string::npos != (path_begin = reqUrl.substr(7).find("/")) &&
-			0 == reqUrl.substr(7 + path_begin).compare(location_path)
+		COUT_DEBUG_INSERTION(
+			"trying exact match on location |" << location_path << "|"
+			<< " with uri : |" << reqUrl << "|"
+			<< std::endl
 		)
-			return (std::string::npos);
+		if (0 == reqUrl.compare(location_path)
+		)
+			match_score = (std::string::npos);
 		else
-			return (0);
+			match_score = (0);
 	}
 	else
 	{
-		//*		prefix match
 		location_path = location.directives.at("location");
-		strip_trailing_and_leading_spaces(location_path);
-		if (
-			0 == reqUrl.find("http://") &&
-			std::string::npos != (path_begin = reqUrl.substr(7).find("/")) &&
-			0 == reqUrl.substr(7 + path_begin).find(location_path)
+		COUT_DEBUG_INSERTION(
+			"trying prefix match on location |" << location_path << "|"
+			<< " with uri : |" << reqUrl << "|"
+			<< std::endl
 		)
-			return (location_path.length());
+		//*		prefix match
+		if (0 == reqUrl.find(location_path))
+			match_score = (location_path.length());
 		else
-			return (0);
+			match_score = (0);
 	}
+
+	COUT_DEBUG_INSERTION(
+		" match score : " << match_score << std::endl
+	)
+	return (match_score);
 }
 
 //TODO	Matteo TEST
@@ -330,10 +337,19 @@ const t_conf_block&	Response::takeMatchingDirectives(
 			matches.push_back(t_location_match(*location, match_score));
 	}
 
-	if (matches.empty())
+	if (matches.empty()) {
+		COUT_DEBUG_INSERTION(
+			RED "no location for requested url" RESET
+			 << std::endl
+		)
 		return (virtual_server);
+	}
 	else {
 		matches.sort();
+		COUT_DEBUG_INSERTION(
+			BOLDGREEN "taking location : " << matches.back().location.directives.at("root") << RESET
+			<< std::endl
+		)
 		return (matches.back().location);
 	}
 }
@@ -391,42 +407,33 @@ const t_conf_block&	Response::takeMatchingServer(
  * @brief this function completes the path-part of a request URL.
  * That means it´s going to fecth a index file if the requested resource is a directory.
  * 
- * @param url 
- * @param root the root directory for the requested location (i.e.: var/www/html)
+ * @param uri - the path-part of a request url without query string arguments
+ * @param root - the root directory for the requested location (i.e.: var/www/html)
  * @return std::string : a relative path (any leading slash will be cleaned) pointing to a static resource
  * or empty in case of error (e.g.: no index file could be found)
  */
 std::string		Response::http_req_complete_url_path(
-	const std::string& url, const std::string& root
+	const std::string& uri, const std::string& root
 	)
 {
-	(void)url;
-	std::string		path;
-	// size_t			path_start;
-	// size_t			path_end;
+	std::string		path = uri;
+	size_t			path_start;
 
-	//*	uesless ?
-	// if (
-	// 	std::string::npos == (path_start = url.find("/"))
-	// )
-	// {
-	// 	COUT_DEBUG_INSERTION("throwing url : " << url << std::endl)
-	// 	throw HttpError(400, matching_directives, take_location_root());
-	// }
-
-	//*	useless with new architecture //TODO remove everywhere
-	// //*		remove query string
-	// path_end = url.rfind("?");
-	// if (std::string::npos == path_end)
-	// 	path_end = url.length();
+	//*	protection against telnet bad requests	(i.e.: when we write the http request by hand)
+	if (
+		std::string::npos == (path_start = uri.find("/"))
+	)
+	{
+		throw HttpError(400, matching_directives, root);
+	}
+	path = uri.substr(path_start);
+	//****************************************************
 	
-	// path = url.substr(path_start, path_end - path_start);
-
+	//*	check if requested resource is a directory
 	if ( true == isDirectory( root, path, this->matching_directives) ) {
 		path = getIndexPage(root, path);
 	}
-	// TODO check that path points to a regular file ? crash if other types ?
-	// else path refers to a file and is already correct
+	// else path refers to a regular file and is already correct
 
 	path_remove_leading_slash(path);
 	return (path);//*	may be empty (a.k.a. "")
@@ -478,42 +485,4 @@ std::string		Response::getIndexPage( const std::string& root, std::string path )
 // 	std::ifstream					newFileStream(filePath.c_str(), std::ios_binary);
 
 // }
-
-
-
-
-	// const std::string				reqPath(
-	// 	http_req_take_url_path(req.at("url"), root)
-	// );;
-	// std::string						headers;
-	// std::vector<char>				page;
-	// std::string						filePath = "";
-
-	// //TODO autoindex (CHECK that path refers to directory and not a regular file)
-	// std::cout << "Path of the request : " << (reqPath.empty()? "EMPTY" : reqPath ) << std::endl;
-	// if (reqPath.empty()) {
-	// }
-	// else {
-	// 	COUT_DEBUG_INSERTION("serving page : " << root + reqPath << std::endl)
-	// 									filePath = root + reqPath;
-	// 	std::ifstream					docstream(filePath.c_str(), std::ios::binary);
-
-	// 	if (false == docstream.is_open()) {
-	// 		COUT_DEBUG_INSERTION("throwing page not found\n")
-	// 		throw HttpError(404, matching_directives, take_location_root());
-	// 	}
-	// 	try {
-	// 		page.insert(
-	// 			page.begin(),
-	// 			std::istreambuf_iterator<char>(docstream),
-	// 			std::istreambuf_iterator<char>());
-	// 	}
-	// 	catch (const std::exception& e) {
-	// 		COUT_DEBUG_INSERTION("throwing Internal Server Error\n")
-	// 		throw HttpError(500, matching_directives, take_location_root());
-	// 	}
-	// 	headers = getHeaders(200, "OK", filePath, page.size());
-	// }
-	// response.insert(response.begin(), headers.begin(), headers.end());
-	// response.insert(response.end(), page.begin(), page.end());
 

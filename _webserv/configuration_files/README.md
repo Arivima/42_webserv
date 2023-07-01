@@ -2,6 +2,8 @@ CONFIGURATION DOCUMENTATION
 
 Formatting Rules:
 
+	- location pathnames must always end with a slash if the location pathaname is a directory
+	- All pathnames in every other scenario must never end with a slash
     - no tabs in config file. Only whitespace and new line are valid space characters.
     - opening block brackets must be at the same line as the block level (i.e.: "server {")
     - closing block brackets must be on their own line (i.e.: "<something>}" is not valid)

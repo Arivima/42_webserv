@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/06 21:15:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/30 20:46:13 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/01 11:35:42 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,6 +43,8 @@ Worker::Worker(const t_conf_block& root_block) : servers(), edata()
 				<< "server_name : " << debug_server_name << std::endl
 				<< "reason : " << e.what() << std::endl
 				<< RESET;
+
+			this->servers.pop_back();
 		}
 	}
 	if (0 == this->servers.size())

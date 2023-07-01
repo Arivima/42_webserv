@@ -172,7 +172,7 @@ void	Config::parse( t_conf_block& current ) {
 			if ("}" != cur_line)
 				throw (std::invalid_argument("Config::parse() : \'}\' must be on its own line"));
 			if (current.invalidated)
-				throw (std::invalid_argument("Config::parse() : current block invalidated (contained failed or invalid directive)"));
+				throw (std::invalid_argument("Config::parse() : current block invalidated (contained failed sub-block or invalid directive)"));
 			return ;
 		}
 		else if (false == cur_line.empty()) {
@@ -354,7 +354,9 @@ void	Config::parse_location_block( t_conf_block& current, std::string& cur_line 
 	std::string			location_path;
 
 	std::getline(linestream, location_keyword, ' ');
-	std::getline(linestream, location_path);
+	std::getline(linestream, location_path, '{');
+	strip_trailing_and_leading_spaces(location_keyword);
+	strip_trailing_and_leading_spaces(location_path);
 	t_conf_block		location(
 		e_location_block,
 		current.directives
@@ -365,6 +367,8 @@ void	Config::parse_location_block( t_conf_block& current, std::string& cur_line 
 	COUT_DEBUG_INSERTION(
 		GREEN "pushing a new location block into virtual server sub-blocks" RESET << std::endl
 	);
+
+
 	//**	check if location block already exists within server
 	//*		we add a fake directive with key location<location_path> and check for the existence of this key
 	//TODO	may need to trim leading and trailing spaces in both
@@ -375,6 +379,8 @@ void	Config::parse_location_block( t_conf_block& current, std::string& cur_line 
 	else
 		current.directives[location_keyword + location_path] = location_path;
 	//**	////////////////////////////////////////////////////
+
+
 	current.sub_blocks.push_back(location);
 }
 
