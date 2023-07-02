@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/18 10:41:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/01 21:02:52 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/02 14:55:43 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -220,6 +220,7 @@ std::string	take_cgi_extension(
 	const std::map<std::string, std::string>& directives
 )
 {
+	COUT_DEBUG_INSERTION("take_cgi_extension - url : " << url << std::endl);
 	size_t				cur_dot_pos;
 	std::string			cur_extension;
 	size_t				ext_found_at_pos;
@@ -238,18 +239,69 @@ std::string	take_cgi_extension(
 		
 		cgiDirectiveStream.str(cgi_enable_directive.substr(cur_dot_pos));
 		std::getline(cgiDirectiveStream, cur_extension, ' ');
+		COUT_DEBUG_INSERTION("trying extension : |" << cur_extension << "| " << std::endl);
 		ext_found_at_pos = url.find(cur_extension);
 		if (
-			//*script at the end
-			ext_found_at_pos + cur_extension.length() == url.length() ||
-			//*additional url info
-			'/' == url[ext_found_at_pos + cur_extension.length()]
-		)
+			std::string::npos != ext_found_at_pos &&
+			(
+				//*script at the end
+				ext_found_at_pos + cur_extension.length() == url.length() ||
+				//*additional url info
+				'/' == url[ext_found_at_pos + cur_extension.length()]
+			)
+		) {
+			COUT_DEBUG_INSERTION("returning extension : |" << cur_extension << "| " << std::endl);
 			return (cur_extension);
+		}
 			
 		cur_dot_pos += 1;
 	}
 	return "";
+}
+
+/**
+ * @brief this function returns the cgi interpreter for the current extension.
+ * 
+ * @param extension 
+ * @param cgi_directive 
+ * @return std::string 
+ */
+std::string		take_cgi_interpreter_path(
+						const std::string& extension,
+						const std::string& cgi_directive
+				)
+{
+	size_t	prev_extension_pos;
+	size_t	interpreter_pos;
+
+	//*	imagine we are parsing a directive like "/usr/bin/bash .bash .sh .zsh /usr/bin/python .py"
+
+	prev_extension_pos = cgi_directive.find(" " + extension);
+	while (true)
+	{
+		std::cout << "searching intepreter..." << std::endl;
+		//*	Looking for interpreter
+		interpreter_pos = cgi_directive.rfind("/", prev_extension_pos);
+		//*	Looking for previous extension
+		prev_extension_pos = cgi_directive.rfind(" .", prev_extension_pos);
+
+		//*	there is no interpreter
+		if (std::string::npos == interpreter_pos)
+			return ("");
+		//*	next extension belongs to another interpreter
+		if (
+			std::string::npos == prev_extension_pos ||
+			prev_extension_pos < interpreter_pos
+		)
+			break ;
+		prev_extension_pos -= 1;
+	}
+	return (
+		cgi_directive.substr(
+			interpreter_pos,
+			cgi_directive.find(" ", interpreter_pos)
+		)
+	);
 }
 
 std::string		uri_remove_queryString(const std::string& uri)

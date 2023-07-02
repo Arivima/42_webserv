@@ -18,6 +18,7 @@ DONE	-	do many bisous to Matteo
 		- clean delete and change isDirectory 
 
 Matteo:
+		-	takeCGIInterpreterPath
 		-	Mettere location root e upload_path come variabili di classe di Response
 		-	Change req url name to "uri"
 		-	Refactor Request class

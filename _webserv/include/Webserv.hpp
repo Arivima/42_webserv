@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/05 15:27:54 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/01 19:58:55 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/02 14:13:27 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,6 +82,10 @@ bool						isCGI(
 std::string					take_cgi_extension(
 								const std::string& url,
 								const std::map<std::string, std::string>& directives
+							);
+std::string					take_cgi_interpreter_path(
+									const std::string& extension,
+									const std::string& cgi_directive
 							);
 
 //	HTTP UTILS

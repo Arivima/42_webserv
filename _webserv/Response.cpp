@@ -84,6 +84,7 @@ void	Response::send_line( void )
 void	Response::generateResponse( void )
 {
 	std::string		cgi_extension;
+	std::string		cgi_interpreter_path;
 	std::string		url_no_query_str = uri_remove_queryString(req.at("url"));
 	try
 	{
@@ -95,8 +96,11 @@ void	Response::generateResponse( void )
 		);
 		if (false == cgi_extension.empty())
 		{
-			throw (std::runtime_error("not implemented"));
-			this->cgi = new CGI(sock_fd, client_IP, server_IP, req, matching_directives, std::string(""));
+			cgi_interpreter_path = take_cgi_interpreter_path(
+										cgi_extension,
+										matching_directives.directives.at("cgi_enable")//* safe to call in this branch
+									);
+			this->cgi = new CGI(sock_fd, client_IP, server_IP, req, matching_directives, cgi_interpreter_path);
 			this->cgi->launch();
 			this->response = this->cgi->getResponse();
 			return ;
@@ -446,7 +450,23 @@ std::string		Response::http_req_complete_url_path(
 	return (path);//*	may be empty (a.k.a. "")
 }
 
-
+// utils
+// void throw_errno_HTTPError(int errno, const t_conf_block& matching_directives){
+// 	switch(errno) {
+// 		case (ELOOP || ENOENT || ENOTDIR || EISDIR || EFAULT):
+// 			throw HttpError(400, matching_directives, take_location_root(matching_directives, false));
+// 		case (EACCES || EPERM || EROFS):
+// 			throw HttpError(403, matching_directives, take_location_root(matching_directives, false));
+// 		case EBUSY:
+// 			throw HttpError(409, matching_directives, take_location_root(matching_directives, false));
+// 		case ENAMETOOLONG:
+// 			throw HttpError(414, matching_directives, take_location_root(matching_directives, false));
+// 		case (EIO || ENOMEM):
+// 			throw HttpError(500, matching_directives, take_location_root(matching_directives, false));
+// 		default:
+// 			throw HttpError(404, matching_directives, take_location_root(matching_directives, false));
+// 	}
+// }
 
 /**
  * @brief this function deletes a file at given 'filepath'
@@ -614,7 +634,7 @@ void	Response::deleteDirectory(const std::string directoryPath)
 /**
  * @brief this function implements the DELETE method : delete a given file or directory and return a status of the operation
  * 
- * @param directoryPath - the full path (root + directoryname) of the directory to delete
+ * @param uri_path - the path of the file/directory to delete
  * @exception throws HTTPError when given file or directory is invalid for deleting, or syscall functions fail
  * @return (void)
  */
