@@ -97,7 +97,7 @@ private:
 	std::string						getHeaders(
 										int status, std::string description,
 										std::string& filepath,
-										size_t	body_size
+										size_t	body_size, std::string additional_header = ""
 									);
 	std::string						getIndexPage( const std::string& root, std::string path );
 

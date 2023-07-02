@@ -96,6 +96,7 @@ void	Response::generateResponse( void )
 		);
 		if (false == cgi_extension.empty())
 		{
+			throw std::exception();
 			cgi_interpreter_path = take_cgi_interpreter_path(
 										cgi_extension,
 										matching_directives.directives.at("cgi_enable")//* safe to call in this branch
@@ -323,7 +324,7 @@ void	Response::generateGETResponse(  const std::string uri_path  )
 //*	(l'estensione potrebbe essere stata cancellata)
 std::string		Response::getHeaders(
 	int status, std::string description, std::string& filepath,
-	size_t body_size
+	size_t body_size, std::string location_header
 	)
 {
 	std::stringstream	headersStream;
@@ -356,8 +357,9 @@ std::string		Response::getHeaders(
 	headersStream
 		<< "HTTP/1.1 " << status << " " << description << "\r\n"
 		<< "Content-Type: " << fileType_prefix << fileType << "\r\n"
-		<< "Content-Length : " << body_size
-		<< "\r\n\r\n";
+		<< "Content-Length : " << body_size << "\r\n"
+		<< (location_header.empty() ? "" : location_header + "\r\n")
+		<< "\r\n";
 	
 	return (headersStream.str());
 }

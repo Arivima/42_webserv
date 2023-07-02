@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 17:19:26 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/01 16:34:29 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/02 20:57:26 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,6 +71,23 @@ void	Request::read_line( void )
 		memset(rcv_buf, '\0', RCV_BUF_SIZE + 1);
 		if (recv(sock_fd, rcv_buf, RCV_BUF_SIZE, 0) <= 0)
 			throw (SockEof());
+		
+		//*		DEBUG
+		std::string		debug_rcv_buf = rcv_buf;
+		std::string		debug_cur_line = cur_line;
+
+		std::replace(debug_rcv_buf.begin(), debug_rcv_buf.end(), '\r', 'r');
+		std::replace(debug_rcv_buf.begin(), debug_rcv_buf.end(), '\n', 'n');
+		std::replace(debug_cur_line.begin(), debug_cur_line.end(), '\r', 'r');
+		std::replace(debug_cur_line.begin(), debug_cur_line.end(), '\n', 'n');
+		COUT_DEBUG_INSERTION(
+			YELLOW "Request::read_line()" RESET
+			<< " - received chars : |" << debug_rcv_buf << "|" << std::endl
+			<< " - cur line : |" << debug_cur_line << "|"  << std::endl
+			<< " - cur stream : " << sock_stream.str() << std::endl
+		);
+		//*************************************************************
+		
 		//*	Dumping into dynamic entity for character handling (stream)
 		sock_stream << rcv_buf;
 	}
@@ -89,17 +106,14 @@ void	Request::read_line( void )
 void	Request::read_header( void )
 {
 	std::string			line_read;
-	bool				has_eol = (std::string::npos != sock_stream.str().find("\r\n"));
+	// bool				has_eol = (std::string::npos != sock_stream.str().find("\r\n"));
 
 	std::getline(sock_stream, line_read);//line_read += '\0';
 	cur_line += line_read;
-	if (has_eol)
+	if (sock_stream.good())//(has_eol)
 		cur_line += "\n";
-
-	//*		debug
-	std::string	debug_string = line_read;
-	debug_string.erase(std::remove(debug_string.begin(), debug_string.end(), '\r'), debug_string.end());
-	// std::cout << "line_read: " << debug_string << " has_eol: " << has_eol << std::endl;
+	else
+		sock_stream.clear();
 }
 
 void	Request::read_body( void ) {
@@ -165,6 +179,9 @@ void	Request::parse_req_line( std::string& req_line ) {
 	req["method"] = method;
 	req["url"] = url;
 	req["http_version"] = http_version;
+
+	if (std::string::npos != req["url"].find("http://"))
+		req["url"].substr(7);
 }
 
 void	Request::parse_body( void ) {

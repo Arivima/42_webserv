@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/30 12:37:05 by avilla-m          #+#    #+#             */
-/*   Updated: 2023/07/01 19:58:30 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/02 20:30:03 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,17 +88,20 @@ private:
 	const std::string		msg;
 	const t_conf_block&		matching_directives;
 	const std::string		location_root;
+	const std::string		errno_str;
 
 public:
 	HttpError(
-		unsigned short      err_code,
-		const t_conf_block& matching_directives,
-		const std::string&	location_root
+		unsigned short		err_code,
+		const t_conf_block&	matching_directives,
+		const std::string&	location_root,
+		const char *		errno_str = NULL
 	)
 	:	err_page(), err_code(err_code), msg(takeMsg(err_code)),
-		matching_directives(matching_directives), location_root(location_root)
+		matching_directives(matching_directives), location_root(location_root), 
+		errno_str(errno_str? (std::string(" " + std::string(errno_str))) : std::string(""))
 	{
-		std::string         page_str = this->buildErrorPage();
+		std::string		page_str = this->buildErrorPage();
 
 		err_page.insert(
 			err_page.begin(),
@@ -111,7 +114,7 @@ public:
 
 		memset(buf, '\0', 5);
 		sprintf(buf, "%03hu ", err_code);
-		return ((buf + std::string(" ") + msg).c_str());
+		return ((buf + std::string(" ") + msg + errno_str).c_str());
 	}
 
 	std::vector<char>	getErrorPage( void ) const {
@@ -200,42 +203,44 @@ private:
 	}
 
 	std::string		defaultErrorPage( void ) {
-		return (
-			"<!DOCTYPE html>\
+		std::stringstream	defaultPageStream;
+
+		defaultPageStream << "<!DOCTYPE html>\
 <html lang=\"en\">\
   <head>\
     <meta charset=\"UTF-8\" />\
     <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\
-    <title>Default Error Page</title>\
+    <title>"<< err_code << " " << msg << "--" << errno_str << "</title>\
   </head>\
   <body>\
-    <h1>Default Error Page</h1>\
+    <h1>"<< err_code << " " << msg << "--" << errno_str << "</h1>\
   </body>\
 </html>\
-"
-		);
+";
+
+		return (defaultPageStream.str());
 	}
 
 	const char*	takeMsg(unsigned short err_code) {
 		switch (err_code) {
 			case 400:
-				return ("bad request");
+				return ("Bad Request");
 			case 403:
-				return ("forbidden");
+				return ("Forbidden");
 			case 404:
-				return ("not found");
+				return ("Not Found");
 			case 409:
-				return ("conflict");
+				return ("Conflict");
 			case 414:
-				return ("uri too long");
+				return ("URI too long");
 			case 500:
-				return ("internal server error");
+				return ("Internal Server Error");
 			case 501:
-				return ("not implemented");
+				return ("Not Implemented");
 			case 502:
 				return ("Bad Gateway");
 			default:
-				return ("http unknown error");
+				return ("Http Unknown Error");
 		}
 	}
 };

@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/05 15:27:54 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/02 14:13:27 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/02 21:04:40 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,7 +51,8 @@ Connection: close\r\n\
 # define MAX_HTTP_REQ_LINE 8000
 # define MAX_HTTP_HEAD_LINE 4096
 
-# define RCV_BUF_SIZE (MAX_HTTP_HEAD_LINE > MAX_HTTP_REQ_LINE ? MAX_HTTP_HEAD_LINE : MAX_HTTP_REQ_LINE)
+//!	REMEMBER TO TOGLIEREEEE!!!!!!
+# define RCV_BUF_SIZE 4//(MAX_HTTP_HEAD_LINE > MAX_HTTP_REQ_LINE ? MAX_HTTP_HEAD_LINE : MAX_HTTP_REQ_LINE)
 // # define RCV_BUF_SIZE 1024
 # define SND_BUF_SIZE 1024
 
