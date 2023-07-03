@@ -44,7 +44,7 @@ void	Response::generatePOSTResponse( const std::string uri_path )
 	errno = 0;
     if (stat(fullPath.c_str(), &fileStat) == 0) {
 		is_dir = S_ISDIR(fileStat.st_mode);
-		std::cout << MAGENTA << "isDirectory("<< fullPath <<"): " << (is_dir? "is a directory" : "is not a directory") << RESET << std::endl;);
+		std::cout << MAGENTA << fullPath <<" : " << (is_dir? "is a directory" : "is not a directory") << RESET << std::endl;
 		if (is_dir){
 // create the new resource at the location
 			std::cout << MAGENTA << "Trying to add a resource to DIRECTORY : " << fullPath << RESET << std::endl;
@@ -75,27 +75,9 @@ void	Response::generatePOSTResponse( const std::string uri_path )
 			throw HttpError(405, matching_directives, root, "url should point to a directory (POST)");
 		}
     }
-	else {
-		std::cout << RED << "Failed stat("<< fullPath <<"):" YELLOW " errno : " << errno << ":" << strerror(errno) << RESET << std::endl;);
-		switch(errno) {
-			// 400 Bad Request
-			case ELOOP :	throw HttpError(400, matching_directives, root, strerror(errno)); 
-			case ENOTDIR:	throw HttpError(400, matching_directives, root, strerror(errno));  
-			case EFAULT:	throw HttpError(400, matching_directives, root, strerror(errno));  
-			// 403 Forbidden
-			case EACCES:	throw HttpError(403, matching_directives, root, strerror(errno)); 
-			// 409 Conflict
-			case EBUSY:		throw HttpError(409, matching_directives, root, strerror(errno)); 
-			// 414 url too long
-			case ENAMETOOLONG:throw HttpError(414, matching_directives, root, strerror(errno)); 
-			// 500 Internal Server Error
-			case ENOMEM:	throw HttpError(500, matching_directives, root, strerror(errno)); 
-			case EOVERFLOW:	throw HttpError(500, matching_directives, root, strerror(errno)); 
-			// 404 Not found
-			case ENOENT :	throw HttpError(404, matching_directives, root, strerror(errno)); 
-			default:		throw HttpError(404, matching_directives, root, strerror(errno)); 
-		}
-	}
+	else
+		throw_HttpError_errno_stat();
+
 
 // update the response
 	std::string						location_header;

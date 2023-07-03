@@ -92,7 +92,7 @@ private:
 										const std::string& req_url
 									);
 	void							generateGETResponse( const std::string uri_path );
-	void							generatePOSTResponse( const std::string uri_path );
+	// void							generatePOSTResponse( const std::string uri_path );
 	void							generateDELETEResponse( const std::string uri_path );
 	std::string						getHeaders(
 										int status, std::string description,
@@ -111,6 +111,7 @@ private:
 										const std::string& uri,
 										const std::string& root
 									);
+	void							throw_HttpError_errno_stat();
 
 };
 

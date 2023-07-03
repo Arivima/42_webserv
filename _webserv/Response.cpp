@@ -69,7 +69,7 @@ void	Response::send_line( void )
 				this->sock_fd, response.data(), response.size(), 0
 			);
 			if (bytes_sent < 0)
-				throw HttpError(500, matching_directives, take_location_root(matching_directives, false));
+				/*Server Err*/	throw HttpError(500, matching_directives, take_location_root(matching_directives, false));
 			else
 			if (0 == bytes_sent)
 				throw TaskFulfilled();
@@ -296,7 +296,7 @@ void	Response::generateGETResponse(  const std::string uri_path  )
 			// finire gestire ls
 		}
 		else
-			throw HttpError(404, this->matching_directives, root);
+			/*Not found*/	throw HttpError(404, this->matching_directives, root);
 	}
 	else {
 		COUT_DEBUG_INSERTION("serving page : " << root + reqPath << std::endl)
@@ -305,7 +305,7 @@ void	Response::generateGETResponse(  const std::string uri_path  )
 
 		if (false == docstream.is_open()) {
 			COUT_DEBUG_INSERTION("throwing page not found\n")
-			throw HttpError(404, matching_directives, take_location_root(matching_directives, false));
+			/*Not found*/	throw HttpError(404, matching_directives, take_location_root(matching_directives, false));
 		}
 		try {
 			page.insert(
@@ -315,7 +315,7 @@ void	Response::generateGETResponse(  const std::string uri_path  )
 		}
 		catch (const std::exception& e) {
 			COUT_DEBUG_INSERTION("throwing Internal Server Error\n")
-			throw HttpError(500, matching_directives, take_location_root(matching_directives, false));
+			/*Server Err*/	throw HttpError(500, matching_directives, take_location_root(matching_directives, false));
 		}
 		headers = getHeaders(200, "OK", filePath, page.size());
 	}
@@ -440,7 +440,7 @@ std::string		Response::http_req_complete_url_path(
 		std::string::npos == (path_start = uri.find("/"))
 	)
 	{
-		throw HttpError(400, matching_directives, root);
+		/*Bad req*/	throw HttpError(400, matching_directives, root);
 	}
 	path = uri.substr(path_start);
 	//****************************************************
@@ -455,23 +455,16 @@ std::string		Response::http_req_complete_url_path(
 	return (path);//*	may be empty (a.k.a. "")
 }
 
-// utils
-// void throw_errno_HTTPError(int errno, const t_conf_block& matching_directives){
-// 	switch(errno) {
-// 		case (ELOOP || ENOENT || ENOTDIR || EISDIR || EFAULT):
-// 			throw HttpError(400, matching_directives, take_location_root(matching_directives, false));
-// 		case (EACCES || EPERM || EROFS):
-// 			throw HttpError(403, matching_directives, take_location_root(matching_directives, false));
-// 		case EBUSY:
-// 			throw HttpError(409, matching_directives, take_location_root(matching_directives, false));
-// 		case ENAMETOOLONG:
-// 			throw HttpError(414, matching_directives, take_location_root(matching_directives, false));
-// 		case (EIO || ENOMEM):
-// 			throw HttpError(500, matching_directives, take_location_root(matching_directives, false));
-// 		default:
-// 			throw HttpError(404, matching_directives, take_location_root(matching_directives, false));
-// 	}
-// }
+
+
+
+
+
+
+
+
+
+
 
 /**
  * @brief this function deletes a file at given 'filepath'
@@ -481,80 +474,27 @@ std::string		Response::http_req_complete_url_path(
  * @return (void)
  */
 void Response::deleteFile( const std::string filePath ){
+	std::cout << YELLOW << "Trying to delete FILE : " << filePath << RESET << std::endl;
 // does the resource exists
 	errno = 0;
     if (access(filePath.c_str(), F_OK) == -1){
-		std::cout << "Response::deleteFile() access F_OK: 404" << std::endl;
-        // throw HttpError(404, matching_directives, take_location_root(matching_directives, false));
-	// 404 Not Found - The server cannot find the requested resource. In the browser, this means the URL is not recognized. 
+        /*Not found*/	throw HttpError(404, matching_directives, take_location_root(matching_directives, false));
 
 // do I have the right permission ? 
 	errno = 0;
     if (access(filePath.c_str(), W_OK) == -1){
-		if (errno == ETXTBSY)
-			std::cout << "Response::deleteFile() access W_OK: 409" << std::endl;
-			// throw HttpError(409, matching_directives, take_location_root(matching_directives, false));
+		if (errno == ETXTBSY) // ETXTBSY Write access was requested to an executable which is being executed.
+		/*Conflict*/	throw HttpError(409, matching_directives, take_location_root(matching_directives, false));
 		else
-			std::cout << "Response::deleteFile() access W_OK: 403" << std::endl;
-			// throw HttpError(403, matching_directives, take_location_root(matching_directives, false));
+		/*Forbidden*/	throw HttpError(403, matching_directives, take_location_root(matching_directives, false));
 	}
-	// 401 Unauthorized - Although the HTTP standard specifies "unauthorized", semantically this response means "unauthenticated". 
-		// That is, the client must authenticate itself to get the requested response.
-	// 403 Forbidden - The client does not have access rights to the content; that is, it is unauthorized, so the server is refusing to give the requested resource. 
-		// Unlike 401 Unauthorized, the client's identity is known to the server.
-	// 409 Conflict: The deletion could not be completed due to a conflict with the current state of the resource. 
-		// ETXTBSY		Write access was requested to an executable which is being executed.
 	}
 
-// unlink
+// delete the file
 	errno = 0;
     if (unlink(filePath.c_str()) == -1) {
-		if ((errno == ELOOP) || (errno == ENOENT) || (errno == ENOTDIR) || (errno == EISDIR) || (errno == EFAULT))
-			throw HttpError(400, matching_directives, take_location_root(matching_directives, false));
-		else if ((errno == EACCES) || (errno == EPERM) || (errno == EROFS))
-			throw HttpError(403, matching_directives, take_location_root(matching_directives, false));
-		else if (errno == EBUSY)
-			throw HttpError(409, matching_directives, take_location_root(matching_directives, false));
-		else if (errno == ENAMETOOLONG)
-			throw HttpError(414, matching_directives, take_location_root(matching_directives, false));
-		else if ((errno == EIO) || (errno == ENOMEM))
-			throw HttpError(500, matching_directives, take_location_root(matching_directives, false));
-		else 
-			throw HttpError(404, matching_directives, take_location_root(matching_directives, false));
+		/*Server Err*/	throw HttpError(500, matching_directives, take_location_root(matching_directives, false));
 	}
-	// 404 Not Found 		- The server cannot find the requested resource. In the browser, this means the URL is not recognized. 
-		// ??
-	// 400 Bad Request 		- The server cannot or will not process the request due to something that is perceived to be a client error 
-	// 						(e.g., malformed request syntax, invalid request message framing, or deceptive request routing).
-		// ELOOP			Too many symbolic links were encountered in translating pathname.
-		// ENOENT			A component in pathname does not exist or is a dangling symbolic link, or pathname is empty.
-		// ENOTDIR			A component used as a directory in pathname is not, in fact, a directory.
-		// EISDIR			pathname refers to a directory.  (This is the non-POSIX value returned since Linux 2.1.132.)
-		// EFAULT			pathname points outside your accessible address space.
-
-	// 403 Forbidden 		- The client does not have access rights to the content; that is, it is unauthorized, so the server is refusing to give the requested resource. 
-	// 						Unlike 401 Unauthorized, the client's identity is known to the server.
-		// EACCES			Write access to the directory containing pathname is not allowed for the process's effective UID, or one of the directories in pathname did not allow search permission.
-		// EPERM (Linux)	The filesystem does not allow unlinking of files.
-		// EPERM or EACCES	The directory containing pathname has the sticky bit (S_ISVTX) set and the process's effective UID is neither the UID of the file 
-		// 					to be deleted nor that of the directory containing it, and the process is not privileged (Linux: does not have the CAP_FOWNER capability).
-		// EPERM			The file to be unlinked is marked immutable or append-only.  (See ioctl_iflags(2).)	
-		// EPERM  			The system does not allow unlinking of directories, or unlinking of directories requires privileges that the calling process doesn't have.
-		// 					(This is the POSIX prescribed error return; as noted above, Linux returns EISDIR for this case.)
-		// EROFS			pathname refers to a file on a read-only filesystem. 
-		// 					The same errors that occur for unlink() and rmdir(2) can also occur for unlinkat().  The following additional errors can occur for unlinkat():
-
-
-	// 409 Conflict			- The deletion could not be completed due to a conflict with the current state of the resource. 
-		// EBUSY			The file pathname cannot be unlinked because it is being used by the system or another process; 
-		//					for example, it is a mount point or the NFS client software created it to represent an active but otherwise nameless inode ("NFS silly renamed").
-
-	// 414 URI Too Long		- The URI requested by the client is longer than the server is willing to interpret.
-		// ENAMETOOLONG		pathname was too long.
-
-	// 500 Internal Server Error: An unexpected error occurred on the server while processing the deletion request.
-		// EIO				An I/O error occurred.
-		// ENOMEM			Insufficient kernel memory was available.
 }
 
 /**
@@ -570,7 +510,7 @@ void Response::deleteFile( const std::string filePath ){
 //        stream from an error, set errno to zero before calling readdir() and then check the value of errno if NULL is returned.
 void	Response::deleteDirectory(const std::string directoryPath)
 {
-	std::cout << MAGENTA << "deleteDirectory("<< directoryPath <<"): " << RESET << std::endl;
+	std::cout << YELLOW << "Trying to delete DIRECTORY : " << directoryPath << RESET << std::endl;
 	const std::string	root = take_location_root(matching_directives, false);
 
 	errno = 0;
@@ -581,95 +521,70 @@ void	Response::deleteDirectory(const std::string directoryPath)
         while ((entry = readdir(dir)) != NULL){
 			
 			if (entry == NULL && errno != 0)								// errno, see above
-				throw HttpError(500, matching_directives, root);
-            if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0){
+				/*Server Err*/	throw HttpError(500, matching_directives, root);
+            if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
 				continue;
-			}
-			if (entry->d_type == DT_DIR){
-				std::cout << CYAN << "| dir: " << directoryPath << "| entry : " << entry->d_name << " is a directory " << RESET << std::endl;
+			std::cout << CYAN << "| dir: " << directoryPath << "| entry : " << entry->d_name << ((entry->d_type == DT_DIR)? "is a directory" : "") << (((entry->d_type == DT_REG) || (entry->d_type == DT_LNK))? "is a regular file" : "") << ((!(entry->d_type == DT_DIR) && !(entry->d_type == DT_REG) && !(entry->d_type == DT_LNK))? "is neither a file nor a directory" : "") << RESET << std::endl;
+			if (entry->d_type == DT_DIR)
 				deleteDirectory(directoryPath + "/" + entry->d_name);
-			}
-			else if ((entry->d_type == DT_REG) || (entry->d_type == DT_LNK)){
-				std::cout << MAGENTA << "| dir: " << directoryPath << "| entry : " << entry->d_name << " is a file " << RESET << std::endl;
+			else if ((entry->d_type == DT_REG) || (entry->d_type == DT_LNK))
 				deleteFile(directoryPath + "/" + entry->d_name);
-			}
-			else {
-				std::cout << RED << "| dir: " << directoryPath << "| entry : " << entry->d_name << " is nor a file nor a directory " << RESET << std::endl;
-				throw HttpError(403, matching_directives, root);
-			}
+			else 
+				/*Forbidden*/	throw HttpError(403, matching_directives, root);
         }
 		errno = 0;
         if (closedir(dir) == -1)
-			throw HttpError(500, matching_directives, root);
-
+			/*Server Err*/	throw HttpError(500, matching_directives, root);
 		errno = 0;
         if (rmdir(directoryPath.c_str()) == -1) // error check is performed hereafter
-			std::cout << "Debug : Response::deleteDirectory : ERR in RMDIR()" << std::endl;
+			/*Server Err*/	throw HttpError(500, matching_directives, root);
     }
-    if (errno != 0) {
-		switch(errno) {
-			// 400 Bad Request //? Empty because directory validity (client input) has been previously checked
-			
-			// 403 Forbidden - The client does not have access rights to the content; that is, it is unauthorized, so the server is refusing to give the requested resource. 
-			case EACCES:	throw HttpError(403, matching_directives, root, strerror(errno)); 
-			case EPERM:		throw HttpError(403, matching_directives, root, strerror(errno)); 
-			case EROFS:		throw HttpError(403, matching_directives, root, strerror(errno)); 
-			
-			// 409 Conflict: The deletion could not be completed due to a conflict with the current state of the resource. 
-			case EBUSY:		throw HttpError(409, matching_directives, root, strerror(errno)); 
-			
-			// 414 url too long //? Empty because directory validity (client input) has been previously checked
-			
-			// 500 Internal Server Error: An unexpected error occurred on the server while processing the deletion request.
-			case ENOMEM:	throw HttpError(500, matching_directives, root, strerror(errno)); 
-			case EOVERFLOW:	throw HttpError(500, matching_directives, root, strerror(errno)); 
-			case ENOENT :	throw HttpError(500, matching_directives, root, strerror(errno));
-			case ENOTEMPTY:	throw HttpError(500, matching_directives, root, strerror(errno)); 
-			case ENOTDIR:	throw HttpError(500, matching_directives, root, strerror(errno));  
-			case EINVAL:	throw HttpError(500, matching_directives, root, strerror(errno));  
-			case EFAULT:	throw HttpError(500, matching_directives, root, strerror(errno));  
-			case ELOOP :	throw HttpError(500, matching_directives, root, strerror(errno)); 
-			case ENAMETOOLONG:throw HttpError(500, matching_directives, root, strerror(errno)); 
-			
-			// 404 Not Found //? Empty because directory validity (client input) has been previously checked
-			
-			// default case : EMFILE, ENFILE, EBADF
-			default:		throw HttpError(500, matching_directives, root, strerror(errno)); 
-		}
+    else
+		/*Server Err*/	throw HttpError(500, matching_directives, root, strerror(errno));
+}
+
+
+void Response::throw_HttpError_errno_stat(){
+	const std::string root = take_location_root(matching_directives, false);
+
+	switch(errno)
+	{
+	// 400 Bad Request
+	case EFAULT:	throw HttpError(400, matching_directives, root, strerror(errno));  
+	// 403 Forbidden
+	case EACCES:	throw HttpError(403, matching_directives, root, strerror(errno)); 
+	// 414 url too long
+	case ENAMETOOLONG:throw HttpError(414, matching_directives, root, strerror(errno)); 
+	// 500 Internal Server Error
+	case ENOMEM:	throw HttpError(500, matching_directives, root, strerror(errno)); 
+	case EOVERFLOW:	throw HttpError(500, matching_directives, root, strerror(errno)); 
+	// 404 Not found
+	case ELOOP :	throw HttpError(404, matching_directives, root, strerror(errno)); 
+	case ENOENT :	throw HttpError(404, matching_directives, root, strerror(errno)); 
+	case ENOTDIR:	throw HttpError(404, matching_directives, root, strerror(errno));  
+	default:		throw HttpError(404, matching_directives, root, strerror(errno)); 
 	}
 }
-// opendir ERRORS : 
-    //    EACCES Permission denied.
-    //    EBADF  fd is not a valid file descriptor opened for reading.
-    //    EMFILE The per-process limit on the number of open file descriptors has been reached.
-    //    ENFILE The system-wide limit on the total number of open files has been reached.
-    //    ENOENT Directory does not exist, or name is an empty string.
-    //    ENOMEM Insufficient memory to complete the operation.
-    //    ENOTDIR name is not a directory.
-// rmdir ERRORS : 
-    //    EACCES Write access to the directory containing pathname was not allowed, or one of the directories in the path prefix of
-    //           pathname did not allow search permission.  (See also path_resolution(7).)
-    //    EBUSY  pathname is currently in use by the system or some process that prevents its removal.  On Linux, this means pathname
-    //           is currently used as a mount point or is the root directory of the calling process.
-    //    EFAULT pathname points outside your accessible address space.
-    //    EINVAL pathname has .  as last component.
-    //    ELOOP  Too many symbolic links were encountered in resolving pathname.
-    //    ENAMETOOLONG pathname was too long.
-    //    ENOENT A directory component in pathname does not exist or is a dangling symbolic link.
-    //    ENOMEM Insufficient kernel memory was available.
-    //    ENOTDIR pathname, or a component used as a directory in pathname, is not, in fact, a directory.
-    //    ENOTEMPTY pathname contains entries other than . and .. ; or, pathname has ..  as its final component.
-	//    			POSIX.1 also allows EEXIST for this condition.
-    //    EPERM  The directory containing pathname has the sticky bit (S_ISVTX) set and the process's effective user ID is
-    //           neither the user ID of the file to be deleted nor that of the directory containing it, and the process is not
-    //           privileged (Linux: does not have the CAP_FOWNER capability).
-    //    EPERM  The filesystem containing pathname does not support the removal of directories.
-    //    EROFS  pathname refers to a directory on a read-only filesystem.
 
-// HTTP Status codes
+// STAT ERROR
+// EACCES|			Search permission is denied for one of the directories in the path prefix of path. (See also path_resolution(7).)
+// EBADF|			fd is bad.
+// EFAULT|			Bad address.
+// ELOOP|			Too many symbolic links encountered while traversing the path.
+// ENAMETOOLONG|	path is too long.
+// ENOENT|			A component of path does not exist, or path is an empty string.
+// ENOMEM|			Out of memory (i.e., kernel memory).
+// ENOTDIR|			A component of the path prefix of path is not a directory.
+// EOVERFLOW|		path or fd refers to a file whose size, inode number, or number of blocks cannot be represented in,
+// 					respectively, the types off_t, ino_t, or blkcnt_t. 
+// 					This error can occur when, for example, an application compiled on a 32-bit platform without 
+// 					-D_FILE_OFFSET_BITS=64 calls stat() on a file whose size exceeds (1<<31)-1 bytes.
 
 
 
+#include <cerrno>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 //_______________________ METHOD : DELETE _______________________
 /**
@@ -679,43 +594,61 @@ void	Response::deleteDirectory(const std::string directoryPath)
  * @exception throws HTTPError when given file or directory is invalid for deleting, or syscall functions fail
  * @return (void)
  */
+
+// A successful DELETE response SHOULD be 
+	// 200 (OK) if the response includes an entity describing the status
+	// 202 (Accepted) if the action has not yet been enacted
+	// 204 (No Content) if the action has been enacted but the response does not include an entity.
+// failed request
+// 400 Bad Request: The request could not be understood or was malformed. The server should include information in the response body or headers about the nature of the error.
+// 403 Forbidden: The server understood the request, but the client does not have permission to access the requested resource.
+// 404 Not Found: The requested resource could not be found on the server.
+// 414 URI Too Long : The URI requested by the client is longer than the server is willing to interpret.
+// 409 Conflict: The request could not be completed due to a conflict with the current state of the resource. This is often used for data validation errors or when trying to create a resource that already exists.
+// 500 Internal Server Error: An unexpected error occurred on the server, indicating a problem with the server's configuration or processing of the request.
+
 void	Response::generateDELETEResponse( const std::string uri_path )
 {
 	const std::string				root = take_location_root(matching_directives, false);
 	std::string						reqPath(uri_path);
-	std::string						headers;
-	std::string						tmp;
-	std::vector<char>				body;
 	std::string						filePath;
 
-	std::cout << "DELET uri_path : " << uri_path << std::endl;
+    struct stat						fileStat;
+	bool							is_dir;
+	bool							is_reg;
+
+	std::string						headers;
+	std::vector<char>				body;
+	std::string						tmp;	
+
+	std::cout << "method: DELETE" << std::endl;
+	std::cout << "uri_path : " << uri_path << std::endl;
 	path_remove_leading_slash(reqPath);
 	filePath = root + reqPath;
-	std::cout << "DELETE full uri_path : " << filePath << std::endl;
-	
-// delete the file/directory
-	if (true == isDirectory(root, reqPath, this->matching_directives)) {
-		std::cout << YELLOW << "Trying to delete DIRECTORY : " << filePath << RESET << std::endl;
-		deleteDirectory(filePath); // recursive call to delete content of directory (all files and subdirectories)
-		tmp = "Directory \"" +  filePath  + "\" was successfully deleted\n";
-		body.insert(body.begin(), tmp.begin(), tmp.end());
-	}
-	else {
-		std::cout << YELLOW << "Trying to delete FILE : " << filePath << RESET << std::endl;
-		deleteFile(filePath);
-		tmp = "File \"" +  filePath  + "\" was successfully deleted\n";
-		body.insert(body.begin(), tmp.begin(), tmp.end());
-	}
+	std::cout << "filePath : " << filePath << std::endl;
+
+	errno = 0;
+    if (stat(filePath.c_str(), &fileStat) == 0) {
+		is_dir = S_ISDIR(fileStat.st_mode);
+		is_reg = S_ISREG(fileStat.st_mode);
+		std::cout << MAGENTA << filePath <<" : " << (is_dir? "is a directory" : "") << (is_reg? "is a regular file" : "") << ((!is_dir && !is_reg)? "is neither a file nor a directory" : "") << RESET << std::endl;
+
+		if (is_dir)
+			deleteDirectory(filePath); 			// recursive call to delete content of directory (all files and subdirectories)
+		else if (is_reg)
+			deleteFile(filePath);
+		else 									// existing resource that is not a regular file nor a directory
+			/*Not allowed*/	throw HttpError(405, matching_directives, root, "url should point to a directory (POST)");
+    }
+	else 
+		throw_HttpError_errno_stat(); 			// throws accurate http status code according to errno
 
 // update the response
+	tmp = (is_dir == true ? "Directory: " : "File: ") +  filePath  + " was successfully deleted\n";
+	body.insert(body.begin(), tmp.begin(), tmp.end());
 	headers = getHeaders(200, "OK", filePath, body.size());
 	this->response.insert(this->response.begin(), headers.begin(), headers.end());
 	this->response.insert(this->response.end(), body.begin(), body.end());
-
-// A successful response SHOULD be 
-	// 200 (OK) if the response includes an entity describing the status
-	// 202 (Accepted) if the action has not yet been enacted
-	// 204 (No Content) if the action has been enacted but the response does not include an entity.
 }
 
 //_______________________ METHOD : POST _______________________

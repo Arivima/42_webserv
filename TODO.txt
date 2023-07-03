@@ -12,12 +12,11 @@ Arielle:
 		// https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
 		- 	test CGI
 		- 	test DELETE
+		- 	update POST
 		-	clean exceptions / error syntax to make it consistent throughout files
-		-	use errno ?
-		-	clean delete and change isDirectory 
+		-	refactor isDirectory 
 
 Matteo:
-		-	takeCGIInterpreterPath
 		-	Mettere location root e upload_path come variabili di classe di Response
 		-	Change req url name to "uri"
 		-	Refactor Request class
