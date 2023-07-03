@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 17:19:26 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/02 20:57:26 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/03 13:29:25 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -134,6 +134,10 @@ void	Request::parse_header( void )
 	if (std::string::npos != cur_line.find("\r\n")) {
 		if ("\r\n" == cur_line) {
 			//*	end of headers, there may or not may be a body
+			if (req.end() == req.find("method")) {
+				throw SockEof();
+			}
+			else
 			if (req.end() != req.find("Content-Length"))
 			{
 				parser_status = e_READING_BODY;

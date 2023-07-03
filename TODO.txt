@@ -1,10 +1,7 @@
 Always		Check against subject, correction sheet, tester, write tests with python, Postman 
 
 Arielle:
-DONE	-	do many bisous to Matteo
-		-	do many hugs to Matteo    
-		- 	test CGI
-		- 	test DELETE
+
 		-	HTTP status code to check throughout all code
 		Give different HTTP response status code depending on errors - throughout the response class, every where there is a 
 		Response (dirlisting, etc.) : give different error codes based on reading of errno
@@ -13,9 +10,11 @@ DONE	-	do many bisous to Matteo
 		// https://www.restapitutorial.com/httpstatuscodes.html
 		// https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
 		// https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
+		- 	test CGI
+		- 	test DELETE
 		-	clean exceptions / error syntax to make it consistent throughout files
 		-	use errno ?
-		- clean delete and change isDirectory 
+		-	clean delete and change isDirectory 
 
 Matteo:
 		-	takeCGIInterpreterPath

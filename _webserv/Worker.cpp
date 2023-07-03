@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/06 21:15:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/01 16:14:26 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/03 13:05:12 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -152,6 +152,7 @@ void	Worker::_handle_new_connectionS() {
 
 void	Worker::_serve_clientS( void ) {
 	// COUT_DEBUG_INSERTION("Worker::serve_clientS" << std::endl);
+	ConnectionSocket*	connection;
 	
 	for (
 		VectorServ::iterator serv_it = servers.begin();
@@ -165,13 +166,15 @@ void	Worker::_serve_clientS( void ) {
 			/*...no increment*/
 		)
 		{
+			connection = (*cli_it);
 			try {
-				(*(*cli_it)).serve_client();//_serve_client(*(*cli_it));
+				connection->serve_client();//_serve_client(*(*cli_it));
 				cli_it++;
 			}
 			catch (const SockEof& e) {
 				std::cout << std::endl << BOLDRED "Exception >>" << e.what() << RESET << std::endl;
 				cli_it = (*serv_it).open_connections.erase(cli_it);
+				delete connection;
 			}
 		}
 	}
