@@ -20,63 +20,111 @@
  * @exception throws HTTPError when given file or directory is already existent, path incorrect, or syscall functions fail
  * @return (void)
  */
+
+// example				http://localhost:80/fragola/lemon.txt
+// example				POST /fragola/lemon.txt
+// uri_path		client	/fragola/lemon.txt
+// reqPath				fragola/lemon.txt
+
+// root			config	/var/www/html
+// upload_path	config	uploads
+// Dir					fragola
+// newFileName	client	lemon.txt
+
+// fullFilePath			/var/www/html/uploads/fragola/lemon.txt
+// fullDirPath			root + "/" + upload_path + "/" + dir
+// fullFilePath			root + "/" + upload_path + "/" + dir + "/" + newFileName
+
+//TODO
+//TODO	1. line 49 : check if upload_path must be appended to the root
+//TODO	2. line 53 : move (and maybe correct) check in generateResponse
+//TODO	3. line 69 : check exact behavior
+//TODO	4. line 103 : check max path length
+//TODO	5. line 110 : check open_mode
+//TODO	6. line 139 : check if location points to an absolute or relative path
+//TODO
 void	Response::generatePOSTResponse( const std::string uri_path )
 {
 	const std::string				root = take_location_root(matching_directives, false);
+	std::string						upload_path = take_location_root(matching_directives, true);
 	std::string						reqPath(uri_path);
-	std::string						fullPath;
-	std::string						newResourceName;
+	std::string						dir;
+	std::string						newFileName;
+	std::string						fullDirPath;
+	std::string						fullFilePath;
 
 	std::cout << "POST uri_path : " << uri_path << std::endl;
+	//! to move to generate response
+	if (reqPath.find("/..") != std::string::npos)
+		/*Bad req*/	throw HttpError(400, matching_directives, root);  	
+
+	path_remove_leading_slash(upload_path);
 	path_remove_leading_slash(reqPath);
-	fullPath = root + reqPath;
-	std::cout << "POST fullPath : " << fullPath << std::endl;
 
-	// to update after - wip
-	// if a filename is given in the request, UPDATE
+	// check if existing filename and splits reqPath into dir and newFileName
+	size_t pos = reqPath.rfind("/");
+	if (pos != std::string::npos){
+		dir = reqPath.substr(0, pos);
+		newFileName = reqPath.substr(pos + 1);
+	}
+	else { // if no filename given
+		dir = reqPath;
+		//! check behavior ? throw ?
+		newFileName = "POST_test";
+	}
 
-	// check need to add extension
+	//! check upload_path is indeed correct
+	fullDirPath		= root + "/" + upload_path + "/" + dir;
+	fullFilePath	= root + "/" + upload_path + "/" + dir + "/" + newFileName;
 
-// checks if fullPath is pointing to a valid location (directory)
+	std::cout << "POST reqPath : "	 	<< reqPath << std::endl;
+	std::cout << "POST root : "	 		<< root << std::endl;
+	std::cout << "POST upload_path : "	<< upload_path << std::endl;
+	std::cout << "POST dir : "	 		<< dir << std::endl;
+	std::cout << "POST newFileName : "	<< newFileName << std::endl;
+	std::cout << "POST fullDirPath : "	<< fullDirPath << std::endl;
+	std::cout << "POST fullFilePath : "	<< fullFilePath << std::endl;
+
+// checks if fullDirPath is pointing to a valid location (directory)
     struct stat						fileStat;
 	bool							is_dir;
 
 	errno = 0;
-    if (stat(fullPath.c_str(), &fileStat) == 0) {
+    if (stat(fullDirPath.c_str(), &fileStat) == 0) {
 		is_dir = S_ISDIR(fileStat.st_mode);
-		std::cout << MAGENTA << fullPath <<" : " << (is_dir? "is a directory" : "is not a directory") << RESET << std::endl;
+		std::cout << MAGENTA << fullDirPath <<" : " << (is_dir? "is a directory" : "is not a directory") << RESET << std::endl;
 		if (is_dir){
 // create the new resource at the location
-			std::cout << MAGENTA << "Trying to add a resource to DIRECTORY : " << fullPath << RESET << std::endl;
+			std::cout << MAGENTA << "Trying to add a resource to DIRECTORY : " << fullDirPath << RESET << std::endl;
 
-			// to update after - wip
-			newResourceName = "POST_test";
-
-			// check if file exists at the given location and updating the name if it is 
-			while (stat((fullPath + "/" + newResourceName).c_str(), &fileStat) == 0) {
-				newResourceName += "_cpy";
+			// check if file exists at the given location and updating the name if it does
+			while (stat(fullFilePath.c_str(), &fileStat) == 0) {
+				std::string extension = take_cgi_extension(newFileName, this->matching_directives);
+				if (extension.empty() == false)
+					newFileName	= newFileName.substr(0, newFileName.find(extension));
+				newFileName += "_cpy" + extension;
+				if (newFileName.size() >= 255)
+					/*Server Err*/	throw HttpError(500, this->matching_directives, root);
 			}
-
-			std::ofstream	stream_newResource((fullPath + "/" + newResourceName), std::ios::out);
-			if (false == stream_newResource.is_open())
-				throw_HttpError_debug("Response::generatePOSTResponse", "is_open()", 500, this->matching_directives);
+			fullFilePath	= root + "/" + upload_path + "/" + dir + "/" + newFileName;
 			
-			stream_newResource << std::string("Hello from Response::generatePOSTResponse()");
-			stream_newResource << (req.find("body") != req.end() ? req.at("body") : std::string());
+			// writes body to new file
+			std::ofstream	stream_newFile(fullFilePath/*, std::ios::out*/);
+			if (false == stream_newFile.is_open())
+				/*Server Err*/	throw HttpError(500, this->matching_directives, root);
 			
-			if (stream_newResource.fail())
-				throw_HttpError_debug("Response::generatePOSTResponse", "stream <<", 500, this->matching_directives);
-			stream_newResource.close();
-
+			stream_newFile << std::string("Hello from Response::generatePOSTResponse()");
+			stream_newFile << (this->req.find("body") != this->req.end() ? this->req.at("body") : std::string());
+			
+			if (stream_newFile.fail())
+				/*Server Err*/	throw HttpError(500, this->matching_directives, root);
+			stream_newFile.close();
 		}
-		else {
-			// to update after - wip
-			std::cout << RED << "throwing 405 - Not allowed" << fullPath << RESET << std::endl;
-			throw HttpError(405, matching_directives, root, "url should point to a directory (POST)");
-		}
+		else
+			/*Not allowed*/	throw HttpError(405, this->matching_directives, root, "url should point to a directory (POST)");
     }
 	else
-		throw_HttpError_errno_stat();
+		this->throw_HttpError_errno_stat();
 
 
 // update the response
@@ -88,12 +136,14 @@ void	Response::generatePOSTResponse( const std::string uri_path )
 	std::string						newResourcePath;
 
 	domainName		= std::string(server_IP) + ":" + matching_directives.directives.at("listen");
-	newResourcePath	= "http://" + domainName + reqPath + "/" + newResourceName;
+	newResourcePath	= "http://" + domainName + "/" + dir + "/" + newFileName;
+
 	location_header	= std::string("Location: " + newResourcePath);
-	headers			= getHeaders(201, "OK", fullPath, body.size(), location_header);
+	headers			= getHeaders(201, "OK", (dir + "/" + newFileName), body.size(), location_header);
+	this->response.insert(this->response.begin(), headers.begin(), headers.end());
+
 	tmp				= "Resource " +  newResourcePath  + " at directory\"" +  reqPath  + "\" was successfully created\n";
 	body.insert(body.begin(), tmp.begin(), tmp.end());
-	this->response.insert(this->response.begin(), headers.begin(), headers.end());
 	this->response.insert(this->response.end(), body.begin(), body.end());
 }
 

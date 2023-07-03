@@ -98,11 +98,6 @@ void CGI::launch()
 			strdup((get_env_value("ROOT") + get_env_value("SCRIPT_NAME")).c_str()),
 			nullptr
 		};
-        // char* cmd[] = {
-        //     const_cast<char*>(get_env_value("INTERPRETER_PATH").c_str()),
-        //     const_cast<char*>((get_env_value("ROOT") + get_env_value("SCRIPT_NAME")).c_str()),
-        //     nullptr
-        // };
 	// executing cgi
 		if (execve(cmd[0], cmd, this->cgi_env) == -1)
 			throw_HttpError_debug("CGI::launch()", "execve()", 500, this->matching_directives);
