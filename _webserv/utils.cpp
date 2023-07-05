@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/18 10:41:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/05 01:57:02 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/05 18:57:56 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -271,37 +271,17 @@ std::string		take_cgi_interpreter_path(
 						const std::string& cgi_directive
 				)
 {
-	size_t	prev_extension_pos;
+	size_t	extension_pos;
 	size_t	interpreter_pos;
 
 	//*	imagine we are parsing a directive like "/usr/bin/bash .bash .sh .zsh /usr/bin/python .py"
 
-	prev_extension_pos = cgi_directive.find(" " + extension);
-	while (true)
-	{
-		std::cout << "searching intepreter..." << std::endl;
-		//*	Looking for interpreter
-		interpreter_pos = cgi_directive.rfind("/", prev_extension_pos);
-		//*	Looking for previous extension
-		prev_extension_pos = cgi_directive.rfind(" .", prev_extension_pos);
-
-		//*	there is no interpreter
-		if (std::string::npos == interpreter_pos)
-			return ("");
-		//*	next extension belongs to another interpreter
-		if (
-			std::string::npos == prev_extension_pos ||
-			prev_extension_pos < interpreter_pos
-		)
-			break ;
-		prev_extension_pos -= 1;
-	}
-	return (
-		cgi_directive.substr(
-			interpreter_pos,
-			cgi_directive.find(" ", interpreter_pos)
-		)
-	);
+	extension_pos = cgi_directive.find(" " + extension);
+	interpreter_pos = cgi_directive.rfind(" /", extension_pos);
+	if (std::string::npos == interpreter_pos)
+		interpreter_pos = 0;
+	
+	return (cgi_directive.substr(interpreter_pos, extension_pos - interpreter_pos));
 }
 
 std::string		uri_remove_queryString(const std::string& uri)
@@ -433,9 +413,10 @@ void	path_remove_leading_slash(std::string& pathname)
 //TODO	check stat error with errno. Throw server internal error if it failed for something else than non-existent file.
 //TODO
 //TODO
-bool			isDirectory(const std::string root, std::string path, const t_conf_block& matching_directives) {
-   
-    struct stat fileStat;
+bool			isDirectory(const std::string root, std::string path, const t_conf_block& matching_directives)
+{COUT_DEBUG_INSERTION(YELLOW "isDirectory()" RESET << std::endl);
+
+	struct stat fileStat;
 
 	path_remove_leading_slash(path);
 	std::string dir_path = root + path;

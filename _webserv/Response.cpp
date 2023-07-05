@@ -59,12 +59,24 @@ void	Response::send_line( void )
 	const struct epoll_event*	eevent = edata.getEpollEvent(this->sock_fd);
 	int							bytes_sent;
 
-	// COUT_DEBUG_INSERTION("send_line()\n")
-	if (response.empty())
+	COUT_DEBUG_INSERTION("send_line()\n")
+	if (response.empty()) {
+		COUT_DEBUG_INSERTION(
+			"Response::send_line() ---TaskFulfilled"
+			<< std::endl
+		);
 		throw TaskFulfilled();
+	}
 	else {
 		if (NULL != eevent && eevent->events & EPOLLOUT)
 		{
+			std::string	debug(this->response.begin(), this->response.end());
+			COUT_DEBUG_INSERTION(
+				"sending chars : "
+				<< "|" << debug << "|"
+				<< std::endl
+			);
+
 			bytes_sent = send(
 				this->sock_fd, response.data(), response.size(), 0
 			);
@@ -97,15 +109,26 @@ void	Response::generateResponse( void )
 		if (false == cgi_extension.empty())
 		{
 			std::cout << GREEN << "Response::generateResponse there is a CGI extension" << RESET << std::endl;
-			throw std::exception();
 			
 			cgi_interpreter_path = take_cgi_interpreter_path(
 										cgi_extension,
 										matching_directives.directives.at("cgi_enable")//* safe to call in this branch
 									);
+			COUT_DEBUG_INSERTION(
+				"cgi interpreter full path : |"
+				<< cgi_interpreter_path
+				<< "|"
+				<< std::endl
+			);
 			this->cgi = new CGI(sock_fd, client_IP, server_IP, req, matching_directives, cgi_interpreter_path);
 			this->cgi->launch();
 			this->response = this->cgi->getResponse();
+
+			std::string	debug(this->response.begin(), this->response.end());
+			COUT_DEBUG_INSERTION(
+				"CGI response : " << std::endl
+				<< "|" << debug << "|" << std::endl;
+			);
 			return ;
 		}
 		if ("GET" == this->req.at("method"))
@@ -267,7 +290,8 @@ size_t	Response::locationMatch(
 //_______________________ METHOD : GET _______________________
 // refactor to clean + test and make sure all cases are covered
 void	Response::generateGETResponse(  const std::string uri_path  )
-{
+{COUT_DEBUG_INSERTION(YELLOW "Response::generateGETResponse()" RESET << std::endl);
+
 	const std::string				root = take_location_root(matching_directives, false);
 	const std::string				reqPath(http_req_complete_url_path(uri_path, root));
 	std::string						headers;
@@ -371,7 +395,8 @@ std::string		Response::getHeaders(
 }
 
 std::string		Response::getIndexPage( const std::string& root, std::string path )
-{
+{COUT_DEBUG_INSERTION(YELLOW "Response::getIndexPage()" RESET << std::endl);
+
 	std::string									indexes;
 	std::stringstream							indexesStream;
 	std::string									cur_index;
@@ -437,10 +462,11 @@ bool	Response::isMethodAllowed(void)
 std::string		Response::http_req_complete_url_path(
 	const std::string& uri, const std::string& root
 	)
-{
+{COUT_DEBUG_INSERTION(YELLOW "Response::http_req_complete_url_path()" RESET << std::endl);
+
 	std::string		path = uri;
 	size_t			path_start;
-
+	
 	//*	protection against telnet bad requests	(i.e.: when we write the http request by hand)
 	if (
 		std::string::npos == (path_start = uri.find("/"))

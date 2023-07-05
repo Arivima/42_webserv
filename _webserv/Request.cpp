@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 17:19:26 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/03 13:29:25 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/05 17:41:47 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,7 +67,8 @@ void	Request::read_line( void )
 	const struct epoll_event*	eevent = edata.getEpollEvent(this->sock_fd);
 
 	//*	Checking for incoming data and writing into statically allocated recv buffer
-	if (NULL != eevent && (eevent->events & EPOLLIN)) {
+	if (NULL != eevent && (eevent->events & EPOLLIN))
+	{
 		memset(rcv_buf, '\0', RCV_BUF_SIZE + 1);
 		if (recv(sock_fd, rcv_buf, RCV_BUF_SIZE, 0) <= 0)
 			throw (SockEof());
@@ -80,12 +81,12 @@ void	Request::read_line( void )
 		std::replace(debug_rcv_buf.begin(), debug_rcv_buf.end(), '\n', 'n');
 		std::replace(debug_cur_line.begin(), debug_cur_line.end(), '\r', 'r');
 		std::replace(debug_cur_line.begin(), debug_cur_line.end(), '\n', 'n');
-		COUT_DEBUG_INSERTION(
-			YELLOW "Request::read_line()" RESET
-			<< " - received chars : |" << debug_rcv_buf << "|" << std::endl
-			<< " - cur line : |" << debug_cur_line << "|"  << std::endl
-			<< " - cur stream : " << sock_stream.str() << std::endl
-		);
+		// COUT_DEBUG_INSERTION(
+		// 	YELLOW "Request::read_line()" RESET
+		// 	<< " - received chars : |" << debug_rcv_buf << "|" << std::endl
+		// 	<< " - cur line : |" << debug_cur_line << "|"  << std::endl
+		// 	<< " - cur stream : " << sock_stream.str() << std::endl
+		// );
 		//*************************************************************
 		
 		//*	Dumping into dynamic entity for character handling (stream)

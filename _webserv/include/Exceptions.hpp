@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/30 12:37:05 by avilla-m          #+#    #+#             */
-/*   Updated: 2023/07/03 16:54:09 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/05 20:30:31 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -152,8 +152,8 @@ private:
 		err_page
 			<< "HTTP/1.1 " << err_code << " " << msg << "\r\n"
 			<< "Content-Type: text/html" << "\r\n"
-			<< "Content-Length : " << page_content.length()
-			<< "\r\n\r\n";
+			<< "Content-Length : " << page_content.length() << "\r\n"
+			<< "\r\n";
 
 		//*		append page content
 		err_page << page_content;

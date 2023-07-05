@@ -52,7 +52,7 @@ std::string CGI::get_env_value(const std::string & key){
 }
 
 void CGI::launch()
-{
+{COUT_DEBUG_INSERTION(YELLOW "CGI::launch()" RESET << std::endl);
 	pid_t pid = 0;
 
 	pid = fork();
@@ -72,7 +72,6 @@ void CGI::launch()
 		if (false == stream_cgi_infile.is_open())
 			throw_HttpError_debug("CGI::launch()", "is_open()", 500, this->matching_directives);
 		
-		stream_cgi_infile << std::string("Hello from CGI.launch()");
 		stream_cgi_infile << input;
 		
 		if (stream_cgi_infile.fail())
@@ -165,13 +164,13 @@ void CGI::init_env_paths(
 	path_remove_leading_slash(path_info);
 	path_remove_leading_slash(query_str);
 	
-	cgi_env[29] = strdup((std::string("ROOT=")           			+ 	root ).c_str())   ;
-	cgi_env[30] = strdup((std::string("INTERPRETER_PATH=")			+ 	interpreter_path ).c_str())   ;
-	cgi_env[22] = strdup((std::string("REQUEST_URI=")				+ 	url).c_str())	;
-	cgi_env[23] = strdup((std::string("SCRIPT_NAME=")				+ 	script_name).c_str())   ;
-	cgi_env[16] = strdup((std::string("QUERY_STRING=")				+ 	query_str).c_str())   ;
-	cgi_env[14] = strdup((std::string("PATH_INFO=")					+ 	path_info).c_str())   ;
-	cgi_env[15] = strdup((std::string("PATH_TRANSLATED=")			+ 	root + path_info).c_str())   ;
+	cgi_env[0] = strdup((std::string("ROOT=")           			+ 	root ).c_str())   ;
+	cgi_env[1] = strdup((std::string("INTERPRETER_PATH=")			+ 	interpreter_path ).c_str())   ;
+	cgi_env[2] = strdup((std::string("REQUEST_URI=")				+ 	url).c_str())	;
+	cgi_env[3] = strdup((std::string("SCRIPT_NAME=")				+ 	script_name).c_str())   ;
+	cgi_env[4] = strdup((std::string("QUERY_STRING=")				+ 	query_str).c_str())   ;
+	cgi_env[5] = strdup((std::string("PATH_INFO=")					+ 	path_info).c_str())   ;
+	cgi_env[6] = strdup((std::string("PATH_TRANSLATED=")			+ 	root + path_info).c_str())   ;
 
 }
 
@@ -180,37 +179,41 @@ void	CGI::init_env(const t_conf_block& matching_directives, const std::string& c
 	// const std::string&	server_IP;	//*	the interface, among all the assigned_server utilized interfaces, where the connection got accepted.
 
 	// Path environment variables declared in init_env_paths();
-	cgi_env[0] = strdup((std::string("AUTH_TYPE=")               +	std::string("")).c_str());
-	cgi_env[1] = strdup((std::string("CONTENT_LENGTH=")          +	((req.find("Content-Length") != req.end()) ? req.at("Content-Length") : "")).c_str());
-	cgi_env[2] = strdup((std::string("CONTENT_TYPE=")            +	((req.find("Content-Type") != req.end()) ? req.at("Content-Type") : "")).c_str());
-	cgi_env[3] = strdup((std::string("GATEWAY_INTERFACE=")       +	std::string("CGI/1.1")).c_str());
-	cgi_env[4] = strdup((std::string("HTTP_ACCEPT=")             +	((req.find("Accept") != req.end()) ? req.at("Accept") : "")).c_str());
-	cgi_env[6] = strdup((std::string("HTTP_ACCEPT_ENCODING=")    +	((req.find("Accept-Encoding") != req.end()) ? req.at("Accept-Encoding") : "")).c_str());
-	cgi_env[7] = strdup((std::string("HTTP_ACCEPT_LANGUAGE=")    +	((req.find("Accept-Language") != req.end()) ? req.at("Accept-Language") : "")).c_str());
-	cgi_env[8] = strdup((std::string("HTTP_COOKIE=")             +	((req.find("Cookie") != req.end()) ? req.at("Cookie") : "")).c_str());
-	cgi_env[9] = strdup((std::string("HTTP_FORWARDED=")          +	((req.find("Forwarded") != req.end()) ? req.at("Forwarded") : "")).c_str());
-	cgi_env[10] = strdup((std::string("HTTP_HOST=")                 			+	((req.find("Host") != req.end()) ? req.at("Host") : "")).c_str());
-	cgi_env[11] = strdup((std::string("HTTP_PROXY_AUTHORIZATION=")  			+	((req.find("Proxy-Authorization") != req.end()) ? req.at("Proxy-Authorization") : "")).c_str());
-	cgi_env[12] = strdup((std::string("HTTP_USER_AGENT=")           			+	((req.find("User-Agent") != req.end()) ? req.at("User-Agent") : "")).c_str());
-	cgi_env[13] = strdup((std::string("NCHOME=")                    			+ 	std::string("")).c_str());
-	cgi_env[17] = strdup((std::string("REMOTE_ADDR=")               			+ 	std::string(client_IP)).c_str());
-	cgi_env[18] = strdup((std::string("REMOTE_HOST=")               			+ 	std::string("")).c_str());
-	cgi_env[19] = strdup((std::string("REMOTE_IDENT=")              			+ 	std::string("")).c_str());
-	cgi_env[20] = strdup((std::string("REMOTE_USER=")               			+ 	std::string("")).c_str());
-	cgi_env[21] = strdup((std::string("REQUEST_METHOD=")            			+ 	req.at("method")).c_str());
-	cgi_env[24] = strdup((std::string("SERVER_NAME=")               			+ 	std::string(server_IP)).c_str());
-	cgi_env[25] = strdup((std::string("SERVER_PORT=")               			+ 	matching_directives.directives.at("listen")).c_str());
-	cgi_env[26] = strdup((std::string("SERVER_PROTOCOL=")           			+ 	std::string("HTTP/1.1")).c_str());
-	cgi_env[27] = strdup((std::string("SERVER_SOFTWARE=")           			+ 	std::string("WebServ_PiouPiou/1.0.0 (Ubuntu)")).c_str());
-	cgi_env[28] = strdup((std::string("WEBTOP_USER=")               			+ 	std::string("")).c_str());
+	cgi_env[7] = strdup((std::string("AUTH_TYPE=")               +	std::string("")).c_str());
+	cgi_env[8] = strdup((std::string("CONTENT_LENGTH=")          +	((req.find("Content-Length") != req.end()) ? req.at("Content-Length") : "")).c_str());
+	cgi_env[9] = strdup((std::string("CONTENT_TYPE=")            +	((req.find("Content-Type") != req.end()) ? req.at("Content-Type") : "")).c_str());
+	cgi_env[10] = strdup((std::string("GATEWAY_INTERFACE=")       +	std::string("CGI/1.1")).c_str());
+	cgi_env[11] = strdup((std::string("HTTP_ACCEPT=")             +	((req.find("Accept") != req.end()) ? req.at("Accept") : "")).c_str());
+	cgi_env[12] = strdup((std::string("HTTP_ACCEPT_ENCODING=")    +	((req.find("Accept-Encoding") != req.end()) ? req.at("Accept-Encoding") : "")).c_str());
+	cgi_env[13] = strdup((std::string("HTTP_ACCEPT_LANGUAGE=")    +	((req.find("Accept-Language") != req.end()) ? req.at("Accept-Language") : "")).c_str());
+	cgi_env[14] = strdup((std::string("HTTP_COOKIE=")             +	((req.find("Cookie") != req.end()) ? req.at("Cookie") : "")).c_str());
+	cgi_env[15] = strdup((std::string("HTTP_FORWARDED=")          +	((req.find("Forwarded") != req.end()) ? req.at("Forwarded") : "")).c_str());
+	cgi_env[16] = strdup((std::string("HTTP_HOST=")                 			+	((req.find("Host") != req.end()) ? req.at("Host") : "")).c_str());
+	cgi_env[17] = strdup((std::string("HTTP_PROXY_AUTHORIZATION=")  			+	((req.find("Proxy-Authorization") != req.end()) ? req.at("Proxy-Authorization") : "")).c_str());
+	cgi_env[18] = strdup((std::string("HTTP_USER_AGENT=")           			+	((req.find("User-Agent") != req.end()) ? req.at("User-Agent") : "")).c_str());
+	cgi_env[19] = strdup((std::string("NCHOME=")                    			+ 	std::string("")).c_str());
+	cgi_env[20] = strdup((std::string("REMOTE_ADDR=")               			+ 	std::string(client_IP)).c_str());
+	cgi_env[21] = strdup((std::string("REMOTE_HOST=")               			+ 	std::string("")).c_str());
+	cgi_env[22] = strdup((std::string("REMOTE_IDENT=")              			+ 	std::string("")).c_str());
+	cgi_env[23] = strdup((std::string("REMOTE_USER=")               			+ 	std::string("")).c_str());
+	cgi_env[24] = strdup((std::string("REQUEST_METHOD=")            			+ 	req.at("method")).c_str());
+	cgi_env[25] = strdup((std::string("SERVER_NAME=")               			+ 	std::string(server_IP)).c_str());
+	cgi_env[26] = strdup((std::string("SERVER_PORT=")               			+ 	matching_directives.directives.at("listen")).c_str());
+	cgi_env[27] = strdup((std::string("SERVER_PROTOCOL=")           			+ 	std::string("HTTP/1.1")).c_str());
+	cgi_env[28] = strdup((std::string("SERVER_SOFTWARE=")           			+ 	std::string("WebServ_PiouPiou/1.0.0 (Ubuntu)")).c_str());
+	cgi_env[29] = strdup((std::string("WEBTOP_USER=")               			+ 	std::string("")).c_str());
 	cgi_env[CGI_ENV_SIZE] = NULL;
 }
 
 //* Debug
-void CGI::print_arr(char ** arr, const std::string& title){
+void CGI::print_arr(char ** arr, const std::string& title)
+{COUT_DEBUG_INSERTION(YELLOW "CGI::print_arr()" RESET << std::endl);
+
 	if (!arr)
 		return;
 	std::cout << "Printing " << title << std::endl;
 	for(int i = 0; arr[i]; ++i)
 		std::cout << i << " : " << arr[i] << std::endl;
+
+	COUT_DEBUG_INSERTION(YELLOW "END_____CGI::print_arr()" RESET << std::endl)
 }
