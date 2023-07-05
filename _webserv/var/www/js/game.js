@@ -12,10 +12,10 @@ let indexes;
 const cells = new Array(TILES);
 
 const imgs = [
-  "url('./img/ocean.jpg')",
-  "url('./img/Doggie.jpg')",
-  "url('./img/Solaire_of_Astora.png')",
-  "url('./img/Sanniti.jpg')",
+  "url('/img/ocean.jpg')",
+  "url('/img/Doggie.jpg')",
+  "url('/img/Solaire_of_Astora.png')",
+  "url('/img/Sanniti.jpg')",
 ];
 
 let moves = 0;

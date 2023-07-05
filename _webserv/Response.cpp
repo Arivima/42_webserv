@@ -284,6 +284,7 @@ void	Response::generateGETResponse(  const std::string uri_path  )
 			path_remove_leading_slash(path);
 			COUT_DEBUG_INSERTION("showing dir listing for " << root + path << std::endl)
 			std::string dir_listing_page = createHtmlPage(
+				"Directory Listing for /" + path,
 				getDirectoryContentList(root + path) //wip
 			);
 			page.insert(
@@ -295,8 +296,10 @@ void	Response::generateGETResponse(  const std::string uri_path  )
 			// throw (std::runtime_error("not yet implemented"));
 			// finire gestire ls
 		}
-		else
+		else {
+			std::cout << "autoindex not set" << std::endl;
 			/*Not found*/	throw HttpError(404, this->matching_directives, root);
+		}
 	}
 	else {
 		COUT_DEBUG_INSERTION("serving page : " << root + reqPath << std::endl)
@@ -390,7 +393,10 @@ std::string		Response::getIndexPage( const std::string& root, std::string path )
 				 << std::endl)
 			std::ifstream	file(root + path + cur_index);
 			if (file.is_open())
+			{
+				file.close();
 				return (path + cur_index);
+			}
 		}
 		return ("");
 	}

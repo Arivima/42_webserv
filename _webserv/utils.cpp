@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/18 10:41:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/02 14:55:43 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/05 01:57:02 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -477,6 +477,7 @@ std::string getDirectoryContentList(const std::string directoryPath)
     if (dir){
         dirent* entry;
 		errno = 0;
+		contentList = "<ul>";
         while ((entry = readdir(dir)) != NULL){
 			
 			if (entry == NULL && errno != 0)								// errno, see above
@@ -484,47 +485,62 @@ std::string getDirectoryContentList(const std::string directoryPath)
 
 			std::string fileType;
 			if (entry->d_type == DT_DIR)
-				fileType = " | Directory ";
+				fileType = "<span style=\"color:blue\"> | Directory </span>";
 			else if (entry->d_type == DT_REG)
-				fileType = " | Regular_file ";
+				fileType = "<span style=\"color:green\"> | Regular_file </span>";
 			else
-				fileType = " | Unkown_type ";
+				fileType = "<span style=\"color:red\"> | Unkown_type </span>";
 
             std::string fileName = entry->d_name;
             if (fileName != "." && fileName != ".."){
-                contentList += fileName + fileType + "\n";
+                contentList += ("<li>" + fileName + "------" + fileType + "</li>");
             }
         }
+		contentList += "</ul>";
         if (closedir(dir) != 0)
 			throw SystemCallException("closedir()");//*HttpError 500 server internal error
     }
     else
 		throw SystemCallException("opendir()");//*HttpError 500 server internal error
-	COUT_DEBUG_INSERTION(YELLOW << contentList << RESET << std::endl;);
-	std::cout << MAGENTA << contentList << RESET << std::endl;
+	COUT_DEBUG_INSERTION(
+		YELLOW << "contenList" << std::endl
+		<< contentList << RESET << std::endl
+	);
     return contentList;
 }
 
 //TODO	mettere pathname directory nel titolo
-std::string	createHtmlPage(const std::string& body)
+std::string	createHtmlPage(const std::string& title, const std::string& body)
 {
 	std::stringstream	pageStream;
 
+	COUT_DEBUG_INSERTION(
+		YELLOW
+		<< "std::string	createHtmlPage() : " << body
+		<< RESET << std::endl
+	);
+
+	COUT_DEBUG_INSERTION(
+		"body : " << body << std::endl
+	);
 	pageStream
 	<< "<!DOCTYPE html>\
 <html lang=\"en\">\
   <head>\
     <meta charset=\"UTF-8\" />\
     <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\
-    <title>Directory Listing</title>\
+    <title>" << title << "</title>\
   </head>\
   <body>\
-    <h1>Directory Listing</h1>"
+    <h1>" << title << "</h1>"
 	<< body
 	<< "</body>\
 </html>\
 ";
 
+	COUT_DEBUG_INSERTION(
+		"pageStream.str() : " << pageStream.str() << std::endl
+	);
 	return (pageStream.str());
 }
 
