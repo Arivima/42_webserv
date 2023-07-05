@@ -154,9 +154,14 @@ void CGI::init_env_paths(
 	if (url.size() > (pos_ext + cgi_extension.size())){
 		path_info = url.substr(pos_ext + cgi_extension.size());
 		
-		pos_query = path_info.find("?");
-		if ((pos_query != std::string::npos) && (pos_query == path_info.size() - 1))
-			query_str = path_info.substr(pos_query + 1);
+		pos_query = url.find("?");
+		if (std::string::npos != pos_query && url.length() - 1 != pos_query)
+			query_str = url.substr(pos_query + 1);
+		else
+			query_str = "";
+
+		// if ((pos_query != std::string::npos) && (pos_query == path_info.size() - 1))
+		// 	query_str = path_info.substr(pos_query + 1);
 			
 		path_info = path_info.substr(0, pos_query);
 	}

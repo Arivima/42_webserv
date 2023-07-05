@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/18 10:41:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/05 18:57:56 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/06 00:55:55 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -220,12 +220,13 @@ std::string	take_cgi_extension(
 	const std::map<std::string, std::string>& directives
 )
 {
-	COUT_DEBUG_INSERTION("take_cgi_extension - url : " << url << std::endl);
+	std::string			uri_path = url.substr(0, url.find("?"));
 	size_t				cur_dot_pos;
 	std::string			cur_extension;
 	size_t				ext_found_at_pos;
 	std::string			cgi_enable_directive;
 	std::stringstream	cgiDirectiveStream;
+	COUT_DEBUG_INSERTION("take_cgi_extension - uri-path : " << uri_path << std::endl);
 
 	if (directives.end() == directives.find("cgi_enable"))
 		return ("");
@@ -240,14 +241,14 @@ std::string	take_cgi_extension(
 		cgiDirectiveStream.str(cgi_enable_directive.substr(cur_dot_pos));
 		std::getline(cgiDirectiveStream, cur_extension, ' ');
 		COUT_DEBUG_INSERTION("trying extension : |" << cur_extension << "| " << std::endl);
-		ext_found_at_pos = url.find(cur_extension);
+		ext_found_at_pos = uri_path.find(cur_extension);
 		if (
 			std::string::npos != ext_found_at_pos &&
 			(
 				//*script at the end
-				ext_found_at_pos + cur_extension.length() == url.length() ||
+				ext_found_at_pos + cur_extension.length() == uri_path.length() ||
 				//*additional url info
-				'/' == url[ext_found_at_pos + cur_extension.length()]
+				'/' == uri_path[ext_found_at_pos + cur_extension.length()]
 			)
 		) {
 			COUT_DEBUG_INSERTION("returning extension : |" << cur_extension << "| " << std::endl);
@@ -280,6 +281,8 @@ std::string		take_cgi_interpreter_path(
 	interpreter_pos = cgi_directive.rfind(" /", extension_pos);
 	if (std::string::npos == interpreter_pos)
 		interpreter_pos = 0;
+	else
+		interpreter_pos += 1;
 	
 	return (cgi_directive.substr(interpreter_pos, extension_pos - interpreter_pos));
 }
