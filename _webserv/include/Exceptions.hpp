@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/30 12:37:05 by avilla-m          #+#    #+#             */
-/*   Updated: 2023/07/05 20:30:31 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/06 18:49:19 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -203,7 +203,7 @@ private:
     <title>"<< err_code << " " << msg << "--" << errno_str << "</title>\
   </head>\
   <body>\
-    <h1>"<< err_code << " " << msg << "--" << errno_str << "</h1>\
+    <center><h1>Webserv PiouPiou</h1><h2>"<< err_code << " " << msg << "--" << errno_str << "</h2></center>\
   </body>\
 </html>\
 ";

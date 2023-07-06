@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/18 10:41:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/06 00:55:55 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/06 19:00:53 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -167,30 +167,30 @@ bool	same_host(
 	);
 }
 
-/**
- * @brief this function takes the root for the current location block.
- * Directive 'upload_path' for file upload requests,
- * directive 'root' for all other requests.
- * 
- * @param matching_directives 
- * @return std::string 
- */
-std::string		take_location_root( const t_conf_block& matching_directives, bool file_upload )
-{
-	std::string											directive = file_upload ? "upload_path" : "root";
-	std::string											root;
-	std::map<std::string, std::string>::const_iterator	root_pos = matching_directives.directives.find(directive);
+// /**
+//  * @brief this function takes the root for the current location block.
+//  * Directive 'upload_path' for file upload requests,
+//  * directive 'root' for all other requests.
+//  * 
+//  * @param matching_directives 
+//  * @return std::string 
+//  */
+// std::string		take_location_root( const t_conf_block& matching_directives, bool file_upload )
+// {
+// 	std::string											directive = file_upload ? "upload_path" : "root";
+// 	std::string											root;
+// 	std::map<std::string, std::string>::const_iterator	root_pos = matching_directives.directives.find(directive);
 
-	if (matching_directives.directives.end() != root_pos) {
-		root = matching_directives.directives.at(directive);
-		path_remove_leading_slash(root);
-		root += "/";
-	}
-	else
-		root = "./";
+// 	if (matching_directives.directives.end() != root_pos) {
+// 		root = matching_directives.directives.at(directive);
+// 		path_remove_leading_slash(root);
+// 		root += "/";
+// 	}
+// 	else
+// 		root = "./";
 	
-	return (root);
-}
+// 	return (root);
+// }
 
 //*		HTTP utilities
 bool	isCGI(
@@ -300,9 +300,19 @@ std::string		uri_remove_queryString(const std::string& uri)
 
 //	UTILS EXCEPTIONS
 
-void throw_HttpError_debug(std::string function, std::string call, int httpStatusCode, const t_conf_block & matching_directives){
-	std::cout << RED << "Error : " << function << " : " << call << "http status code : " << httpStatusCode << RESET << std::endl;
-	throw (HttpError(httpStatusCode, matching_directives, take_location_root(matching_directives, false)));
+void throw_HttpError_debug(
+		std::string function, std::string call,
+		int httpStatusCode,
+		const t_conf_block & matching_directives, const std::string& location_root
+	)
+{
+	std::cout
+		<< RED
+		<< "Error : " << function << " : " << call
+		<< "http status code : " << httpStatusCode
+		<< RESET
+		<< std::endl;
+	throw (HttpError(httpStatusCode, matching_directives, location_root));
 }
 
 //*		GENERAL PURPOSE UTILITIES
@@ -411,6 +421,21 @@ void	path_remove_leading_slash(std::string& pathname)
 #include <cerrno>
 #include <sys/stat.h>
 #include <sys/types.h>
+
+bool	fileExists(
+	const std::string& root,
+	std::string path
+	)
+{COUT_DEBUG_INSERTION(YELLOW "checking existence of file : " << root + path << RESET << std::endl);
+	struct stat	fileStat;
+	std::string	fileFullPath;
+
+	path = path.substr(0, path.find("?"));
+	path_remove_leading_slash(path);
+	fileFullPath = root + path;
+
+	return (0 == stat(fileFullPath.c_str(), &fileStat));
+}
 
 //TODO
 //TODO	check stat error with errno. Throw server internal error if it failed for something else than non-existent file.

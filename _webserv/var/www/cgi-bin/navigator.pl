@@ -1,12 +1,12 @@
 # **************************************************************************** #
 #                                                                              #
 #                                                         :::      ::::::::    #
-#    autoindex.pl                                       :+:      :+:    :+:    #
+#    navigator.pl                                       :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
 #    By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/07/06 03:50:02 by mmarinel          #+#    #+#              #
-#    Updated: 2023/07/06 03:50:04 by mmarinel         ###   ########.fr        #
+#    Updated: 2023/07/06 19:07:28 by mmarinel         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -55,7 +55,7 @@ sub navigator {
 			my $path = "$dir/$entry";
 			my $size = -d $path ? '-' : -s _;  # Use '-' for directories
 
-			$html .= "<li><a href=\"/cgi-bin/autoindex.pl?/$rel_dir/$entry\">$entry</a> ($size bytes)</li>\n";
+			$html .= "<li><a href=\"/cgi-bin/navigator.pl?/$rel_dir/$entry\">$entry</a> ($size bytes)</li>\n";
 		}
 
 		$html .= "</ul>\n";

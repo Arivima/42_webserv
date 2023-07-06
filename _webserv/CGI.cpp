@@ -15,16 +15,19 @@ CGI::CGI(
 	int											sock_fd,
 	const std::string&							client_IP,
 	const std::string&							server_IP,
-	const std::map<std::string, std::string>	req,
+	const std::map<std::string, std::string>&	req,
 	const t_conf_block&							matching_directives,
+	const std::string&							location_root,
+	const std::string &							cgi_extension,
 	const std::string &							interpreter_path
 )
-: sock_fd(sock_fd), response(), req(req), matching_directives(matching_directives)
+	:	sock_fd(sock_fd),
+		response(), req(req),
+		matching_directives(matching_directives)
 {
 	std::cout << "CGI Constructor" << std::endl;
 
-	const std::string cgi_extension(take_cgi_extension(req.at("url"), matching_directives.directives));
-	init_env_paths(take_location_root(matching_directives, false), cgi_extension, interpreter_path);
+	init_env_paths(location_root, cgi_extension, interpreter_path);
 	init_env(matching_directives, client_IP, server_IP);
 
 	print_arr(this->cgi_env, std::string("CGI Environment"));
@@ -55,10 +58,13 @@ void CGI::launch()
 {COUT_DEBUG_INSERTION(YELLOW "CGI::launch()" RESET << std::endl);
 	pid_t pid = 0;
 
-	pid = fork();
 
+	if (false == fileExists(get_env_value("ROOT"), get_env_value("SCRIPT_NAME")))
+		throw HttpError(404, matching_directives, get_env_value("ROOT"));
+	
+	pid = fork();
 	if (pid == -1)
-		throw_HttpError_debug("CGI::launch()", "fork()", 500, this->matching_directives);
+		throw_HttpError_debug("CGI::launch()", "fork()", 500, this->matching_directives, get_env_value("ROOT"));
 	else if (pid == 0)  // child -> CGI
 	{		
 	// create the input string
@@ -70,27 +76,27 @@ void CGI::launch()
 	// create an input file and write the content of body and query string
 		std::ofstream	stream_cgi_infile(CGI_INFILE, std::ios::out | std::ios::trunc);
 		if (false == stream_cgi_infile.is_open())
-			throw_HttpError_debug("CGI::launch()", "is_open()", 500, this->matching_directives);
+			throw_HttpError_debug("CGI::launch()", "is_open()", 500, this->matching_directives, get_env_value("ROOT"));
 		
 		stream_cgi_infile << input;
 		
 		if (stream_cgi_infile.fail())
-			throw_HttpError_debug("CGI::launch()", "stream <<", 500, this->matching_directives);
+			throw_HttpError_debug("CGI::launch()", "stream <<", 500, this->matching_directives, get_env_value("ROOT"));
 		stream_cgi_infile.close();
 
 	// open input and output files
 		int fd_in = open(CGI_INFILE, O_RDONLY, 0666);
 		if (fd_in == -1)
-			throw_HttpError_debug("CGI::launch()", "open CGI_INFILE", 500, this->matching_directives);
+			throw_HttpError_debug("CGI::launch()", "open CGI_INFILE", 500, this->matching_directives, get_env_value("ROOT"));
 		int fd_out = open(CGI_OUTFILE, O_RDWR | O_CREAT | O_TRUNC, 0666);
 		if (fd_out == -1)
-			throw_HttpError_debug("CGI::launch()", "open CGI_OUTFILE", 500, this->matching_directives);
+			throw_HttpError_debug("CGI::launch()", "open CGI_OUTFILE", 500, this->matching_directives, get_env_value("ROOT"));
 
 	// duping fd // if no body ? dup or not ? -> handled by CGI ?
 		if (dup2(fd_in, STDIN_FILENO) == -1)
-			throw_HttpError_debug("CGI::launch()", "dup2(fd_in, STDIN_FILENO)", 500, this->matching_directives);
+			throw_HttpError_debug("CGI::launch()", "dup2(fd_in, STDIN_FILENO)", 500, this->matching_directives, get_env_value("ROOT"));
 		if (dup2(fd_out, STDOUT_FILENO) == -1)
-			throw_HttpError_debug("CGI::launch()", "dup2(fd_out, STDOUT_FILENO)", 500, this->matching_directives);
+			throw_HttpError_debug("CGI::launch()", "dup2(fd_out, STDOUT_FILENO)", 500, this->matching_directives, get_env_value("ROOT"));
 	// creates arguments for execve
 		char* const cmd[3] = {
 			strdup(get_env_value("INTERPRETER_PATH").c_str()),
@@ -99,24 +105,24 @@ void CGI::launch()
 		};
 	// executing cgi
 		if (execve(cmd[0], cmd, this->cgi_env) == -1)
-			throw_HttpError_debug("CGI::launch()", "execve()", 500, this->matching_directives);
+			throw_HttpError_debug("CGI::launch()", "execve()", 500, this->matching_directives, get_env_value("ROOT"));
 	}
 	else 	// back to parent
 	{              
 		if (wait(0) == -1)
-			throw_HttpError_debug("CGI::launch()", "wait()", 500, this->matching_directives);
+			throw_HttpError_debug("CGI::launch()", "wait()", 500, this->matching_directives, get_env_value("ROOT"));
 		// Update the response
 		std::ifstream	stream_cgi_outfile(CGI_OUTFILE, std::ios::in);
 		if (false == stream_cgi_outfile.is_open())
-			throw_HttpError_debug("CGI::launch()", "is_open()", 500, this->matching_directives);
+			throw_HttpError_debug("CGI::launch()", "is_open()", 500, this->matching_directives, get_env_value("ROOT"));
         
 		response.assign(std::istreambuf_iterator<char>(stream_cgi_outfile), std::istreambuf_iterator<char>());
         
 	// delete files
 		if (unlink(CGI_OUTFILE) == -1) 
-			throw_HttpError_debug("CGI::launch()", "unlink(CGI_OUTFILE)", 500, this->matching_directives);
+			throw_HttpError_debug("CGI::launch()", "unlink(CGI_OUTFILE)", 500, this->matching_directives, get_env_value("ROOT"));
 		if (unlink(CGI_INFILE) == -1) 
-			throw_HttpError_debug("CGI::launch()", "unlink(CGI_INFILE)", 500, this->matching_directives);
+			throw_HttpError_debug("CGI::launch()", "unlink(CGI_INFILE)", 500, this->matching_directives, get_env_value("ROOT"));
 	}
 }
 
@@ -153,7 +159,8 @@ void CGI::init_env_paths(
 	
 	if (url.size() > (pos_ext + cgi_extension.size())){
 		path_info = url.substr(pos_ext + cgi_extension.size());
-		
+		path_info = path_info.substr(0, path_info.find("?"));//*corretto
+
 		pos_query = url.find("?");
 		if (std::string::npos != pos_query && url.length() - 1 != pos_query)
 			query_str = url.substr(pos_query + 1);
@@ -163,7 +170,7 @@ void CGI::init_env_paths(
 		// if ((pos_query != std::string::npos) && (pos_query == path_info.size() - 1))
 		// 	query_str = path_info.substr(pos_query + 1);
 			
-		path_info = path_info.substr(0, pos_query);
+		//!wrong path_info = path_info.substr(0, pos_query);
 	}
 	path_remove_leading_slash(script_name);
 	path_remove_leading_slash(path_info);

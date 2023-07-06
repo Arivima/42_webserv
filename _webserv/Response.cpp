@@ -37,18 +37,24 @@ Response::Response(
 	const t_epoll_data& edata
 )
 		:
-		matching_directives(takeMatchingDirectives(assigned_server.conf_server_block, req)),
+		matching_directives(
+			takeMatchingDirectives(assigned_server.conf_server_block, req)
+		),
 		req(req),
+		location_root(take_location_root()),
 		assigned_server(assigned_server),
 		sock_fd(sock_fd),
 		client_IP(client_IP),
 		server_IP(server_IP),
 		edata(edata)
 {
+	this->cgi = NULL;
 }
 
 Response::~Response() {
 	response.clear();
+	if (this->cgi)
+		delete (this->cgi);
 }
 
 
@@ -81,7 +87,7 @@ void	Response::send_line( void )
 				this->sock_fd, response.data(), response.size(), 0
 			);
 			if (bytes_sent < 0)
-				/*Server Err*/	throw HttpError(500, matching_directives, take_location_root(matching_directives, false));
+				/*Server Err*/	throw HttpError(500, matching_directives, location_root);
 			else
 			if (0 == bytes_sent)
 				throw TaskFulfilled();
@@ -101,7 +107,7 @@ void	Response::generateResponse( void )
 	try
 	{
 		if (false == isMethodAllowed())
-			throw (HttpError(405, matching_directives, take_location_root(matching_directives, false)));
+			throw (HttpError(405, matching_directives, location_root));
 		
 		cgi_extension = take_cgi_extension(
 			req.at("url"), matching_directives.directives
@@ -120,7 +126,11 @@ void	Response::generateResponse( void )
 				<< "|"
 				<< std::endl
 			);
-			this->cgi = new CGI(sock_fd, client_IP, server_IP, req, matching_directives, cgi_interpreter_path);
+			this->cgi = new CGI(
+				sock_fd, client_IP, server_IP,
+				req, matching_directives, location_root,
+				cgi_extension, cgi_interpreter_path
+			);
 			this->cgi->launch();
 			this->response = this->cgi->getResponse();
 
@@ -139,7 +149,7 @@ void	Response::generateResponse( void )
 		// 	return (generatePUTResponse());
 		if ("DELETE" == this->req.at("method"))
 			return (generateDELETEResponse(url_no_query_str));
-		throw (HttpError(501, this->matching_directives, take_location_root(matching_directives, false)));
+		throw (HttpError(501, this->matching_directives, location_root));
 	}
 	catch (const HttpError& e) {
 		this->response = e.getErrorPage();
@@ -292,7 +302,7 @@ size_t	Response::locationMatch(
 void	Response::generateGETResponse(  const std::string uri_path  )
 {COUT_DEBUG_INSERTION(YELLOW "Response::generateGETResponse()" RESET << std::endl);
 
-	const std::string				root = take_location_root(matching_directives, false);
+	const std::string				root = location_root;
 	const std::string				reqPath(http_req_complete_url_path(uri_path, root));
 	std::string						headers;
 	std::vector<char>				page;
@@ -322,7 +332,7 @@ void	Response::generateGETResponse(  const std::string uri_path  )
 		}
 		else {
 			std::cout << "autoindex not set" << std::endl;
-			/*Not found*/	throw HttpError(404, this->matching_directives, root);
+			/*Forbidden*/	throw HttpError(403, this->matching_directives, root);
 		}
 	}
 	else {
@@ -330,9 +340,15 @@ void	Response::generateGETResponse(  const std::string uri_path  )
 										filePath = root + reqPath;
 		std::ifstream					docstream(filePath.c_str(), std::ios::binary);
 
+		if (false == fileExists(root, reqPath)) {
+			// COUT_DEBUG_INSERTION("non existent file\n");
+			// /*Not Found*/ throw HttpError(404, matching_directives, location_root);
+			/*Errno error*/ throw_HttpError_errno_stat();
+		}
+		
 		if (false == docstream.is_open()) {
-			COUT_DEBUG_INSERTION("throwing page not found\n")
-			/*Not found*/	throw HttpError(404, matching_directives, take_location_root(matching_directives, false));
+			COUT_DEBUG_INSERTION("could not open file (server error)\n");
+			/*Server Err*/	throw HttpError(500, matching_directives, location_root);
 		}
 		try {
 			page.insert(
@@ -341,8 +357,8 @@ void	Response::generateGETResponse(  const std::string uri_path  )
 				std::istreambuf_iterator<char>());
 		}
 		catch (const std::exception& e) {
-			COUT_DEBUG_INSERTION("throwing Internal Server Error\n")
-			/*Server Err*/	throw HttpError(500, matching_directives, take_location_root(matching_directives, false));
+			COUT_DEBUG_INSERTION("IO file corruption\n");
+			/*Server Err*/	throw HttpError(500, matching_directives, location_root);
 		}
 		headers = getHeaders(200, "OK", filePath, page.size());
 	}
@@ -510,22 +526,22 @@ void Response::deleteFile( const std::string filePath ){
 // does the resource exists
 	errno = 0;
     if (access(filePath.c_str(), F_OK) == -1){
-        /*Not found*/	throw HttpError(404, matching_directives, take_location_root(matching_directives, false));
+        /*Not found*/	throw HttpError(404, matching_directives, location_root);
 
 // do I have the right permission ? 
 	errno = 0;
     if (access(filePath.c_str(), W_OK) == -1){
 		if (errno == ETXTBSY) // ETXTBSY Write access was requested to an executable which is being executed.
-		/*Conflict*/	throw HttpError(409, matching_directives, take_location_root(matching_directives, false));
+		/*Conflict*/	throw HttpError(409, matching_directives, location_root);
 		else
-		/*Forbidden*/	throw HttpError(403, matching_directives, take_location_root(matching_directives, false));
+		/*Forbidden*/	throw HttpError(403, matching_directives, location_root);
 	}
 	}
 
 // delete the file
 	errno = 0;
     if (unlink(filePath.c_str()) == -1) {
-		/*Server Err*/	throw HttpError(500, matching_directives, take_location_root(matching_directives, false));
+		/*Server Err*/	throw HttpError(500, matching_directives, location_root);
 	}
 }
 
@@ -543,7 +559,7 @@ void Response::deleteFile( const std::string filePath ){
 void	Response::deleteDirectory(const std::string directoryPath)
 {
 	std::cout << YELLOW << "Trying to delete DIRECTORY : " << directoryPath << RESET << std::endl;
-	const std::string	root = take_location_root(matching_directives, false);
+	const std::string	root = location_root;
 
 	errno = 0;
     DIR* dir = opendir(directoryPath.c_str());
@@ -577,7 +593,7 @@ void	Response::deleteDirectory(const std::string directoryPath)
 
 
 void Response::throw_HttpError_errno_stat(){
-	const std::string root = take_location_root(matching_directives, false);
+	const std::string root = location_root;
 
 	switch(errno)
 	{
@@ -641,7 +657,7 @@ void Response::throw_HttpError_errno_stat(){
 
 void	Response::generateDELETEResponse( const std::string uri_path )
 {
-	const std::string				root = take_location_root(matching_directives, false);
+	const std::string				root = location_root;
 	std::string						reqPath(uri_path);
 	std::string						filePath;
 
@@ -684,3 +700,33 @@ void	Response::generateDELETEResponse( const std::string uri_path )
 }
 
 //_______________________ METHOD : POST _______________________
+
+
+std::string		Response::take_location_root( void )
+{COUT_DEBUG_INSERTION(YELLOW "Response::take_location_root()" RESET << std::endl);
+	std::string											directive;
+	std::string											root;
+	std::map<std::string, std::string>::const_iterator	root_pos;
+
+	if (
+		"POST" == this->req.at("method") &&
+		matching_directives.directives\
+			.end() != matching_directives.directives.find("upload_path")
+	) {
+		directive = "upload_path";
+	}
+	else {
+		directive = "root";
+	}
+	root_pos = matching_directives.directives.find(directive);
+	if (matching_directives.directives.end() != root_pos) {
+		root = matching_directives.directives.at(directive);
+		path_remove_leading_slash(root);
+		root += "/";
+	}
+	else
+		root = "./";
+	
+	COUT_DEBUG_INSERTION(YELLOW "END------Response::take_location_root()" RESET << std::endl);
+	return (root);
+}

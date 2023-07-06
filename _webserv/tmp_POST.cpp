@@ -98,6 +98,7 @@ void	Response::generatePOSTResponse( const std::string uri_path )
 			std::cout << MAGENTA << "Trying to add a resource to DIRECTORY : " << fullDirPath << RESET << std::endl;
 
 			// check if file exists at the given location and updating the name if it does
+			//TODO Replace with fileExists ?
 			while (stat(fullFilePath.c_str(), &fileStat) == 0) {
 				std::string extension = take_cgi_extension(newFileName, this->matching_directives);
 				if (extension.empty() == false)

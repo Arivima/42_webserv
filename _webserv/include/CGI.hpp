@@ -28,8 +28,10 @@ class CGI {
 			int											sock_fd,
 			const std::string &							client_IP,
 			const std::string &							server_IP,
-			const std::map<std::string, std::string>	req,
+			const std::map<std::string, std::string>&	req,
 			const t_conf_block &						matching_directives,
+			const std::string&							location_root,
+			const std::string &							cgi_extension,
 			const std::string &							interpreter_path
 		);
 		~CGI();

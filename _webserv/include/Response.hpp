@@ -54,6 +54,7 @@ private:
 private:
 	const t_conf_block&							matching_directives;
 	const std::map<std::string, std::string>&	req;
+	const std::string							location_root;
 	const t_server&								assigned_server;
 	const int									sock_fd;
 	const std::string&							client_IP;				//*	ip of remote client
@@ -112,6 +113,7 @@ private:
 										const std::string& root
 									);
 	void							throw_HttpError_errno_stat();
+	std::string						take_location_root( void );
 
 };
 

@@ -1,3 +1,9 @@
+
+	1.	Pensare se rimuovere fileExists
+			- studiare stat e dove viene usato nel nostro progetto
+			- se lo tengo, devo tornare false anche se esiste ma é una directory.	(usa ENOENT)
+	2.	Testare CGI con permessi di esecuzione bloccati.
+
 Always		Check against subject, correction sheet, tester, write tests with python, Postman 
 
 Arielle:

@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/05 15:27:54 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/05 01:55:41 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/06 18:30:57 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,7 +75,7 @@ std::string 				block_get_name(t_config_block_level level);
 bool						mandatory_server_directives_present(const t_conf_block& current);
 bool						same_server( const t_conf_block& server, const t_conf_block& virtual_serv2);
 bool						same_host( const t_conf_block& virtual_serv1, const t_conf_block& virtual_serv2);
-std::string					take_location_root( const t_conf_block& matching_directives, bool file_upload );
+// std::string					take_location_root( const t_conf_block& matching_directives, bool file_upload );
 bool						isCGI(
 								const std::map<std::string, std::string>&	req,
 								const t_conf_block&							matching_directives
@@ -93,7 +93,11 @@ std::string					take_cgi_interpreter_path(
 std::string					uri_remove_queryString(const std::string& uri);
 
 //	UTILS EXCEPTIONS
-void throw_HttpError_debug(std::string function, std::string call, int httpStatusCode, const t_conf_block & matching_directives);
+void						throw_HttpError_debug(
+								std::string function, std::string call,
+								int httpStatusCode,
+								const t_conf_block & matching_directives, const std::string& location_root
+							);
 
 //	UTILS HPP
 std::string					strip_spaces(std::string& str);
@@ -109,6 +113,10 @@ std::vector<std::string> 	split_str_to_vector(std::string s, const std::string& 
  */
 bool						str_compare_words(const std::string& str_haystack, const std::string& str_needle);
 void						path_remove_leading_slash(std::string& pathname);
+bool						fileExists(
+								const std::string& root,
+								std::string path
+							);
 bool						isDirectory(const std::string root, std::string path, const t_conf_block& matching_directives);
 std::string					getDirectoryContentList(const std::string directoryPath);
 std::string					createHtmlPage(const std::string& title, const std::string& body);
