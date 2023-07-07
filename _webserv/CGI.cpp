@@ -62,6 +62,11 @@ void CGI::launch()
 
 	check_file_accessibility(
 		X_OK,
+		get_env_value("INTERPRETER_PATH"), "",
+		matching_directives
+	);
+	check_file_accessibility(
+		R_OK,
 		get_env_value("SCRIPT_NAME"), get_env_value("ROOT"),
 		matching_directives
 	);
