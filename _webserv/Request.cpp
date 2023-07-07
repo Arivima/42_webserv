@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 17:19:26 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/05 17:41:47 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/08 01:47:02 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,10 +25,12 @@ Request::Request(
 	) :
 	sock_fd(sock_fd),
 	edata(edata),
-	sock_stream(std::ios_base::in | std::ios_base::out)
+	sock_stream(),
+	payload()
 {
 	parser_status = e_READING_HEADS;
 	cur_body_size = 0;
+	chunked = false;
 }
 
 Request::~Request( void ) {
@@ -42,12 +44,20 @@ const std::map<std::string, std::string>&	Request::getRequest( void ) {
 	return (this->req);
 }
 
+const std::vector<char>&	Request::getPayload( void ) {
+	return (this->payload);
+}
+
+bool						Request::isChunked( void ) {
+	return (this->chunked);
+}
+
 void	Request::parse_line( void ) { //std::cout  << std::endl << "\033[1m\033[32m""parse_line() called()""\033[0m" << std::endl;
 	
 	const struct epoll_event*	eevent = edata.getEpollEvent(this->sock_fd);
 
 	if (
-		false == sock_stream.str().empty() ||
+		false == sock_stream.empty() ||
 		(NULL != eevent &&  eevent->events & EPOLLIN))
 	{
 		read_line();
@@ -65,17 +75,19 @@ void	Request::parse_line( void ) { //std::cout  << std::endl << "\033[1m\033[32m
 void	Request::read_line( void )
 { //std::cout  << std::endl << "\033[1m\033[32m""read_line() called()""\033[0m" << std::endl;
 	const struct epoll_event*	eevent = edata.getEpollEvent(this->sock_fd);
+	int							bytes_read;
 
 	//*	Checking for incoming data and writing into statically allocated recv buffer
 	if (NULL != eevent && (eevent->events & EPOLLIN))
 	{
 		memset(rcv_buf, '\0', RCV_BUF_SIZE + 1);
-		if (recv(sock_fd, rcv_buf, RCV_BUF_SIZE, 0) <= 0)
+		bytes_read = recv(sock_fd, rcv_buf, RCV_BUF_SIZE, 0);
+		if ( bytes_read <= 0)
 			throw (SockEof());
 		
 		//*		DEBUG
 		std::string		debug_rcv_buf = rcv_buf;
-		std::string		debug_cur_line = cur_line;
+		std::string		debug_cur_line = cur_line.data();
 
 		std::replace(debug_rcv_buf.begin(), debug_rcv_buf.end(), '\r', 'r');
 		std::replace(debug_rcv_buf.begin(), debug_rcv_buf.end(), '\n', 'n');
@@ -90,7 +102,11 @@ void	Request::read_line( void )
 		//*************************************************************
 		
 		//*	Dumping into dynamic entity for character handling (stream)
-		sock_stream << rcv_buf;
+		sock_stream.insert(
+			sock_stream.end(),
+			rcv_buf,
+			rcv_buf + bytes_read
+		) ;
 	}
 
 	//*	Read characters from dynamic entity for character handling (stream)
@@ -106,34 +122,46 @@ void	Request::read_line( void )
 
 void	Request::read_header( void )
 {
-	std::string			line_read;
-	// bool				has_eol = (std::string::npos != sock_stream.str().find("\r\n"));
+	std::vector<char>::iterator		lf_pos;
 
-	std::getline(sock_stream, line_read);//line_read += '\0';
-	cur_line += line_read;
-	if (sock_stream.good())//(has_eol)
-		cur_line += "\n";
+	if (hasHttpHeaderDelimiter(sock_stream))
+	{
+		lf_pos = std::find(sock_stream.begin(), sock_stream.end(), '\n');
+		cur_line.insert(
+			cur_line.end(),
+			sock_stream.begin(),
+			lf_pos + 1
+		);
+		sock_stream.erase(sock_stream.begin(), lf_pos + 1);
+	}
 	else
+	{
+		cur_line.insert(
+			cur_line.end(),
+			sock_stream.begin(),
+			sock_stream.end()
+		);
 		sock_stream.clear();
+	}
 }
 
 void	Request::read_body( void ) {
 
-	std::streamsize		buf_len = sock_stream.str().length();//()->in_avail();
-	std::streamsize		bytes_read;
-	char				buf[buf_len + 1];
+	std::size_t		bytes_read = sock_stream.size();
 
-	memset(buf, '\0', buf_len + 1);
-	sock_stream.read(buf, buf_len);
-	bytes_read = sock_stream.gcount();
-	cur_line += buf;
+	payload.insert(
+		payload.end(),
+		sock_stream.begin(),
+		sock_stream.end()
+	);
+	sock_stream.clear();
 	cur_body_size -= bytes_read;
 }
 
 void	Request::parse_header( void )
 { //std::cout << "reading headers" << std::endl;
-	if (std::string::npos != cur_line.find("\r\n")) {
-		if ("\r\n" == cur_line) {
+	if (hasHttpHeaderDelimiter(cur_line)) {
+		if (isHttpHeaderDelimiter(cur_line)) {
 			//*	end of headers, there may or not may be a body
 			if (req.end() == req.find("method")) {
 				throw SockEof();
@@ -157,7 +185,7 @@ void	Request::parse_header( void )
 			}
 			else {
 				//*		request is not empty, line is header line
-				std::stringstream	str_stream(cur_line);
+				std::stringstream	str_stream(cur_line.data());
 				std::string			key;
 				std::string			value;
 				
@@ -166,14 +194,14 @@ void	Request::parse_header( void )
 				req[key] = value;
 			}
 		}
-		cur_line.erase(0);
+		cur_line.clear();
 	}
 	// std::cout << "reading headers---END" << std::endl;
 }
 
-void	Request::parse_req_line( std::string& req_line ) {
+void	Request::parse_req_line( std::vector<char>& req_line ) {
 
-	std::stringstream	reqline_stream(req_line);
+	std::stringstream	reqline_stream(req_line.data());
 	std::string			method;
 	std::string			url;
 	std::string			http_version;
@@ -191,8 +219,8 @@ void	Request::parse_req_line( std::string& req_line ) {
 
 void	Request::parse_body( void ) {
 	if (0 == cur_body_size) {
-		req["body"] = cur_line;
-		cur_line.erase(0);
+		req["body"] = cur_line.data();
+		cur_line.clear();
 		throw TaskFulfilled();
 	}
 }

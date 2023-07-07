@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 15:41:58 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/01 16:26:30 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/08 01:38:42 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,11 +44,14 @@ private:
 	t_PARSER_STATUS							parser_status;
 	const int								sock_fd;
 	const t_epoll_data&						edata;
-	std::map<std::string, std::string>		req;
+	std::map<std::string, std::string>		req;	//*	map holding the request headers
+	std::vector<char>						payload;//*	request body
+	
 	char									rcv_buf[RCV_BUF_SIZE + 1];	//*	buffer upon which we recv()
-	std::stringstream						sock_stream;				//*	stream where we dump all the data read in rcv buffer for a more convenient handling
-	std::string								cur_line;					//*	current req line
+	std::vector<char>						sock_stream;				//*	vector on which we dump the request incoming data for a more convenient handling
+	std::vector<char>						cur_line;					//*	current req line
 	int										cur_body_size;				//*	remaining body bytes to be read
+	bool									chunked;
 
 public:
 
@@ -61,7 +64,9 @@ public:
 	
 	//*		main functionalities
 	void										parse_line( void );
+	bool										isChunked( void );
 	const std::map<std::string, std::string>&	getRequest( void );
+	const std::vector<char>&					getPayload( void );
 	void										print_req( void );
 
 private:
@@ -76,7 +81,7 @@ private:
 	void			read_header( void );
 	void			read_body( void );
 	void			parse_header( void );
-	void			parse_req_line( std::string& req_line );
+	void			parse_req_line( std::vector<char>& req_line );
 	void			parse_body( void );
 };
 

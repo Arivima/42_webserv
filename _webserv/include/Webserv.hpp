@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/05 15:27:54 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/07 07:43:59 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/08 01:36:27 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,6 +90,8 @@ std::string					take_cgi_interpreter_path(
 							);
 
 //	HTTP UTILS
+bool						hasHttpHeaderDelimiter(std::vector<char>& line);
+bool						isHttpHeaderDelimiter(std::vector<char>& line);
 std::string					uri_remove_queryString(const std::string& uri);
 
 //	UTILS EXCEPTIONS

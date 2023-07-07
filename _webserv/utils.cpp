@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/18 10:41:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/07 07:43:42 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/08 01:36:12 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,9 +16,10 @@
 #include <sys/stat.h>	//*stat
 #include <dirent.h>		//*opendir
 
-#include <algorithm>
+#include <algorithm>	//*std::find
+#include <vector>		//*request utils
 #include <cstring>
-#include <sstream>//splitting : get_cgi_extension(), etc.
+#include <sstream>//*splitting : get_cgi_extension(), etc.
 
 // BLOCK HPP
 //*		TYPES CONSTRUCTORS
@@ -482,6 +483,23 @@ void throw_HttpError_debug(
 }
 
 //*		GENERAL PURPOSE UTILITIES
+bool	hasHttpHeaderDelimiter(std::vector<char>& line)
+{
+	std::vector<char>::iterator		pos = std::find(line.begin(), line.end(), '\n');
+
+	if (line.end() == pos || line.begin() == pos)//*not found, or cannot go back one position to look for CR
+		return (false);
+	return (*pos == '\r');
+}
+
+bool	isHttpHeaderDelimiter(std::vector<char>& line)
+{
+	return (
+		hasHttpHeaderDelimiter(line) &&
+		2 == line.size()
+	);
+}
+
 std::string					strip_spaces(std::string& str) {
 	std::string	stripped;
 
