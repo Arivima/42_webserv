@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/18 10:41:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/07 03:57:01 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/07 07:43:42 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -607,26 +607,18 @@ bool	fileExists(
 //TODO	check stat error with errno. Throw server internal error if it failed for something else than non-existent file.
 //TODO
 //TODO
-bool			isDirectory(const std::string root, std::string path, const t_conf_block& matching_directives)
+bool			isDirectory(const std::string root, std::string path)
 {COUT_DEBUG_INSERTION(YELLOW "isDirectory()" RESET << std::endl);
 
-	struct stat fileStat;
-
+	struct stat	fileStat;
+	
 	path_remove_leading_slash(path);
-	std::string dir_path = root + path;
+	std::string	dir_path = root + path;
 
-    if (stat(dir_path.c_str(), &fileStat) == 0) {
-		bool ret = S_ISDIR(fileStat.st_mode);
-		COUT_DEBUG_INSERTION(MAGENTA << "isDirectory("<< dir_path <<"): " << (ret? "is a directory" : "is not a directory") << RESET << std::endl;);
-		return ret;
-        // return (S_ISDIR(fileStat.st_mode));
-    }
-	else{
-		//TODO check errno for returning different HTTP error codes
-		COUT_DEBUG_INSERTION(MAGENTA << "! isDirectory("<< dir_path <<"):" YELLOW " errno : " << errno << ":" << strerror(errno) << RESET << std::endl;);
-		throw HttpError(404, matching_directives, root);
-	}
-    return (false);
+	return (
+		0 == stat(dir_path.c_str(), &fileStat) &&
+		S_ISDIR(fileStat.st_mode)
+	);
 }
 
 #include <iostream>

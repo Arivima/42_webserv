@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/30 12:37:05 by avilla-m          #+#    #+#             */
-/*   Updated: 2023/07/07 04:09:43 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/07 07:55:57 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -219,6 +219,8 @@ private:
 				return ("Forbidden");
 			case 404:
 				return ("Not Found");
+			case 405:
+				return ("Method Not Allowed");
 			case 409:
 				return ("Conflict");
 			case 414:

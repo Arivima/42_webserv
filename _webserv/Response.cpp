@@ -11,18 +11,21 @@
 /* ************************************************************************** */
 
 #include "include/Response.hpp"
-#include <sys/socket.h>	//send
+
+#include <iostream>
 #include <fstream>		//open requested files
 #include <sstream>		//stringstream
+#include <string>
 #include <cstring>		//memeset
 #include <list>			//location matches sorting
+
 #include <unistd.h>		// access, unlink
-#include <cerrno>		// errno
 #include <stdio.h>		// remove
+#include <sys/socket.h>	//send
 #include <sys/stat.h>	// stat
-#include <iostream>
-#include <string>
+#include <sys/types.h>
 #include <dirent.h>
+#include <cerrno>		// errno
 
 //*		non-member helper functions
 //*		/////////////////////////////////////////////////
@@ -108,7 +111,9 @@ void	Response::generateResponse( void )
 	try
 	{
 		if (false == isMethodAllowed())
-			throw (HttpError(405, matching_directives, location_root));
+			/*Not Allowed*/	throw (HttpError(405, matching_directives, location_root));
+		if (req.at("url").find("/..") != std::string::npos)//*input sanitization
+			/*Bad req*/	throw HttpError(400, matching_directives, location_root);  	
 		
 		cgi_extension = take_cgi_extension(
 			req.at("url"), matching_directives.directives
@@ -144,8 +149,8 @@ void	Response::generateResponse( void )
 		}
 		if ("GET" == this->req.at("method"))
 			return (generateGETResponse(url_no_query_str));
-		// if ("POST" == this->req.at("method"))
-		// 	return (generatePOSTResponse(url_no_query_str));
+		if ("POST" == this->req.at("method"))
+			return (generatePOSTResponse(url_no_query_str));
 		// if ("PUT" == this->req.at("method"))
 		// 	return (generatePUTResponse());
 		if ("DELETE" == this->req.at("method"))
@@ -156,6 +161,261 @@ void	Response::generateResponse( void )
 		this->response = e.getErrorPage();
 	}
 }
+
+
+//_______________________ METHOD : GET _______________________
+// refactor to clean + test and make sure all cases are covered
+void	Response::generateGETResponse(  const std::string uri_path  )
+{COUT_DEBUG_INSERTION(YELLOW "Response::generateGETResponse()" RESET << std::endl);
+
+	const std::string				root = location_root;
+	const std::string				reqPath(http_req_complete_url_path(uri_path, root));
+	std::string						headers;
+	std::vector<char>				page;
+	std::string						filePath = "";
+
+	std::cout << "Path of the request : " << (reqPath.empty()? "EMPTY" : reqPath ) << std::endl;
+	if (reqPath.empty()) {
+		if (
+			(this->matching_directives.directives.find("autoindex") != this->matching_directives.directives.end())
+			&& (this->matching_directives.directives.at("autoindex") == "on" ))
+		{
+			std::string	path = req.at("url");
+			path_remove_leading_slash(path);
+			COUT_DEBUG_INSERTION("showing dir listing for " << root + path << std::endl)
+			std::string dir_listing_page = createHtmlPage(
+				"Directory Listing for /" + path,
+				getDirectoryContentList(root + path) //wip
+			);
+			page.insert(
+				page.begin(),
+				dir_listing_page.begin(),
+				dir_listing_page.end()
+			);
+			headers = getHeaders(200, "OK", filePath, page.size());
+			// throw (std::runtime_error("not yet implemented"));
+			// finire gestire ls
+		}
+		else {
+			std::cout << "autoindex not set" << std::endl;
+			/*Forbidden*/	throw HttpError(403, this->matching_directives, root);
+		}
+	}
+	else {
+		COUT_DEBUG_INSERTION("serving page : " << root + reqPath << std::endl)
+										filePath = root + reqPath;
+		std::ifstream					docstream(filePath.c_str(), std::ios::binary);
+
+		check_file_accessibility(
+			R_OK,
+			reqPath, root,
+			matching_directives
+		);
+		if (false == docstream.is_open()) {
+			COUT_DEBUG_INSERTION("could not open file (server error)\n");
+			/*Server Err*/	throw HttpError(500, matching_directives, location_root);
+		}
+		try {
+			page.insert(
+				page.begin(),
+				std::istreambuf_iterator<char>(docstream),
+				std::istreambuf_iterator<char>());
+		}
+		catch (const std::exception& e) {
+			COUT_DEBUG_INSERTION("IO file corruption\n");
+			/*Server Err*/	throw HttpError(500, matching_directives, location_root);
+		}
+		headers = getHeaders(200, "OK", filePath, page.size());
+	}
+	response.insert(response.begin(), headers.begin(), headers.end());
+	response.insert(response.end(), page.begin(), page.end());
+}
+
+//_______________________ METHOD : DELETE _______________________
+/**
+ * @brief this function implements the DELETE method : delete a given file or directory and return a status of the operation
+ * 
+ * @param uri_path - the path of the file/directory to delete
+ * @exception throws HTTPError when given file or directory is invalid for deleting, or syscall functions fail
+ * @return (void)
+ */
+
+// A successful DELETE response SHOULD be 
+	// 200 (OK) if the response includes an entity describing the status
+	// 202 (Accepted) if the action has not yet been enacted
+	// 204 (No Content) if the action has been enacted but the response does not include an entity.
+// failed request
+// 400 Bad Request: The request could not be understood or was malformed. The server should include information in the response body or headers about the nature of the error.
+// 403 Forbidden: The server understood the request, but the client does not have permission to access the requested resource.
+// 404 Not Found: The requested resource could not be found on the server.
+// 414 URI Too Long : The URI requested by the client is longer than the server is willing to interpret.
+// 409 Conflict: The request could not be completed due to a conflict with the current state of the resource. This is often used for data validation errors or when trying to create a resource that already exists.
+// 500 Internal Server Error: An unexpected error occurred on the server, indicating a problem with the server's configuration or processing of the request.
+
+void	Response::generateDELETEResponse( const std::string uri_path )
+{
+	const std::string				root = location_root;
+	std::string						reqPath(uri_path);
+	std::string						filePath;
+
+    struct stat						fileStat;
+	bool							is_dir;
+	bool							is_reg;
+
+	std::string						headers;
+	std::vector<char>				body;
+	std::string						tmp;	
+
+	std::cout << "method: DELETE" << std::endl;
+	std::cout << "uri_path : " << uri_path << std::endl;
+	path_remove_leading_slash(reqPath);
+	filePath = root + reqPath;
+	std::cout << "filePath : " << filePath << std::endl;
+
+	errno = 0;
+	if (stat(filePath.c_str(), &fileStat) == 0) {
+		is_dir = S_ISDIR(fileStat.st_mode);
+		is_reg = S_ISREG(fileStat.st_mode);
+		std::cout << MAGENTA << filePath <<" : " << (is_dir? "is a directory" : "") << (is_reg? "is a regular file" : "") << ((!is_dir && !is_reg)? "is neither a file nor a directory" : "") << RESET << std::endl;
+
+		if (is_dir)
+			deleteDirectory(filePath); 			// recursive call to delete content of directory (all files and subdirectories)
+		else if (is_reg)
+			deleteFile(filePath);
+		else 									// existing resource that is not a regular file nor a directory
+			/*Not allowed*/	throw HttpError(405, matching_directives, root, "url should point to a directory (POST)");
+    }
+	else {
+		COUT_DEBUG_INSERTION(YELLOW"Response::generateDELETEResponse()---stat failed" RESET << std::endl);
+		throw return_HttpError_errno_stat(location_root, matching_directives);
+		// throw_HttpError_errno_stat(); 			// throws accurate http status code according to errno
+	}
+
+// update the response
+	tmp = (is_dir == true ? "Directory: " : "File: ") +  filePath  + " was successfully deleted\n";
+	body.insert(body.begin(), tmp.begin(), tmp.end());
+	headers = getHeaders(200, "OK", filePath, body.size());
+	this->response.insert(this->response.begin(), headers.begin(), headers.end());
+	this->response.insert(this->response.end(), body.begin(), body.end());
+}
+
+//_______________________ METHOD : POST _______________________
+//TODO
+//TODO	1. line 49 : check if upload_path must be appended to the root
+//TODO	2. line 53 : move (and maybe correct) check in generateResponse
+//TODO	3. line 69 : check exact behavior
+//TODO	4. line 103 : check max path length
+//TODO	5. line 110 : check open_mode
+//TODO	6. line 139 : check if location points to an absolute or relative path
+//TODO
+void	Response::generatePOSTResponse( const std::string uri_path )
+{
+	std::string						root = location_root;
+	std::string						reqPath(uri_path);
+	std::string						dir;
+	std::string						newFileName;
+	std::string						fileExtension;
+	std::string						fullDirPath;
+	std::string						fullFilePath;
+
+	std::cout << "POST uri_path : " << uri_path << std::endl;
+
+	path_remove_leading_slash(root);
+	path_remove_leading_slash(reqPath);
+
+	// check if existing filename and splits reqPath into dir and newFileName
+	size_t pos = reqPath.rfind("/");
+	if (pos != std::string::npos && pos < reqPath.length() - 1){//if / exists and there's characters after it
+		newFileName = reqPath.substr(pos + 1);
+	}
+	else {// if no filename given
+		//! check behavior ? throw ?
+		newFileName = "POST_test";
+	}
+	dir = reqPath.substr(0, pos);
+	
+	//! check upload_path is indeed correct
+	fullDirPath		= root + "/" + dir;
+	fullFilePath	= root + "/" + dir + "/" + newFileName;
+
+	std::cout << "POST reqPath : "	 	<< reqPath << std::endl;
+	std::cout << "POST root : "	 		<< root << std::endl;
+	std::cout << "POST dir : "	 		<< dir << std::endl;
+	std::cout << "POST newFileName : "	<< newFileName << std::endl;
+	std::cout << "POST fullDirPath : "	<< fullDirPath << std::endl;
+	std::cout << "POST fullFilePath : "	<< fullFilePath << std::endl;
+
+// checks if fullDirPath is pointing to a valid location (directory)
+    struct stat						fileStat;
+	size_t							extension_pos;
+
+	errno = 0;
+	if (isDirectory(root, dir))
+	{
+			// create the new resource at the location
+			std::cout << MAGENTA << "Trying to add a resource to DIRECTORY : " << fullDirPath << RESET << std::endl;
+
+			// check if file exists at the given location and updating the name if it does
+			//TODO Replace with fileExists ?
+			extension_pos = newFileName.rfind(".");
+			if (std::string::npos != extension_pos)
+				fileExtension = newFileName.substr(extension_pos);
+			else
+				fileExtension = "";
+			while (stat(fullFilePath.c_str(), &fileStat) == 0) {
+				if (fileExtension.empty() == false)
+					newFileName	= newFileName.substr(0, newFileName.rfind(fileExtension));
+				newFileName += "_cpy" + fileExtension;
+				if (newFileName.size() >= 255)
+					/*Server Err*/	throw HttpError(500, this->matching_directives, root);
+				fullFilePath	= root + "/" + dir + "/" + newFileName;
+			}
+			if (errno && ENOENT != errno)
+				throw return_HttpError_errno_stat(root, matching_directives);
+			
+			// writes body to new file
+			std::ofstream	stream_newFile(fullFilePath/*, std::ios::out*/);
+			if (false == stream_newFile.is_open())
+				/*Server Err*/	throw HttpError(500, this->matching_directives, root);
+			
+			stream_newFile << (this->req.find("body") != this->req.end() ? this->req.at("body") : std::string());
+			if (stream_newFile.fail()) {
+				stream_newFile.close();
+				/*Server Err*/	throw HttpError(500, this->matching_directives, root);
+			}
+			stream_newFile.close();
+	}
+	else if (errno)
+	{
+		throw return_HttpError_errno_stat(root, matching_directives);
+	}
+	else
+	{
+		/*Not allowed*/	throw HttpError(405, this->matching_directives, root, "url should point to a directory (POST)");
+	}
+
+// update the response
+	std::string						location_header;
+	std::string						headers;
+	std::string						tmp;
+	std::string						body;
+	std::string						domainName;
+	std::string						newResourceUrl;
+	std::string						newResourceRelPath;
+
+	domainName		= std::string(server_IP) + ":" + matching_directives.directives.at("listen");
+	newResourceUrl	= "http://" + domainName + "/" + dir + "/" + newFileName;
+	newResourceRelPath = dir + "/" + newFileName;
+
+	body				= "Resource " +  newResourceUrl  + " at directory\"" +  reqPath  + "\" was successfully created\n";
+	location_header	= std::string("Location: " + newResourceUrl);
+	headers			= getHeaders(201, "OK", newResourceRelPath, body.size(), location_header);
+	
+	this->response.insert(this->response.begin(), headers.begin(), headers.end());
+	this->response.insert(this->response.end(), body.begin(), body.end());
+}
+
+
 
 //*		Main Helper Functions
 
@@ -298,72 +558,33 @@ size_t	Response::locationMatch(
 	return (match_score);
 }
 
-//_______________________ METHOD : GET _______________________
-// refactor to clean + test and make sure all cases are covered
-void	Response::generateGETResponse(  const std::string uri_path  )
-{COUT_DEBUG_INSERTION(YELLOW "Response::generateGETResponse()" RESET << std::endl);
+std::string		Response::take_location_root( void )
+{COUT_DEBUG_INSERTION(YELLOW "Response::take_location_root()" RESET << std::endl);
+	std::string											directive;
+	std::string											root;
+	std::map<std::string, std::string>::const_iterator	root_pos;
 
-	const std::string				root = location_root;
-	const std::string				reqPath(http_req_complete_url_path(uri_path, root));
-	std::string						headers;
-	std::vector<char>				page;
-	std::string						filePath = "";
-
-	std::cout << "Path of the request : " << (reqPath.empty()? "EMPTY" : reqPath ) << std::endl;
-	if (reqPath.empty()) {
-		if (
-			(this->matching_directives.directives.find("autoindex") != this->matching_directives.directives.end())
-			&& (this->matching_directives.directives.at("autoindex") == "on" ))
-		{
-			std::string	path = req.at("url");
-			path_remove_leading_slash(path);
-			COUT_DEBUG_INSERTION("showing dir listing for " << root + path << std::endl)
-			std::string dir_listing_page = createHtmlPage(
-				"Directory Listing for /" + path,
-				getDirectoryContentList(root + path) //wip
-			);
-			page.insert(
-				page.begin(),
-				dir_listing_page.begin(),
-				dir_listing_page.end()
-			);
-			headers = getHeaders(200, "OK", filePath, page.size());
-			// throw (std::runtime_error("not yet implemented"));
-			// finire gestire ls
-		}
-		else {
-			std::cout << "autoindex not set" << std::endl;
-			/*Forbidden*/	throw HttpError(403, this->matching_directives, root);
-		}
+	if (
+		"POST" == this->req.at("method") &&
+		matching_directives.directives\
+			.end() != matching_directives.directives.find("upload_path")
+	) {
+		directive = "upload_path";
 	}
 	else {
-		COUT_DEBUG_INSERTION("serving page : " << root + reqPath << std::endl)
-										filePath = root + reqPath;
-		std::ifstream					docstream(filePath.c_str(), std::ios::binary);
-
-		check_file_accessibility(
-			R_OK,
-			reqPath, root,
-			matching_directives
-		);
-		if (false == docstream.is_open()) {
-			COUT_DEBUG_INSERTION("could not open file (server error)\n");
-			/*Server Err*/	throw HttpError(500, matching_directives, location_root);
-		}
-		try {
-			page.insert(
-				page.begin(),
-				std::istreambuf_iterator<char>(docstream),
-				std::istreambuf_iterator<char>());
-		}
-		catch (const std::exception& e) {
-			COUT_DEBUG_INSERTION("IO file corruption\n");
-			/*Server Err*/	throw HttpError(500, matching_directives, location_root);
-		}
-		headers = getHeaders(200, "OK", filePath, page.size());
+		directive = "root";
 	}
-	response.insert(response.begin(), headers.begin(), headers.end());
-	response.insert(response.end(), page.begin(), page.end());
+	root_pos = matching_directives.directives.find(directive);
+	if (matching_directives.directives.end() != root_pos) {
+		root = matching_directives.directives.at(directive);
+		path_remove_leading_slash(root);
+		root += "/";
+	}
+	else
+		root = "./";
+	
+	COUT_DEBUG_INSERTION(YELLOW "END------Response::take_location_root()" RESET << std::endl);
+	return (root);
 }
 
 //*	considerare se usare lstat per leggere nei primi byte del file il tipo
@@ -410,44 +631,10 @@ std::string		Response::getHeaders(
 	return (headersStream.str());
 }
 
-std::string		Response::getIndexPage( const std::string& root, std::string path )
-{COUT_DEBUG_INSERTION(YELLOW "Response::getIndexPage()" RESET << std::endl);
-
-	std::string									indexes;
-	std::stringstream							indexesStream;
-	std::string									cur_index;
-	const std::map<std::string, std::string>&	directives
-		= this->matching_directives.directives;
-	
-	if ('/' != path[path.length() - 1])
-		path += "/";
-	if (directives.end() != directives.find("index"))
-	{
-		indexes = directives.at("index");
-		indexesStream.str(indexes);
-
-		while (indexesStream.good()) {
-			getline(indexesStream, cur_index, ' ');
-			path_remove_leading_slash(cur_index);
-			COUT_DEBUG_INSERTION("trying index file : "\
-				 << root + path + cur_index \
-				 << std::endl)
-			std::ifstream	file(root + path + cur_index);
-			if (file.is_open())
-			{
-				file.close();
-				return (path + cur_index);
-			}
-		}
-		return ("");
-	}
-	else
-		return ("");
-}
 
 //*		Secondary Helper Functions
 
-bool	Response::isMethodAllowed(void)
+bool			Response::isMethodAllowed(void)
 {
 	std::stringstream	methodDirectiveStream;
 	std::string			cur_method;
@@ -494,8 +681,12 @@ std::string		Response::http_req_complete_url_path(
 	//****************************************************
 	
 	//*	check if requested resource is a directory
-	if ( true == isDirectory( root, path, this->matching_directives) ) {
+	errno = 0;
+	if ( true == isDirectory( root, path) ) {
 		path = getIndexPage(root, path);
+	}
+	else if (errno) {
+		throw return_HttpError_errno_stat(location_root, matching_directives);
 	}
 	// else path refers to a regular file and is already correct
 
@@ -503,16 +694,40 @@ std::string		Response::http_req_complete_url_path(
 	return (path);//*	may be empty (a.k.a. "")
 }
 
+std::string		Response::getIndexPage( const std::string& root, std::string path )
+{COUT_DEBUG_INSERTION(YELLOW "Response::getIndexPage()" RESET << std::endl);
 
+	std::string									indexes;
+	std::stringstream							indexesStream;
+	std::string									cur_index;
+	const std::map<std::string, std::string>&	directives
+		= this->matching_directives.directives;
+	
+	if ('/' != path[path.length() - 1])
+		path += "/";
+	if (directives.end() != directives.find("index"))
+	{
+		indexes = directives.at("index");
+		indexesStream.str(indexes);
 
-
-
-
-
-
-
-
-
+		while (indexesStream.good()) {
+			getline(indexesStream, cur_index, ' ');
+			path_remove_leading_slash(cur_index);
+			COUT_DEBUG_INSERTION("trying index file : "\
+				 << root + path + cur_index \
+				 << std::endl)
+			std::ifstream	file(root + path + cur_index);
+			if (file.is_open())
+			{
+				file.close();
+				return (path + cur_index);
+			}
+		}
+		return ("");
+	}
+	else
+		return ("");
+}
 
 /**
  * @brief this function deletes a file at given 'filepath'
@@ -521,7 +736,7 @@ std::string		Response::http_req_complete_url_path(
  * @exception throws HTTPError when filepath is invalid, file not enabled for writing, or if syscall functions fail
  * @return (void)
  */
-void Response::deleteFile( const std::string filePath )
+void			Response::deleteFile( const std::string filePath )
 {
 	std::cout << YELLOW << "Trying to delete FILE : " << filePath << RESET << std::endl;
 // 	const std::string	dirPath = filePath.substr(0, filePath.rfind("/"));
@@ -565,7 +780,7 @@ void Response::deleteFile( const std::string filePath )
 //        On success, readdir() returns a pointer to a dirent structure. If the end of the directory stream is reached, NULL is returned
 //        and errno is not changed.  If an error occurs, NULL is returned and errno is set to indicate the error.  To distinguish end of
 //        stream from an error, set errno to zero before calling readdir() and then check the value of errno if NULL is returned.
-void	Response::deleteDirectory(const std::string directoryPath)
+void			Response::deleteDirectory(const std::string directoryPath)
 {
 	std::cout << YELLOW << "Trying to delete DIRECTORY : " << directoryPath << RESET << std::endl;
 	const std::string	root = location_root;
@@ -607,109 +822,4 @@ void	Response::deleteDirectory(const std::string directoryPath)
 		COUT_DEBUG_INSERTION(RED "Response::deleteDirectory() : could not open dir error" RESET << std::endl);
 		/*Server Err*/	throw HttpError(500, matching_directives, root, strerror(errno));
 	}
-}
-
-
-#include <cerrno>
-#include <sys/stat.h>
-#include <sys/types.h>
-
-//_______________________ METHOD : DELETE _______________________
-/**
- * @brief this function implements the DELETE method : delete a given file or directory and return a status of the operation
- * 
- * @param uri_path - the path of the file/directory to delete
- * @exception throws HTTPError when given file or directory is invalid for deleting, or syscall functions fail
- * @return (void)
- */
-
-// A successful DELETE response SHOULD be 
-	// 200 (OK) if the response includes an entity describing the status
-	// 202 (Accepted) if the action has not yet been enacted
-	// 204 (No Content) if the action has been enacted but the response does not include an entity.
-// failed request
-// 400 Bad Request: The request could not be understood or was malformed. The server should include information in the response body or headers about the nature of the error.
-// 403 Forbidden: The server understood the request, but the client does not have permission to access the requested resource.
-// 404 Not Found: The requested resource could not be found on the server.
-// 414 URI Too Long : The URI requested by the client is longer than the server is willing to interpret.
-// 409 Conflict: The request could not be completed due to a conflict with the current state of the resource. This is often used for data validation errors or when trying to create a resource that already exists.
-// 500 Internal Server Error: An unexpected error occurred on the server, indicating a problem with the server's configuration or processing of the request.
-
-void	Response::generateDELETEResponse( const std::string uri_path )
-{
-	const std::string				root = location_root;
-	std::string						reqPath(uri_path);
-	std::string						filePath;
-
-    struct stat						fileStat;
-	bool							is_dir;
-	bool							is_reg;
-
-	std::string						headers;
-	std::vector<char>				body;
-	std::string						tmp;	
-
-	std::cout << "method: DELETE" << std::endl;
-	std::cout << "uri_path : " << uri_path << std::endl;
-	path_remove_leading_slash(reqPath);
-	filePath = root + reqPath;
-	std::cout << "filePath : " << filePath << std::endl;
-
-	errno = 0;
-	if (stat(filePath.c_str(), &fileStat) == 0) {
-		is_dir = S_ISDIR(fileStat.st_mode);
-		is_reg = S_ISREG(fileStat.st_mode);
-		std::cout << MAGENTA << filePath <<" : " << (is_dir? "is a directory" : "") << (is_reg? "is a regular file" : "") << ((!is_dir && !is_reg)? "is neither a file nor a directory" : "") << RESET << std::endl;
-
-		if (is_dir)
-			deleteDirectory(filePath); 			// recursive call to delete content of directory (all files and subdirectories)
-		else if (is_reg)
-			deleteFile(filePath);
-		else 									// existing resource that is not a regular file nor a directory
-			/*Not allowed*/	throw HttpError(405, matching_directives, root, "url should point to a directory (POST)");
-    }
-	else {
-		COUT_DEBUG_INSERTION(YELLOW"Response::generateDELETEResponse()---stat failed" RESET << std::endl);
-		throw return_HttpError_errno_stat(location_root, matching_directives);
-		// throw_HttpError_errno_stat(); 			// throws accurate http status code according to errno
-	}
-
-// update the response
-	tmp = (is_dir == true ? "Directory: " : "File: ") +  filePath  + " was successfully deleted\n";
-	body.insert(body.begin(), tmp.begin(), tmp.end());
-	headers = getHeaders(200, "OK", filePath, body.size());
-	this->response.insert(this->response.begin(), headers.begin(), headers.end());
-	this->response.insert(this->response.end(), body.begin(), body.end());
-}
-
-//_______________________ METHOD : POST _______________________
-
-
-std::string		Response::take_location_root( void )
-{COUT_DEBUG_INSERTION(YELLOW "Response::take_location_root()" RESET << std::endl);
-	std::string											directive;
-	std::string											root;
-	std::map<std::string, std::string>::const_iterator	root_pos;
-
-	if (
-		"POST" == this->req.at("method") &&
-		matching_directives.directives\
-			.end() != matching_directives.directives.find("upload_path")
-	) {
-		directive = "upload_path";
-	}
-	else {
-		directive = "root";
-	}
-	root_pos = matching_directives.directives.find(directive);
-	if (matching_directives.directives.end() != root_pos) {
-		root = matching_directives.directives.at(directive);
-		path_remove_leading_slash(root);
-		root += "/";
-	}
-	else
-		root = "./";
-	
-	COUT_DEBUG_INSERTION(YELLOW "END------Response::take_location_root()" RESET << std::endl);
-	return (root);
 }

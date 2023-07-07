@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/05 15:27:54 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/07 02:01:52 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/07 07:43:59 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -137,7 +137,7 @@ bool						fileExists(
 								const std::string& root,
 								std::string path
 							);
-bool						isDirectory(const std::string root, std::string path, const t_conf_block& matching_directives);
+bool						isDirectory(const std::string root, std::string path);
 std::string					getDirectoryContentList(const std::string directoryPath);
 std::string					createHtmlPage(const std::string& title, const std::string& body);
 // std::string					get_cgi_extension(const std::string& path, const std::map<std::string, std::string>& directives);
