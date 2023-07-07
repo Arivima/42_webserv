@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/30 12:37:05 by avilla-m          #+#    #+#             */
-/*   Updated: 2023/07/06 18:49:19 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/07 04:09:43 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -200,10 +200,10 @@ private:
   <head>\
     <meta charset=\"UTF-8\" />\
     <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\
-    <title>"<< err_code << " " << msg << "--" << errno_str << "</title>\
+    <title>"<< err_code << " " << msg << "</title>\
   </head>\
   <body>\
-    <center><h1>Webserv PiouPiou</h1><h2>"<< err_code << " " << msg << "--" << errno_str << "</h2></center>\
+    <center><h1>Webserv PiouPiou</h1><h2>"<< err_code << " " << msg << "</br>" << errno_str << "</h2></center>\
   </body>\
 </html>\
 ";

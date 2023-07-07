@@ -6,11 +6,16 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/18 10:41:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/06 19:00:53 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/07 03:57:01 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "include/Webserv.hpp"
+
+#include <unistd.h>		//*access
+#include <sys/stat.h>	//*stat
+#include <dirent.h>		//*opendir
+
 #include <algorithm>
 #include <cstring>
 #include <sstream>//splitting : get_cgi_extension(), etc.
@@ -299,6 +304,167 @@ std::string		uri_remove_queryString(const std::string& uri)
 }
 
 //	UTILS EXCEPTIONS
+
+/**
+ * This function checks for non directory file accessibility read, write, execute
+*/
+void			check_file_accessibility(
+					int						access_mode,
+					const std::string&		fileRelPath,
+					const std::string&		location_root,
+					const t_conf_block&		matching_directives
+				)
+{
+	const std::string	fileFullPath = location_root + fileRelPath;
+	struct stat			fileStat;
+	int					statReturn;
+	
+	// errno = 0;
+    // if (access(fileFullPath.c_str(), F_OK) == -1) {
+    //     /*Not found*/	throw HttpError(404, matching_directives, location_root);
+	// }
+	statReturn = stat(fileFullPath.c_str(), &fileStat);
+	if (
+		0 == statReturn && 
+		(
+			S_ISDIR(fileStat.st_mode) ||
+			0 != access(fileFullPath.c_str(), access_mode)
+		)
+	)
+	{
+		throw HttpError(403, matching_directives, location_root);
+	}
+	if (statReturn < 0)
+		throw return_HttpError_errno_stat(location_root, matching_directives);
+}
+
+/**
+ * file can be a directory
+*/
+void	check_file_deletable(
+			const std::string&		fileRelPath,
+			const std::string&		location_root,
+			const t_conf_block&		matching_directives
+		)
+{
+	const std::string	filePath = location_root + fileRelPath;
+	std::string			dirPath = filePath.substr(0, filePath.rfind("/"));
+
+	if (dirPath.empty())
+		dirPath = "./";
+
+// does file exist ? 
+	errno = 0;
+    if (access(filePath.c_str(), F_OK) == -1) {
+        /*Not found*/	throw HttpError(404, matching_directives, location_root);
+	}
+
+// do I have the right permission ? 
+	errno = 0;
+    if (
+		-1 == access(dirPath.c_str(), W_OK | X_OK) ||
+		-1 == access(filePath.c_str(), W_OK)
+	)
+	{
+		COUT_DEBUG_INSERTION(RED "Response::deleteFile() : permissions error" RESET << std::endl);
+		if (errno == ETXTBSY) // ETXTBSY Write access was requested to an executable which is being executed.
+		/*Conflict*/	throw HttpError(409, matching_directives, location_root);
+		else
+		/*Forbidden*/	throw HttpError(403, matching_directives, location_root);
+	}
+}
+
+void	check_directory_deletable(
+			const std::string&	dirRelPath,
+			const std::string&	location_root,
+			const t_conf_block&	matching_directives
+		)
+{COUT_DEBUG_INSERTION(YELLOW "check_directory_deletable()" RESET << std::endl);
+	const std::string	dirFullPath = location_root + dirRelPath;
+
+	check_file_deletable(dirRelPath, location_root, matching_directives);
+	errno = 0;
+    DIR* dir = opendir(dirFullPath.c_str());
+    if (dir){
+        dirent* entry;
+		errno = 0;
+        while ((entry = readdir(dir)) != NULL)
+		{
+			try {
+				if (entry == NULL && errno != 0)								// errno, see above
+					/*Server Err*/	throw HttpError(500, matching_directives, location_root);
+            	if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+					continue;
+				std::cout << CYAN << "| dir: " << dirFullPath << "| entry : " << entry->d_name << ((entry->d_type == DT_DIR)? "is a directory" : "") << (((entry->d_type == DT_REG) || (entry->d_type == DT_LNK))? "is a regular file" : "") << ((!(entry->d_type == DT_DIR) && !(entry->d_type == DT_REG) && !(entry->d_type == DT_LNK))? "is neither a file nor a directory" : "") << RESET << std::endl;
+				if (entry->d_type == DT_DIR)
+					check_directory_deletable(dirRelPath + "/" + entry->d_name, location_root, matching_directives);
+				else if ((entry->d_type == DT_REG) || (entry->d_type == DT_LNK))
+					check_file_deletable(dirRelPath + "/" + entry->d_name, location_root, matching_directives);
+				else 
+					/*Forbidden*/	throw HttpError(403, matching_directives, location_root);
+			}
+			catch (const HttpError& e) {
+				closedir(dir);
+				throw (e);
+			}
+        }
+		errno = 0;
+        if (closedir(dir) == -1)
+			/*Server Err*/	throw HttpError(500, matching_directives, location_root);
+    }
+    else {
+		COUT_DEBUG_INSERTION(RED "Response::deleteDirectory() : could not open dir error" RESET << std::endl);
+		/*Server Err*/	throw HttpError(500, matching_directives, location_root, strerror(errno));
+	}
+}
+
+HttpError	return_HttpError_errno_stat(
+			const std::string& location_root,
+			const t_conf_block& matching_directives
+		)
+{
+	const std::string root = location_root;
+
+	switch(errno)
+	{
+		// 400 Bad Request
+		//? case ELOOP:	throw HttpError(400, matching_directives, root, strerror(errno));  
+		
+		// 403 Forbidden
+		case EACCES:
+			throw HttpError(403, matching_directives, root, strerror(errno)); 
+		// 414 url too long
+		case ENAMETOOLONG:
+			throw HttpError(414, matching_directives, root, strerror(errno)); 
+		// 500 Internal Server Error
+		case EBADF:
+		case EFAULT:
+		case EINVAL:
+		case ELOOP:
+		case ENOMEM: 
+		case EOVERFLOW:
+			throw HttpError(500, matching_directives, root, strerror(errno)); 
+		// 404 Not found
+		case ENOENT: 
+		case ENOTDIR:
+			throw HttpError(404, matching_directives, root, strerror(errno));  
+		default:
+			throw HttpError(400, matching_directives, root, strerror(errno)); 
+	}
+}
+// STAT ERROR
+// EACCES|			Search permission is denied for one of the directories in the path prefix of path. (See also path_resolution(7).)
+// EBADF|			fd is bad.
+// EFAULT|			Bad address.
+// ELOOP|			Too many symbolic links encountered while traversing the path.
+// ENAMETOOLONG|	path is too long.
+// ENOENT|			A component of path does not exist, or path is an empty string.
+// ENOMEM|			Out of memory (i.e., kernel memory).
+// ENOTDIR|			A component of the path prefix of path is not a directory.
+// EOVERFLOW|		path or fd refers to a file whose size, inode number, or number of blocks cannot be represented in,
+// 					respectively, the types off_t, ino_t, or blkcnt_t. 
+// 					This error can occur when, for example, an application compiled on a 32-bit platform without 
+// 					-D_FILE_OFFSET_BITS=64 calls stat() on a file whose size exceeds (1<<31)-1 bytes.
 
 void throw_HttpError_debug(
 		std::string function, std::string call,

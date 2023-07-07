@@ -19,6 +19,7 @@
 #include <unistd.h>		// access, unlink
 #include <cerrno>		// errno
 #include <stdio.h>		// remove
+#include <sys/stat.h>	// stat
 #include <iostream>
 #include <string>
 #include <dirent.h>
@@ -340,12 +341,11 @@ void	Response::generateGETResponse(  const std::string uri_path  )
 										filePath = root + reqPath;
 		std::ifstream					docstream(filePath.c_str(), std::ios::binary);
 
-		if (false == fileExists(root, reqPath)) {
-			// COUT_DEBUG_INSERTION("non existent file\n");
-			// /*Not Found*/ throw HttpError(404, matching_directives, location_root);
-			/*Errno error*/ throw_HttpError_errno_stat();
-		}
-		
+		check_file_accessibility(
+			R_OK,
+			reqPath, root,
+			matching_directives
+		);
 		if (false == docstream.is_open()) {
 			COUT_DEBUG_INSERTION("could not open file (server error)\n");
 			/*Server Err*/	throw HttpError(500, matching_directives, location_root);
@@ -521,26 +521,35 @@ std::string		Response::http_req_complete_url_path(
  * @exception throws HTTPError when filepath is invalid, file not enabled for writing, or if syscall functions fail
  * @return (void)
  */
-void Response::deleteFile( const std::string filePath ){
+void Response::deleteFile( const std::string filePath )
+{
 	std::cout << YELLOW << "Trying to delete FILE : " << filePath << RESET << std::endl;
-// does the resource exists
-	errno = 0;
-    if (access(filePath.c_str(), F_OK) == -1){
-        /*Not found*/	throw HttpError(404, matching_directives, location_root);
+// 	const std::string	dirPath = filePath.substr(0, filePath.rfind("/"));
+// // does the resource exists
+// 	errno = 0;
+//     if (access(filePath.c_str(), F_OK) == -1) {
+//         /*Not found*/	throw HttpError(404, matching_directives, location_root);
+// 	}
 
-// do I have the right permission ? 
-	errno = 0;
-    if (access(filePath.c_str(), W_OK) == -1){
-		if (errno == ETXTBSY) // ETXTBSY Write access was requested to an executable which is being executed.
-		/*Conflict*/	throw HttpError(409, matching_directives, location_root);
-		else
-		/*Forbidden*/	throw HttpError(403, matching_directives, location_root);
-	}
-	}
+// // do I have the right permission ? 
+// 	errno = 0;
+//     if (
+// 		-1 == access(dirPath.c_str(), W_OK | X_OK) ||
+// 		-1 == access(filePath.c_str(), W_OK)
+// 	)
+// 	{
+// 		COUT_DEBUG_INSERTION(RED "Response::deleteFile() : permissions error" RESET << std::endl);
+// 		if (errno == ETXTBSY) // ETXTBSY Write access was requested to an executable which is being executed.
+// 		/*Conflict*/	throw HttpError(409, matching_directives, location_root);
+// 		else
+// 		/*Forbidden*/	throw HttpError(403, matching_directives, location_root);
+// 	}
 
+	check_file_deletable(filePath, "", matching_directives);
 // delete the file
 	errno = 0;
     if (unlink(filePath.c_str()) == -1) {
+		COUT_DEBUG_INSERTION(RED "Response::deleteFile() : unlink error" RESET << std::endl);
 		/*Server Err*/	throw HttpError(500, matching_directives, location_root);
 	}
 }
@@ -561,24 +570,31 @@ void	Response::deleteDirectory(const std::string directoryPath)
 	std::cout << YELLOW << "Trying to delete DIRECTORY : " << directoryPath << RESET << std::endl;
 	const std::string	root = location_root;
 
+	check_directory_deletable(directoryPath, "", matching_directives);
 	errno = 0;
     DIR* dir = opendir(directoryPath.c_str());
     if (dir){
         dirent* entry;
 		errno = 0;
-        while ((entry = readdir(dir)) != NULL){
-			
-			if (entry == NULL && errno != 0)								// errno, see above
-				/*Server Err*/	throw HttpError(500, matching_directives, root);
-            if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
-				continue;
-			std::cout << CYAN << "| dir: " << directoryPath << "| entry : " << entry->d_name << ((entry->d_type == DT_DIR)? "is a directory" : "") << (((entry->d_type == DT_REG) || (entry->d_type == DT_LNK))? "is a regular file" : "") << ((!(entry->d_type == DT_DIR) && !(entry->d_type == DT_REG) && !(entry->d_type == DT_LNK))? "is neither a file nor a directory" : "") << RESET << std::endl;
-			if (entry->d_type == DT_DIR)
-				deleteDirectory(directoryPath + "/" + entry->d_name);
-			else if ((entry->d_type == DT_REG) || (entry->d_type == DT_LNK))
-				deleteFile(directoryPath + "/" + entry->d_name);
-			else 
-				/*Forbidden*/	throw HttpError(403, matching_directives, root);
+        while ((entry = readdir(dir)) != NULL)
+		{
+			try {
+				if (entry == NULL && errno != 0)								// errno, see above
+					/*Server Err*/	throw HttpError(500, matching_directives, root);
+            	if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+					continue;
+				std::cout << CYAN << "| dir: " << directoryPath << "| entry : " << entry->d_name << ((entry->d_type == DT_DIR)? "is a directory" : "") << (((entry->d_type == DT_REG) || (entry->d_type == DT_LNK))? "is a regular file" : "") << ((!(entry->d_type == DT_DIR) && !(entry->d_type == DT_REG) && !(entry->d_type == DT_LNK))? "is neither a file nor a directory" : "") << RESET << std::endl;
+				if (entry->d_type == DT_DIR)
+					deleteDirectory(directoryPath + "/" + entry->d_name);
+				else if ((entry->d_type == DT_REG) || (entry->d_type == DT_LNK))
+					deleteFile(directoryPath + "/" + entry->d_name);
+				else 
+					/*Forbidden*/	throw HttpError(403, matching_directives, root);
+			}
+			catch (const HttpError& e) {
+				closedir(dir);
+				throw (e);
+			}
         }
 		errno = 0;
         if (closedir(dir) == -1)
@@ -587,47 +603,11 @@ void	Response::deleteDirectory(const std::string directoryPath)
         if (rmdir(directoryPath.c_str()) == -1) // error check is performed hereafter
 			/*Server Err*/	throw HttpError(500, matching_directives, root);
     }
-    else
+    else {
+		COUT_DEBUG_INSERTION(RED "Response::deleteDirectory() : could not open dir error" RESET << std::endl);
 		/*Server Err*/	throw HttpError(500, matching_directives, root, strerror(errno));
-}
-
-
-void Response::throw_HttpError_errno_stat(){
-	const std::string root = location_root;
-
-	switch(errno)
-	{
-	// 400 Bad Request
-	case EFAULT:	throw HttpError(400, matching_directives, root, strerror(errno));  
-	// 403 Forbidden
-	case EACCES:	throw HttpError(403, matching_directives, root, strerror(errno)); 
-	// 414 url too long
-	case ENAMETOOLONG:throw HttpError(414, matching_directives, root, strerror(errno)); 
-	// 500 Internal Server Error
-	case ENOMEM:	throw HttpError(500, matching_directives, root, strerror(errno)); 
-	case EOVERFLOW:	throw HttpError(500, matching_directives, root, strerror(errno)); 
-	// 404 Not found
-	case ELOOP :	throw HttpError(404, matching_directives, root, strerror(errno)); 
-	case ENOENT :	throw HttpError(404, matching_directives, root, strerror(errno)); 
-	case ENOTDIR:	throw HttpError(404, matching_directives, root, strerror(errno));  
-	default:		throw HttpError(404, matching_directives, root, strerror(errno)); 
 	}
 }
-
-// STAT ERROR
-// EACCES|			Search permission is denied for one of the directories in the path prefix of path. (See also path_resolution(7).)
-// EBADF|			fd is bad.
-// EFAULT|			Bad address.
-// ELOOP|			Too many symbolic links encountered while traversing the path.
-// ENAMETOOLONG|	path is too long.
-// ENOENT|			A component of path does not exist, or path is an empty string.
-// ENOMEM|			Out of memory (i.e., kernel memory).
-// ENOTDIR|			A component of the path prefix of path is not a directory.
-// EOVERFLOW|		path or fd refers to a file whose size, inode number, or number of blocks cannot be represented in,
-// 					respectively, the types off_t, ino_t, or blkcnt_t. 
-// 					This error can occur when, for example, an application compiled on a 32-bit platform without 
-// 					-D_FILE_OFFSET_BITS=64 calls stat() on a file whose size exceeds (1<<31)-1 bytes.
-
 
 
 #include <cerrno>
@@ -676,7 +656,7 @@ void	Response::generateDELETEResponse( const std::string uri_path )
 	std::cout << "filePath : " << filePath << std::endl;
 
 	errno = 0;
-    if (stat(filePath.c_str(), &fileStat) == 0) {
+	if (stat(filePath.c_str(), &fileStat) == 0) {
 		is_dir = S_ISDIR(fileStat.st_mode);
 		is_reg = S_ISREG(fileStat.st_mode);
 		std::cout << MAGENTA << filePath <<" : " << (is_dir? "is a directory" : "") << (is_reg? "is a regular file" : "") << ((!is_dir && !is_reg)? "is neither a file nor a directory" : "") << RESET << std::endl;
@@ -688,8 +668,11 @@ void	Response::generateDELETEResponse( const std::string uri_path )
 		else 									// existing resource that is not a regular file nor a directory
 			/*Not allowed*/	throw HttpError(405, matching_directives, root, "url should point to a directory (POST)");
     }
-	else 
-		throw_HttpError_errno_stat(); 			// throws accurate http status code according to errno
+	else {
+		COUT_DEBUG_INSERTION(YELLOW"Response::generateDELETEResponse()---stat failed" RESET << std::endl);
+		throw return_HttpError_errno_stat(location_root, matching_directives);
+		// throw_HttpError_errno_stat(); 			// throws accurate http status code according to errno
+	}
 
 // update the response
 	tmp = (is_dir == true ? "Directory: " : "File: ") +  filePath  + " was successfully deleted\n";

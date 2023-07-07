@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/05 15:27:54 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/06 18:30:57 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/07 02:01:52 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,6 +93,26 @@ std::string					take_cgi_interpreter_path(
 std::string					uri_remove_queryString(const std::string& uri);
 
 //	UTILS EXCEPTIONS
+void						check_file_accessibility(
+								int						access_mode,
+								const std::string&		fileRelPath,
+								const std::string&		location_root,
+								const t_conf_block&		matching_directives
+							);
+void						check_directory_deletable(
+								const std::string&	dirRelPath,
+								const std::string&	location_root,
+								const t_conf_block&	matching_directives
+							);
+void						check_file_deletable(
+								const std::string&		fileRelPath,
+								const std::string&		location_root,
+								const t_conf_block&		matching_directives
+							);
+HttpError					return_HttpError_errno_stat(
+								const std::string& location_root,
+								const t_conf_block& matching_directives
+							);
 void						throw_HttpError_debug(
 								std::string function, std::string call,
 								int httpStatusCode,

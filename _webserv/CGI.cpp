@@ -2,9 +2,10 @@
 
 # include	<sys/socket.h>
 # include	<arpa/inet.h>
-# include	<unistd.h>			// fork, dup2, execve, write, close
-# include	<sys/wait.h>		// wait
-# include	<fcntl.h>			// open
+# include	<unistd.h>		// fork, dup2, execve, write, close
+# include	<sys/wait.h>	// wait
+# include	<fcntl.h>		// open
+# include	<sys/stat.h>	// stat
 # include	<sstream>
 # include	<fstream>
 # include	<iostream>
@@ -56,12 +57,14 @@ std::string CGI::get_env_value(const std::string & key){
 
 void CGI::launch()
 {COUT_DEBUG_INSERTION(YELLOW "CGI::launch()" RESET << std::endl);
-	pid_t pid = 0;
 
+	pid_t				 pid = 0;
 
-	if (false == fileExists(get_env_value("ROOT"), get_env_value("SCRIPT_NAME")))
-		throw HttpError(404, matching_directives, get_env_value("ROOT"));
-	
+	check_file_accessibility(
+		X_OK,
+		get_env_value("SCRIPT_NAME"), get_env_value("ROOT"),
+		matching_directives
+	);
 	pid = fork();
 	if (pid == -1)
 		throw_HttpError_debug("CGI::launch()", "fork()", 500, this->matching_directives, get_env_value("ROOT"));
