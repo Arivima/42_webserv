@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 17:19:26 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/08 01:47:02 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/08 01:55:04 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -149,8 +149,8 @@ void	Request::read_body( void ) {
 
 	std::size_t		bytes_read = sock_stream.size();
 
-	payload.insert(
-		payload.end(),
+	cur_line.insert(
+		cur_line.end(),
 		sock_stream.begin(),
 		sock_stream.end()
 	);
@@ -219,7 +219,11 @@ void	Request::parse_req_line( std::vector<char>& req_line ) {
 
 void	Request::parse_body( void ) {
 	if (0 == cur_body_size) {
-		req["body"] = cur_line.data();
+		payload.insert(
+			payload.begin(),
+			cur_line.begin(),
+			cur_line.end()
+		);
 		cur_line.clear();
 		throw TaskFulfilled();
 	}
