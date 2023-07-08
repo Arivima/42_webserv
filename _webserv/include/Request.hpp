@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 15:41:58 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/08 01:38:42 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/08 02:03:22 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,6 +64,7 @@ public:
 	
 	//*		main functionalities
 	void										parse_line( void );
+	std::vector<char>							getIncomingData( void );
 	bool										isChunked( void );
 	const std::map<std::string, std::string>&	getRequest( void );
 	const std::vector<char>&					getPayload( void );

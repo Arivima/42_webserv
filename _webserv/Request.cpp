@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 17:19:26 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/08 01:55:04 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/08 02:15:07 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,17 @@ Request::~Request( void ) {
 
 
 //*		Main Functions
+
+std::vector<char>		Request::getIncomingData( void )
+{
+	std::vector<char>	incomingData;
+
+	read_line();
+	incomingData = cur_line;
+	cur_line.clear();
+
+	return (incomingData);
+}
 
 const std::map<std::string, std::string>&	Request::getRequest( void ) {
 	return (this->req);
@@ -163,6 +174,7 @@ void	Request::parse_header( void )
 	if (hasHttpHeaderDelimiter(cur_line)) {
 		if (isHttpHeaderDelimiter(cur_line)) {
 			//*	end of headers, there may or not may be a body
+			cur_line.clear();
 			if (req.end() == req.find("method")) {
 				throw SockEof();
 			}
@@ -173,6 +185,8 @@ void	Request::parse_header( void )
 				cur_body_size = std::atol(req["Content-Length"].c_str());
 			}
 			else {
+				if (chunked)
+					parser_status = e_READING_BODY;
 				throw TaskFulfilled();
 			}
 		}
@@ -192,6 +206,11 @@ void	Request::parse_header( void )
 				std::getline(str_stream, key, ':');
 				std::getline(str_stream, value);
 				req[key] = value;
+				if (
+					"Transfer-Encoding" == key &&
+					"chunked" == value
+				)
+					chunked = true;
 			}
 		}
 		cur_line.clear();
