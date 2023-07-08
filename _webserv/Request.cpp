@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 17:19:26 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/08 04:35:46 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/08 09:13:35 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,11 @@ Request::Request(
 	parser_status = e_READING_HEADS;
 	cur_body_size = 0;
 	chunked = false;
+
+	req.clear();
+	payload.clear();
+	sock_stream.clear();
+	cur_line.clear();
 }
 
 Request::~Request( void ) {
@@ -95,7 +100,7 @@ void	Request::read_line( void )
 	{
 		memset(rcv_buf, '\0', RCV_BUF_SIZE + 1);
 		bytes_read = recv(sock_fd, rcv_buf, RCV_BUF_SIZE, 0);
-		if ( bytes_read <= 0)
+		if (bytes_read <= 0)
 			throw (SockEof());
 		
 		//*		DEBUG
@@ -136,7 +141,7 @@ void	Request::read_line( void )
 }
 
 void	Request::read_header( void )
-{
+{ //std::cout << MAGENTA "Request::read_header()" RESET << std::endl;
 	std::vector<char>::iterator		lf_pos;
 
 	if (hasHttpHeaderDelimiter(sock_stream))
@@ -174,7 +179,7 @@ void	Request::read_body( void ) {
 }
 
 void	Request::parse_header( void )
-{ //std::cout << "reading headers" << std::endl;
+{ //std::cout << YELLOW "Request::parse_header()" RESET << std::endl;
 	if (hasHttpHeaderDelimiter(cur_line)) {
 		if (isHttpHeaderDelimiter(cur_line)) {
 			//*	end of headers, there may or not may be a body
@@ -204,7 +209,7 @@ void	Request::parse_header( void )
 			}
 			else {
 				//*		request is not empty, line is header line
-				std::stringstream	str_stream(cur_line.data());
+				std::stringstream	str_stream(std::string(cur_line.data()));
 				std::string			key;
 				std::string			value;
 				
@@ -225,7 +230,7 @@ void	Request::parse_header( void )
 
 void	Request::parse_req_line( std::vector<char>& req_line ) {
 
-	std::stringstream	reqline_stream(req_line.data());
+	std::stringstream	reqline_stream(std::string(req_line.data()));
 	std::string			method;
 	std::string			url;
 	std::string			http_version;
@@ -242,6 +247,7 @@ void	Request::parse_req_line( std::vector<char>& req_line ) {
 }
 
 void	Request::parse_body( void ) {
+	std::cout << "parsing body" << std::endl;
 	if (0 == cur_body_size) {
 		payload.insert(
 			payload.begin(),

@@ -33,7 +33,7 @@
 
 //*		Main Constructor and Destructor
 Response::Response(
-	Request&			request,
+	Request*			request,
 	const t_server&		assigned_server,
 	const int			sock_fd,
 	const std::string&	client_IP,
@@ -44,11 +44,11 @@ Response::Response(
 		matching_directives(
 			takeMatchingDirectives(
 				assigned_server.conf_server_block,
-				request.getRequest()
+				request->getRequest()
 			)
 		),
 		request(request),
-		req(request.getRequest()),
+		req(request->getRequest()),
 		location_root(take_location_root()),
 		assigned_server(assigned_server),
 		sock_fd(sock_fd),
@@ -382,7 +382,7 @@ void	Response::generatePOSTResponse( const std::string uri_path )
 			if (false == stream_newFile.is_open())
 				/*Server Err*/	throw HttpError(500, this->matching_directives, root);
 			
-			stream_newFile.write(request.getPayload().data(), request.getPayload().size());
+			stream_newFile.write(request->getPayload().data(), request->getPayload().size());
 			if (stream_newFile.fail()) {
 				stream_newFile.close();
 				/*Server Err*/	throw HttpError(500, this->matching_directives, root);

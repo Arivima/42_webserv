@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 18:07:39 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/08 05:06:07 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/08 07:06:42 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,7 @@ void	ConnectionSocket::status_switch( void ) {
 		COUT_DEBUG_INSERTION(YELLOW "ConnectionSocket::status_switch()---response" RESET << std::endl);
 		request->print_req();
 		response = new Response(
-			*request,
+			request,
 			assigned_server,
 			sock_fd,
 			client_IP,
@@ -54,14 +54,10 @@ void	ConnectionSocket::status_switch( void ) {
 	}
 	else {
 		COUT_DEBUG_INSERTION(YELLOW "ConnectionSocket::status_switch()---request" RESET << std::endl);
-		if (response) {
-			delete response;
-			response = NULL;
-		}
-		if (request) {
-			delete request;
-			request = NULL;
-		}
+		delete response;
+		response = NULL;
+		delete request;
+		request = NULL;
 		request = new Request(sock_fd, edata);
 		status = e_REQ_MODE;
 	}

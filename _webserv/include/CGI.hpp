@@ -21,7 +21,7 @@ class CGI {
 		const int									sock_fd;
 		char*										cgi_env[CGI_ENV_SIZE + 1];
 		std::vector<char>							response;
-		Request&									request;
+		Request*									request;
 		const std::map<std::string, std::string>&	req;
 		const t_conf_block&							matching_directives;
 
@@ -31,7 +31,7 @@ class CGI {
 			int											sock_fd,
 			const std::string &							client_IP,
 			const std::string &							server_IP,
-			Request&									request,
+			Request*									request,
 			const t_conf_block &						matching_directives,
 			const std::string&							location_root,
 			const std::string &							cgi_extension,

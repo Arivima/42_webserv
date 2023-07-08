@@ -54,7 +54,7 @@ private:
 	//*		MEMBER FIELDS
 private:
 	const t_conf_block&							matching_directives;
-	Request&									request;				//*	request object
+	Request*									request;				//*	request object
 	const std::map<std::string, std::string>&	req;					//*	request headers map
 	const std::string							location_root;
 	const t_server&								assigned_server;
@@ -68,7 +68,7 @@ private:
 public: 
 	//*		main Constructors and Destructors
 							Response(
-								Request&			request,
+								Request*			request,
 								const t_server&		assigned_server,
 								const int			sock_fd,
 								const std::string&	client_IP,

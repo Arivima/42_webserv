@@ -16,14 +16,14 @@ CGI::CGI(
 	int											sock_fd,
 	const std::string&							client_IP,
 	const std::string&							server_IP,
-	Request&									request,
+	Request*									request,
 	const t_conf_block&							matching_directives,
 	const std::string&							location_root,
 	const std::string &							cgi_extension,
 	const std::string &							interpreter_path
 )
 	:	sock_fd(sock_fd),
-		response(), request(request), req(request.getRequest()),
+		response(), request(request), req(request->getRequest()),
 		matching_directives(matching_directives)
 {
 	std::cout << "CGI Constructor" << std::endl;
@@ -82,7 +82,7 @@ void CGI::launch()
 		if (false == stream_cgi_infile.is_open())
 			throw_HttpError_debug("CGI::launch()", "is_open()", 500, this->matching_directives, get_env_value("ROOT"));
 		
-		stream_cgi_infile.write(request.getPayload().data(), request.getPayload().size());
+		stream_cgi_infile.write(request->getPayload().data(), request->getPayload().size());
 	//* CHANGED
 		
 		if (stream_cgi_infile.fail())
