@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 17:19:26 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/08 02:15:07 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/08 04:35:46 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,9 +24,7 @@ Request::Request(
 	const t_epoll_data& edata
 	) :
 	sock_fd(sock_fd),
-	edata(edata),
-	sock_stream(),
-	payload()
+	edata(edata)
 {
 	parser_status = e_READING_HEADS;
 	cur_body_size = 0;
@@ -35,6 +33,10 @@ Request::Request(
 
 Request::~Request( void ) {
 	req.clear();
+	payload.clear();
+	memset(rcv_buf, '\0', RCV_BUF_SIZE + 1);
+	sock_stream.clear();
+	cur_line.clear();
 }
 
 
@@ -97,18 +99,20 @@ void	Request::read_line( void )
 			throw (SockEof());
 		
 		//*		DEBUG
-		std::string		debug_rcv_buf = rcv_buf;
-		std::string		debug_cur_line = cur_line.data();
+		// std::string			debug_rcv_buf = rcv_buf;
+		// std::string			debug_cur_line = cur_line.data() == NULL ? "" : cur_line.data();
+		// std::vector<char>	debug_sockstream(sock_stream);
 
-		std::replace(debug_rcv_buf.begin(), debug_rcv_buf.end(), '\r', 'r');
-		std::replace(debug_rcv_buf.begin(), debug_rcv_buf.end(), '\n', 'n');
-		std::replace(debug_cur_line.begin(), debug_cur_line.end(), '\r', 'r');
-		std::replace(debug_cur_line.begin(), debug_cur_line.end(), '\n', 'n');
+		// debug_sockstream.push_back('\0');
+		// std::replace(debug_rcv_buf.begin(), debug_rcv_buf.end(), '\r', 'r');
+		// std::replace(debug_rcv_buf.begin(), debug_rcv_buf.end(), '\n', 'n');
+		// std::replace(debug_cur_line.begin(), debug_cur_line.end(), '\r', 'r');
+		// std::replace(debug_cur_line.begin(), debug_cur_line.end(), '\n', 'n');
 		// COUT_DEBUG_INSERTION(
 		// 	YELLOW "Request::read_line()" RESET
 		// 	<< " - received chars : |" << debug_rcv_buf << "|" << std::endl
 		// 	<< " - cur line : |" << debug_cur_line << "|"  << std::endl
-		// 	<< " - cur stream : " << sock_stream.str() << std::endl
+		// 	<< " - cur stream : " << debug_sockstream.data() << std::endl
 		// );
 		//*************************************************************
 		
@@ -117,7 +121,7 @@ void	Request::read_line( void )
 			sock_stream.end(),
 			rcv_buf,
 			rcv_buf + bytes_read
-		) ;
+		);
 	}
 
 	//*	Read characters from dynamic entity for character handling (stream)
@@ -193,6 +197,7 @@ void	Request::parse_header( void )
 		else {
 			cur_line.erase(std::remove(cur_line.begin(), cur_line.end(), '\r'),  cur_line.end());
 			cur_line.erase(std::remove(cur_line.begin(), cur_line.end(), '\n'),  cur_line.end());
+			cur_line.push_back('\0');
 			if (req.empty()) {
 				//*		request is empty, first line is request line
 				parse_req_line(cur_line);
@@ -250,8 +255,19 @@ void	Request::parse_body( void ) {
 
 void	Request::print_req( void ) {
 	std::cout << "| START print_req |" << std::endl;
+
+	std::cout << BOLDGREEN "PRINTING HEADERS" RESET << std::endl;
 	for (std::map<std::string, std::string>::iterator it = req.begin(); it != req.end(); it++) {
 		std::cout << "|" << it->first << " : " << it->second << "|" << std::endl;
 	}
+	std::cout << GREEN "END---PRINTING HEADERS" RESET << std::endl;
+
+	std::cout << BOLDGREEN "PRINTING body" RESET << std::endl;
+	for (std::vector<char>::iterator it = payload.begin(); it != payload.end(); it++)
+		std::cout << *it;
+	std::cout << std::endl;
+	std::cout << "body len : " << payload.size() << std::endl;
+	std::cout << GREEN "END---PRINTING body" RESET << std::endl;
+
 	std::cout << "| END print_req |" << std::endl;
 }

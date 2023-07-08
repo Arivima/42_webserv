@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/18 10:41:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/08 01:36:12 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/08 03:51:52 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -485,11 +485,11 @@ void throw_HttpError_debug(
 //*		GENERAL PURPOSE UTILITIES
 bool	hasHttpHeaderDelimiter(std::vector<char>& line)
 {
-	std::vector<char>::iterator		pos = std::find(line.begin(), line.end(), '\n');
+	std::vector<char>::iterator		lf_pos = std::find(line.begin(), line.end(), '\n');
 
-	if (line.end() == pos || line.begin() == pos)//*not found, or cannot go back one position to look for CR
+	if (line.end() == lf_pos || line.begin() == lf_pos)//*not found, or cannot go back one position to look for CR
 		return (false);
-	return (*pos == '\r');
+	return (*(lf_pos - 1) == '\r');
 }
 
 bool	isHttpHeaderDelimiter(std::vector<char>& line)

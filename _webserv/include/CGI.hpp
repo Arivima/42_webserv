@@ -1,10 +1,12 @@
 #ifndef CGI_HPP
 # define CGI_HPP
 
-# include	"Webserv.hpp"
 # include	<map>
 # include	<vector>
 # include	<string>
+
+# include	"Webserv.hpp"
+# include	"Request.hpp"
 
 # define	CGI_ENV_SIZE	30
 # define	CGI_INFILE		".cgi_input"
@@ -19,7 +21,8 @@ class CGI {
 		const int									sock_fd;
 		char*										cgi_env[CGI_ENV_SIZE + 1];
 		std::vector<char>							response;
-		const std::map<std::string, std::string> &	req;
+		Request&									request;
+		const std::map<std::string, std::string>&	req;
 		const t_conf_block&							matching_directives;
 
 	//*		Public member functions
@@ -28,7 +31,7 @@ class CGI {
 			int											sock_fd,
 			const std::string &							client_IP,
 			const std::string &							server_IP,
-			const std::map<std::string, std::string>&	req,
+			Request&									request,
 			const t_conf_block &						matching_directives,
 			const std::string&							location_root,
 			const std::string &							cgi_extension,

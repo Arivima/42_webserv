@@ -33,18 +33,22 @@
 
 //*		Main Constructor and Destructor
 Response::Response(
-	const std::map<std::string, std::string>& req,
-	const t_server& assigned_server,
-	const int sock_fd,
-	const std::string& client_IP,
-	const std::string& server_IP,
-	const t_epoll_data& edata
+	Request&			request,
+	const t_server&		assigned_server,
+	const int			sock_fd,
+	const std::string&	client_IP,
+	const std::string&	server_IP,
+	const t_epoll_data&	edata
 )
 		:
 		matching_directives(
-			takeMatchingDirectives(assigned_server.conf_server_block, req)
+			takeMatchingDirectives(
+				assigned_server.conf_server_block,
+				request.getRequest()
+			)
 		),
-		req(req),
+		request(request),
+		req(request.getRequest()),
 		location_root(take_location_root()),
 		assigned_server(assigned_server),
 		sock_fd(sock_fd),
@@ -80,12 +84,12 @@ void	Response::send_line( void )
 	else {
 		if (NULL != eevent && eevent->events & EPOLLOUT)
 		{
-			std::string	debug(this->response.begin(), this->response.end());
-			COUT_DEBUG_INSERTION(
-				"sending chars : "
-				<< "|" << debug << "|"
-				<< std::endl
-			);
+			// std::string	debug(this->response.begin(), this->response.end());
+			// COUT_DEBUG_INSERTION(
+			// 	"sending chars : "
+			// 	<< "|" << debug << "|"
+			// 	<< std::endl
+			// );
 
 			bytes_sent = send(
 				this->sock_fd, response.data(), response.size(), 0
@@ -134,7 +138,7 @@ void	Response::generateResponse( void )
 			);
 			this->cgi = new CGI(
 				sock_fd, client_IP, server_IP,
-				req, matching_directives, location_root,
+				request, matching_directives, location_root,
 				cgi_extension, cgi_interpreter_path
 			);
 			this->cgi->launch();
@@ -378,7 +382,7 @@ void	Response::generatePOSTResponse( const std::string uri_path )
 			if (false == stream_newFile.is_open())
 				/*Server Err*/	throw HttpError(500, this->matching_directives, root);
 			
-			stream_newFile << (this->req.find("body") != this->req.end() ? this->req.at("body") : std::string());
+			stream_newFile.write(request.getPayload().data(), request.getPayload().size());
 			if (stream_newFile.fail()) {
 				stream_newFile.close();
 				/*Server Err*/	throw HttpError(500, this->matching_directives, root);
@@ -822,4 +826,17 @@ void			Response::deleteDirectory(const std::string directoryPath)
 		COUT_DEBUG_INSERTION(RED "Response::deleteDirectory() : could not open dir error" RESET << std::endl);
 		/*Server Err*/	throw HttpError(500, matching_directives, root, strerror(errno));
 	}
+}
+
+
+void	Response::print_resp( void )
+{
+	std::cout << BOLDGREEN "PRINTING Response" RESET << std::endl;
+
+	for (std::vector<char>::iterator it = response.begin(); it != response.end(); it++)
+		std::cout << *it;
+	std::cout << std::endl;
+	std::cout << "Response len : " << response.size() << std::endl;
+	
+	std::cout << GREEN "END---PRINTING Response" RESET << std::endl;
 }

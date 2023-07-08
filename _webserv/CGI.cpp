@@ -16,14 +16,14 @@ CGI::CGI(
 	int											sock_fd,
 	const std::string&							client_IP,
 	const std::string&							server_IP,
-	const std::map<std::string, std::string>&	req,
+	Request&									request,
 	const t_conf_block&							matching_directives,
 	const std::string&							location_root,
 	const std::string &							cgi_extension,
 	const std::string &							interpreter_path
 )
 	:	sock_fd(sock_fd),
-		response(), req(req),
+		response(), request(request), req(request.getRequest()),
 		matching_directives(matching_directives)
 {
 	std::cout << "CGI Constructor" << std::endl;
@@ -75,18 +75,15 @@ void CGI::launch()
 		throw_HttpError_debug("CGI::launch()", "fork()", 500, this->matching_directives, get_env_value("ROOT"));
 	else if (pid == 0)  // child -> CGI
 	{		
-	// create the input string
-		std::string input;
-		input = get_env_value("QUERY_STRING");
-		if (this->req.find("body") != this->req.end())
-			input += this->req.at("body"); // redo
 		
+	//* CHANGED
 	// create an input file and write the content of body and query string
-		std::ofstream	stream_cgi_infile(CGI_INFILE, std::ios::out | std::ios::trunc);
+		std::ofstream	stream_cgi_infile(CGI_INFILE, std::ios::out | std::ios::trunc | std::ios::binary);
 		if (false == stream_cgi_infile.is_open())
 			throw_HttpError_debug("CGI::launch()", "is_open()", 500, this->matching_directives, get_env_value("ROOT"));
 		
-		stream_cgi_infile << input;
+		stream_cgi_infile.write(request.getPayload().data(), request.getPayload().size());
+	//* CHANGED
 		
 		if (stream_cgi_infile.fail())
 			throw_HttpError_debug("CGI::launch()", "stream <<", 500, this->matching_directives, get_env_value("ROOT"));
