@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/30 12:37:05 by avilla-m          #+#    #+#             */
-/*   Updated: 2023/07/07 07:55:57 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/09 20:20:18 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,6 +57,14 @@ class TimerExpired : public std::exception {
 			return ("TimerExpired : client starved");
 		}
 };
+
+class InvalidChunk : public std::exception {
+	public:
+		virtual const char*	what( void ) const throw() {
+			return ("Chunked Encoding : invalid chunk read");
+		}
+};
+
 
 //*		HttpError
 //*	see https://developer.mozilla.org/en-US/docs/Web/HTTP/Status#client_error_responses

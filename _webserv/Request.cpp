@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 17:19:26 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/09 19:38:14 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/09 20:45:58 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 #include <iostream>		//cout
 #include <sstream>		//string stream
 #include <cstring>		//memset
-#include <algorithm>	//std::remove
+#include <algorithm>	//std::remove, std::find
 
 //*		main Constructors and Destructors
 
@@ -49,13 +49,53 @@ Request::~Request( void ) {
 
 std::vector<char>		Request::getIncomingData( void )
 {
-	std::vector<char>	incomingData;
+	const struct epoll_event*		eevent = edata.getEpollEvent(this->sock_fd);
+	const std::vector<char>			try_again;
+	static std::vector<char>		incomingData;
+	
+	//*		static variable only works if we have one process
+	//*		...which is the case for our webserv
+	static bool						next_chunk_arrived = false;
+	static size_t					cur_chunk_size;
+
+	std::vector<char>::iterator		cr_pos;
+	std::vector<char>				line;
 
 	read_line();
-	incomingData = cur_line;
-	cur_line.clear();
+	if (false == next_chunk_arrived)
+	{
+		if (hasHttpHeaderDelimiter(payload))
+		{
+			cr_pos = std::find(payload.begin(), payload.end(), '\r');
+			//*	inserting size line line into 'line'
+			line.insert(
+				line.begin(),
+				payload.begin(),
+				cr_pos
+			);
+			payload.erase(payload.begin(), cr_pos + 2);//*taking line off the payload
 
-	return (incomingData);
+			line.push_back('\0');
+			cur_chunk_size = std::atol(line.data());
+
+			return try_again;
+		}
+	}
+	else
+	{
+		incomingData.insert(
+			incomingData.end(),
+			payload.begin(),
+			payload.end()
+		);
+		cur_chunk_size -= next_chunk_arrived;
+		payload.clear();
+		if (0 == cur_chunk_size) {
+			next_chunk_arrived = false;
+			return (incomingData);
+		}
+	}
+	return try_again;
 }
 
 const std::map<std::string, std::string>&	Request::getRequest( void ) {
@@ -146,7 +186,8 @@ void	Request::read_body( void ) {
 		sock_stream.end()
 	);
 	sock_stream.clear();
-	cur_body_size -= bytes_read;
+	if (false == chunked)
+		cur_body_size -= bytes_read;
 }
 
 void	Request::parse_header( void )
@@ -225,7 +266,7 @@ void	Request::parse_body( void ) {
 		cur_line.end()
 	);
 	cur_line.clear();
-	if (0 == cur_body_size)
+	if (false == chunked && 0 == cur_body_size)
 	{
 		throw TaskFulfilled();
 	}
