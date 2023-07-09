@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Config.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/16 14:09:56 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/28 12:00:43 by earendil         ###   ########.fr       */
+/*   Updated: 2023/07/09 23:15:12 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,8 @@
 # include "Webserv.hpp"
 
 # define DEFAULT_PATHNAME   "../_webserv/configuration_files/default.conf"
+# define	DEFAULT_CLIENT_MAX_BODY_SIZE	1000000			// 1M 1e+6 bytes
+# define	LIMIT_CLIENT_MAX_BODY_SIZE		1000000000		// 1G 1e+9 bytes
 
 class Config {
 private:
@@ -49,9 +51,12 @@ private:
 	void					parse_directive( t_conf_block& current, std::string& cur_line );
 	void					check_directive_validity(const std::string& directive, t_config_block_level level);
 	void					add_directive(t_conf_block& current, std::string& key, std::string& value);
+	void					check_value_validity(std::string& key, std::string & value);
+	void					check_value_validity_body_size(t_conf_block& current);
  	void					parse_server_block( t_conf_block& current );
 	void					parse_location_block( t_conf_block& current, std::string& cur_line );
 	void					parse_http_block( t_conf_block& current );
+	void					set_up_default_values(t_conf_block& current);
 };
 
 #endif

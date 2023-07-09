@@ -14,13 +14,10 @@
 				1.	verificare che matching_directives.directives.find("redirect")
 				2.	Se si, rispondere con un messaggio http redirect (studiare)
 				3.	--da gestire in generateResponse, quindi NON in GET, POST, DELETE
-	
-		3-	body size
-			- gestire direttamente in generateResponse
-				1.	verificare che matching_directives.directives.find("body_size")
-				2.	Se é maggiore di request->getPayload().size(),
-					dare giusto errore http (studiare)
-				3. --da gestire in generateResponse, quindi NON in GET, POST, DELETE
+
+TEST
+		3-	test body size
+
 			
 
 Timers Idea (devo studiarlo meglio)

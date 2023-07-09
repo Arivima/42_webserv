@@ -6,6 +6,9 @@
 # define	DEFAULT_CLIENT_MAX_BODY_SIZE	1000000			// 1M 1e+6 bytes
 # define	LIMIT_CLIENT_MAX_BODY_SIZE		1000000000		// 1G 1e+9 bytes
 
+# include <utility> // pair
+# include <string>
+# include <stdexcept>
 
 // check if body size directive is correct
 // config syntax 

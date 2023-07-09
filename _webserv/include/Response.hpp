@@ -110,6 +110,7 @@ private:
 	bool							isMethodAllowed(void);
 	void							deleteFile( const std::string pathname );
 	void							deleteDirectory( const std::string pathname );
+	bool							check_body_size();
 
 	//TODO		forse move in utils
 	std::string						http_req_complete_url_path(

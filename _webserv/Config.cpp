@@ -171,6 +171,13 @@ void	Config::parse( t_conf_block& current ) {
 		throw (std::runtime_error("Config::parse() : IO corrupted"));
 }
 
+void	Config::set_up_default_values(t_conf_block& current)
+{
+	if (current.directives.find("body_size") == current.directives.end())
+		current.directives.at("body_size") = std::to_string(DEFAULT_CLIENT_MAX_BODY_SIZE);	
+}
+
+
 void	Config::parse_sub_block( t_conf_block& current, std::string& cur_line )
 {
 	t_config_block_level	next_level;
@@ -187,6 +194,9 @@ void	Config::parse_sub_block( t_conf_block& current, std::string& cur_line )
 			parse_location_block(current, cur_line);
 		if (e_http_block == next_level)
 			parse_http_block(current);
+
+		set_up_default_values(current);
+
 	}
 	catch (const std::invalid_argument& e) {
 		std::cout << BOLDRED
@@ -336,6 +346,7 @@ void	Config::parse_directive( t_conf_block& current, std::string& cur_line )
 		std::getline(linestream, key, ' ');
 		std::getline(linestream, value);
 		check_directive_validity(key, current.level);
+		check_value_validity(key, value);
 		add_directive(current, key, value);
 	}
 	catch (const std::invalid_argument& e) {
@@ -406,6 +417,53 @@ void	Config::add_directive(t_conf_block& current, std::string& key, std::string&
 	else
 	{
 		current.directives[key] = value;
+	}
+}
+
+void	check_value_validity(std::string& key, std::string & value)
+{
+	if ("body_size" ==  key)
+		check_value_validity_body_size(value);
+}
+
+
+// check if body size directive is correct
+// from 1 byte to 1e+9 bytes (1G) 
+// 0 -> use default value // default value -> 1M 1e+6 bytes // limit value -> 1G 1e+9 bytes
+// abbreviation accepted K and M  // 1K 1e+3 bytes // 1M 1e+6 bytes // 1G 1e+9 bytes
+void	check_value_validity_body_size(std::string & value)
+{
+	std::string body_size_value = value;
+
+	// update body_size value if use of K or M abbreviation
+	size_t pos = body_size_value.find_first_of("KM");
+	if (pos != std::string::npos)
+	{
+		//*	if there is NO stuff after K/M
+		if (body_size_value.size() == pos + 1){
+			std::string magnitude = body_size_value[pos] == 'K' ? "000" : "000000";
+			body_size_value.erase(pos);
+			body_size_value += magnitude;
+
+			value = body_size_value;
+		}
+		else 
+			throw (std::invalid_argument("Config::check_value_validity() : invalid value for body size directive."));
+	}
+	
+	// check value validity using stoi (will throw if value isn't a number)
+	try
+	{
+		int size = std::stoi(body_size_value);
+		if (size > LIMIT_CLIENT_MAX_BODY_SIZE)
+			throw (std::invalid_argument("Config::check_value_validity() : invalid value for body size directive (max 1G)."));
+		if (size == 0)
+			value = std::to_string(DEFAULT_CLIENT_MAX_BODY_SIZE);
+
+	}
+	catch (std::exception& e)
+	{
+		throw (std::invalid_argument("Config::check_value_validity() : invalid value for body size directive."));
 	}
 }
 

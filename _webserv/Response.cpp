@@ -107,6 +107,21 @@ void	Response::send_line( void )
 	}
 }
 
+// check request against body size value, else throw 413 Content Too Large
+	// value validity is checked in config
+	// body_size always exists as its default value (1M) was set in value validity checking
+bool	Response::check_body_size()
+{
+	if (this->req.find("Content-Lenght") != this->req.end())
+	{
+		int req_body_size = std::stoi(this->req.at("Content-Lenght")); // stoi throws
+		int max_body_size = std::stoi(this->matching_directives.directives.at("body_size"));
+		
+		return (req_body_size <= max_body_size);
+	}
+	return (true);
+}
+
 void	Response::generateResponse( void )
 {
 	std::string		cgi_extension;
@@ -118,7 +133,10 @@ void	Response::generateResponse( void )
 			/*Not Allowed*/	throw (HttpError(405, matching_directives, location_root));
 		if (req.at("url").find("/..") != std::string::npos)//*input sanitization
 			/*Bad req*/	throw HttpError(400, matching_directives, location_root);  	
-		
+		if (check_body_size() == false)
+			/*Content Too Large*/	throw HttpError(413, this->matching_directives, location_root);
+
+
 		cgi_extension = take_cgi_extension(
 			req.at("url"), matching_directives.directives
 		);
