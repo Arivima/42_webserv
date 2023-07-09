@@ -78,7 +78,7 @@ DONE	-Response : rimuovi subito query string se non é GET
 		- implement chuncked Encoding
 		- implement timers
 		- scrivere script per le CGI
-
+		- fare correction sheet e scrivere una lista de tutte le cose da dimonstrare
 
 
 

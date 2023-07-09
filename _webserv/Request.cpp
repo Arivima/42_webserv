@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 17:19:26 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/08 09:13:35 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/09 19:38:14 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,8 +70,8 @@ bool						Request::isChunked( void ) {
 	return (this->chunked);
 }
 
-void	Request::parse_line( void ) { //std::cout  << std::endl << "\033[1m\033[32m""parse_line() called()""\033[0m" << std::endl;
-	
+void	Request::parse_line( void )
+{
 	const struct epoll_event*	eevent = edata.getEpollEvent(this->sock_fd);
 
 	if (
@@ -87,11 +87,10 @@ void	Request::parse_line( void ) { //std::cout  << std::endl << "\033[1m\033[32m
 			parse_body();
 		}
 	}
-	// std::cout << std::endl;
 }
 
 void	Request::read_line( void )
-{ //std::cout  << std::endl << "\033[1m\033[32m""read_line() called()""\033[0m" << std::endl;
+{
 	const struct epoll_event*	eevent = edata.getEpollEvent(this->sock_fd);
 	int							bytes_read;
 
@@ -102,24 +101,6 @@ void	Request::read_line( void )
 		bytes_read = recv(sock_fd, rcv_buf, RCV_BUF_SIZE, 0);
 		if (bytes_read <= 0)
 			throw (SockEof());
-		
-		//*		DEBUG
-		// std::string			debug_rcv_buf = rcv_buf;
-		// std::string			debug_cur_line = cur_line.data() == NULL ? "" : cur_line.data();
-		// std::vector<char>	debug_sockstream(sock_stream);
-
-		// debug_sockstream.push_back('\0');
-		// std::replace(debug_rcv_buf.begin(), debug_rcv_buf.end(), '\r', 'r');
-		// std::replace(debug_rcv_buf.begin(), debug_rcv_buf.end(), '\n', 'n');
-		// std::replace(debug_cur_line.begin(), debug_cur_line.end(), '\r', 'r');
-		// std::replace(debug_cur_line.begin(), debug_cur_line.end(), '\n', 'n');
-		// COUT_DEBUG_INSERTION(
-		// 	YELLOW "Request::read_line()" RESET
-		// 	<< " - received chars : |" << debug_rcv_buf << "|" << std::endl
-		// 	<< " - cur line : |" << debug_cur_line << "|"  << std::endl
-		// 	<< " - cur stream : " << debug_sockstream.data() << std::endl
-		// );
-		//*************************************************************
 		
 		//*	Dumping into dynamic entity for character handling (stream)
 		sock_stream.insert(
@@ -137,11 +118,10 @@ void	Request::read_line( void )
 	if (e_READING_BODY == parser_status) {
 		read_body();
 	}
-	// std::cout << std::endl;
 }
 
 void	Request::read_header( void )
-{ //std::cout << MAGENTA "Request::read_header()" RESET << std::endl;
+{
 	std::vector<char>::iterator		lf_pos;
 
 	if (hasHttpHeaderDelimiter(sock_stream))
@@ -153,15 +133,6 @@ void	Request::read_header( void )
 			lf_pos + 1
 		);
 		sock_stream.erase(sock_stream.begin(), lf_pos + 1);
-	}
-	else
-	{
-		cur_line.insert(
-			cur_line.end(),
-			sock_stream.begin(),
-			sock_stream.end()
-		);
-		sock_stream.clear();
 	}
 }
 
@@ -179,9 +150,10 @@ void	Request::read_body( void ) {
 }
 
 void	Request::parse_header( void )
-{ //std::cout << YELLOW "Request::parse_header()" RESET << std::endl;
-	if (hasHttpHeaderDelimiter(cur_line)) {
-		if (isHttpHeaderDelimiter(cur_line)) {
+{
+	if (false ==  cur_line.empty()) {
+		if (isHttpHeaderDelimiter(cur_line))
+		{
 			//*	end of headers, there may or not may be a body
 			cur_line.clear();
 			if (req.end() == req.find("method")) {
@@ -209,7 +181,7 @@ void	Request::parse_header( void )
 			}
 			else {
 				//*		request is not empty, line is header line
-				std::stringstream	str_stream(std::string(cur_line.data()));
+				std::stringstream	str_stream(cur_line.data());
 				std::string			key;
 				std::string			value;
 				
@@ -225,12 +197,11 @@ void	Request::parse_header( void )
 		}
 		cur_line.clear();
 	}
-	// std::cout << "reading headers---END" << std::endl;
 }
 
 void	Request::parse_req_line( std::vector<char>& req_line ) {
 
-	std::stringstream	reqline_stream(std::string(req_line.data()));
+	std::stringstream	reqline_stream(req_line.data());
 	std::string			method;
 	std::string			url;
 	std::string			http_version;
@@ -247,17 +218,22 @@ void	Request::parse_req_line( std::vector<char>& req_line ) {
 }
 
 void	Request::parse_body( void ) {
-	std::cout << "parsing body" << std::endl;
-	if (0 == cur_body_size) {
-		payload.insert(
-			payload.begin(),
-			cur_line.begin(),
-			cur_line.end()
-		);
-		cur_line.clear();
+	
+	payload.insert(
+		payload.end(),
+		cur_line.begin(),
+		cur_line.end()
+	);
+	cur_line.clear();
+	if (0 == cur_body_size)
+	{
 		throw TaskFulfilled();
 	}
 }
+
+
+
+//*		helper functions
 
 void	Request::print_req( void ) {
 	std::cout << "| START print_req |" << std::endl;
@@ -276,4 +252,23 @@ void	Request::print_req( void ) {
 	std::cout << GREEN "END---PRINTING body" RESET << std::endl;
 
 	std::cout << "| END print_req |" << std::endl;
+}
+
+void	Request::printVectorChar(std::vector<char>& v, std::string name)
+{
+	if (v.empty())
+		std::cout << name << " is empty !" << std::endl;
+	else
+	{
+		std::cout << name << ": " << std::endl;
+		for (std::vector<char>::iterator it = v.begin(); it != v.end(); it++)
+		{
+			if ((*it) == '\n')
+				std::cout << "n";
+			if ((*it) == '\r')
+				std::cout << "r";
+			std::cout << *it ;
+		}
+		std::cout << std::endl;
+	}
 }

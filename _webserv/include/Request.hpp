@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 15:41:58 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/08 02:03:22 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/09 19:56:02 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,10 +64,12 @@ public:
 	
 	//*		main functionalities
 	void										parse_line( void );
-	std::vector<char>							getIncomingData( void );
-	bool										isChunked( void );
 	const std::map<std::string, std::string>&	getRequest( void );
 	const std::vector<char>&					getPayload( void );
+	std::vector<char>							getIncomingData( void );
+	bool										isChunked( void );
+
+	//*		public helper functions
 	void										print_req( void );
 
 private:
@@ -77,13 +79,16 @@ private:
 					Request( const Request& other );
 	Request&		operator=( const Request& other );
 
-	//*		helper functions
+	//*		Main helper functions
 	void			read_line( void );
 	void			read_header( void );
 	void			read_body( void );
 	void			parse_header( void );
 	void			parse_req_line( std::vector<char>& req_line );
 	void			parse_body( void );
+	
+	//*		Secondary helper functions
+	void			printVectorChar(std::vector<char>& v, std::string name);
 };
 
 #endif
