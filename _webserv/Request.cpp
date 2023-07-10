@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: avilla-m <avilla-m@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 17:19:26 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/09 20:45:58 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/10 13:28:33 by avilla-m         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 #include <sys/socket.h>	//recv
 #include <iostream>		//cout
 #include <sstream>		//string stream
+#include <string>		//stol
 #include <cstring>		//memset
 #include <algorithm>	//std::remove, std::find
 
@@ -76,20 +77,25 @@ std::vector<char>		Request::getIncomingData( void )
 			payload.erase(payload.begin(), cr_pos + 2);//*taking line off the payload
 
 			line.push_back('\0');
-			cur_chunk_size = std::atol(line.data());
+			cur_chunk_size = std::stoll(line);
+			next_chunk_arrived = true;
 
-			return try_again;
+			throw (ChunkNotComplete());
 		}
 	}
 	else
 	{
+		if (payload.size() < cur_chunk_size + 2)
+			return (try_again);
 		incomingData.insert(
 			incomingData.end(),
 			payload.begin(),
-			payload.end()
+			payload.begin() + cur_chunk_size
 		);
-		cur_chunk_size -= next_chunk_arrived;
-		payload.clear();
+		payload.erase(
+			payload.begin(),
+			payload.begin() + cur_chunk_size
+		);
 		if (0 == cur_chunk_size) {
 			next_chunk_arrived = false;
 			return (incomingData);
@@ -103,7 +109,7 @@ const std::map<std::string, std::string>&	Request::getRequest( void ) {
 }
 
 const std::vector<char>&	Request::getPayload( void ) {
-	return (this->payload);
+	return begin() + ->payload);
 }
 
 bool						Request::isChunked( void ) {

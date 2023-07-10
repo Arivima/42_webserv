@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Exceptions.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: avilla-m <avilla-m@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/30 12:37:05 by avilla-m          #+#    #+#             */
-/*   Updated: 2023/07/09 20:20:18 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/10 13:28:12 by avilla-m         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,10 +58,10 @@ class TimerExpired : public std::exception {
 		}
 };
 
-class InvalidChunk : public std::exception {
+class ChunkNotComplete : public std::exception {
 	public:
 		virtual const char*	what( void ) const throw() {
-			return ("Chunked Encoding : invalid chunk read");
+			return ("Chunked Encoding : chunk not yet ready");
 		}
 };
 
@@ -231,6 +231,8 @@ private:
 				return ("Method Not Allowed");
 			case 409:
 				return ("Conflict");
+			case 413:
+				return ("Content Too Large");
 			case 414:
 				return ("URI too long");
 			case 500:
@@ -249,73 +251,40 @@ private:
 
 
 // HTTP Status codes
-	// 500 Internal Server Error: An unexpected error occurred on the server while processing the deletion request.
-	// 400 Bad Request 		- The server cannot or will not process the request due to something that is perceived to be a client error 
-	// 						(e.g., malformed request syntax, invalid request message framing, or deceptive request routing).
-	// 403 Forbidden 		- The client does not have access rights to the content; that is, it is unauthorized, so the server is refusing to give the requested resource. 
-	// 						Unlike 401 Unauthorized, the client's identity is known to the server.
-	// 404 Not Found 		- The server cannot find the requested resource. In the browser, this means the URL is not recognized. 
-	// 409 Conflict			- The deletion could not be completed due to a conflict with the current state of the resource. 
-	// 414 URI Too Long		- The URI requested by the client is longer than the server is willing to interpret.
-	// 500 Internal Server Error: An unexpected error occurred on the server while processing the deletion request.
-
-
-
-
-// switch(errno) {
-// 	// 400 Bad Request //? Empty because directory validity (client input) has been previously checked
-	
-// 	// 403 Forbidden - The client does not have access rights to the content; that is, it is unauthorized, so the server is refusing to give the requested resource. 
-// 	case EACCES:	throw HttpError(403, matching_directives, root, strerror(errno)); 
-// 	case EPERM:		throw HttpError(403, matching_directives, root, strerror(errno)); 
-// 	case EROFS:		throw HttpError(403, matching_directives, root, strerror(errno)); 
-	
-// 	// 409 Conflict: The deletion could not be completed due to a conflict with the current state of the resource. 
-// 	case EBUSY:		throw HttpError(409, matching_directives, root, strerror(errno)); 
-	
-// 	// 414 url too long //? Empty because directory validity (client input) has been previously checked
-	
-// 	// 500 Internal Server Error: An unexpected error occurred on the server while processing the deletion request.
-// 	case ENOMEM:	throw HttpError(500, matching_directives, root, strerror(errno)); 
-// 	case EOVERFLOW:	throw HttpError(500, matching_directives, root, strerror(errno)); 
-// 	case ENOENT :	throw HttpError(500, matching_directives, root, strerror(errno));
-// 	case ENOTEMPTY:	throw HttpError(500, matching_directives, root, strerror(errno)); 
-// 	case ENOTDIR:	throw HttpError(500, matching_directives, root, strerror(errno));  
-// 	case EINVAL:	throw HttpError(500, matching_directives, root, strerror(errno));  
-// 	case EFAULT:	throw HttpError(500, matching_directives, root, strerror(errno));  
-// 	case ELOOP :	throw HttpError(500, matching_directives, root, strerror(errno)); 
-// 	case ENAMETOOLONG:throw HttpError(500, matching_directives, root, strerror(errno)); 
-	
-// 	// 404 Not Found //? Empty because directory validity (client input) has been previously checked
-	
-// 	// default case : EMFILE, ENFILE, EBADF
-// 	default:		throw HttpError(500, matching_directives, root, strerror(errno)); 
-// }
+	// 400 Bad Request 				- The server cannot or will not process the request due to something that is perceived to be a client error 
+	// 								(e.g., malformed request syntax, invalid request message framing, or deceptive request routing).
+	// 403 Forbidden 				- The client does not have access rights to the content; that is, it is unauthorized, so the server is refusing to give the requested resource. 
+	// 								Unlike 401 Unauthorized, the client's identity is known to the server.
+	// 404 Not Found 				- The server cannot find the requested resource. In the browser, this means the URL is not recognized. 
+	// 409 Conflict					- The deletion could not be completed due to a conflict with the current state of the resource. 
+	// 413 Content Too Large		- The HTTP 413 Content Too Large response status code indicates that the request entity is larger than limits defined by server; the server might close the connection or return a Retry-After header field.
+	// 414 URI Too Long				- The URI requested by the client is longer than the server is willing to interpret.
+	// 500 Internal Server Error	- An unexpected error occurred on the server while processing the deletion request.
 
 // opendir ERRORS : 
-    //    EACCES Permission denied.
-    //    EBADF  fd is not a valid file descriptor opened for reading.
-    //    EMFILE The per-process limit on the number of open file descriptors has been reached.
-    //    ENFILE The system-wide limit on the total number of open files has been reached.
-    //    ENOENT Directory does not exist, or name is an empty string.
-    //    ENOMEM Insufficient memory to complete the operation.
-    //    ENOTDIR name is not a directory.
+    //    EACCES 	Permission denied.
+    //    EBADF  	fd is not a valid file descriptor opened for reading.
+    //    EMFILE 	The per-process limit on the number of open file descriptors has been reached.
+    //    ENFILE 	The system-wide limit on the total number of open files has been reached.
+    //    ENOENT 	Directory does not exist, or name is an empty string.
+    //    ENOMEM 	Insufficient memory to complete the operation.
+    //    ENOTDIR 	name is not a directory.
 // rmdir ERRORS : 
-    //    EACCES Write access to the directory containing pathname was not allowed, or one of the directories in the path prefix of
-    //           pathname did not allow search permission.  (See also path_resolution(7).)
-    //    EBUSY  pathname is currently in use by the system or some process that prevents its removal.  On Linux, this means pathname
-    //           is currently used as a mount point or is the root directory of the calling process.
-    //    EFAULT pathname points outside your accessible address space.
-    //    EINVAL pathname has .  as last component.
-    //    ELOOP  Too many symbolic links were encountered in resolving pathname.
+    //    EACCES 	Write access to the directory containing pathname was not allowed, or one of the directories in the path prefix of
+    //           	pathname did not allow search permission.  (See also path_resolution(7).)
+    //    EBUSY  	pathname is currently in use by the system or some process that prevents its removal.  On Linux, this means pathname
+    //           	is currently used as a mount point or is the root directory of the calling process.
+    //    EFAULT 	pathname points outside your accessible address space.
+    //    EINVAL 	pathname has .  as last component.
+    //    ELOOP  	Too many symbolic links were encountered in resolving pathname.
     //    ENAMETOOLONG pathname was too long.
-    //    ENOENT A directory component in pathname does not exist or is a dangling symbolic link.
-    //    ENOMEM Insufficient kernel memory was available.
-    //    ENOTDIR pathname, or a component used as a directory in pathname, is not, in fact, a directory.
+    //    ENOENT 	A directory component in pathname does not exist or is a dangling symbolic link.
+    //    ENOMEM 	Insufficient kernel memory was available.
+    //    ENOTDIR 	pathname, or a component used as a directory in pathname, is not, in fact, a directory.
     //    ENOTEMPTY pathname contains entries other than . and .. ; or, pathname has ..  as its final component.
 	//    			POSIX.1 also allows EEXIST for this condition.
-    //    EPERM  The directory containing pathname has the sticky bit (S_ISVTX) set and the process's effective user ID is
-    //           neither the user ID of the file to be deleted nor that of the directory containing it, and the process is not
-    //           privileged (Linux: does not have the CAP_FOWNER capability).
-    //    EPERM  The filesystem containing pathname does not support the removal of directories.
-    //    EROFS  pathname refers to a directory on a read-only filesystem.
+    //    EPERM  	The directory containing pathname has the sticky bit (S_ISVTX) set and the process's effective user ID is
+    //           	neither the user ID of the file to be deleted nor that of the directory containing it, and the process is not
+    //           	privileged (Linux: does not have the CAP_FOWNER capability).
+    //    EPERM  	The filesystem containing pathname does not support the removal of directories.
+    //    EROFS  	pathname refers to a directory on a read-only filesystem.

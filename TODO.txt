@@ -1,3 +1,5 @@
+TO DO 
+Monday 10 July
 
 	Matteo
 		1-	Finire Chunked Encoding
@@ -15,8 +17,10 @@
 				2.	Se si, rispondere con un messaggio http redirect (studiare)
 				3.	--da gestire in generateResponse, quindi NON in GET, POST, DELETE
 
-TEST
-		3-	test body size
+TESTING
+		-	Check against subject, correction sheet, tester, write tests with python, Postman 
+		-	fare correction sheet e scrivere una lista de tutte le cose da dimonstrare
+		-	test body size
 
 			
 
@@ -44,13 +48,6 @@ Timers Idea (devo studiarlo meglio)
 			-Example. (https://github.com/mmarinel/42RomaLuiss__Cpp09.git) ex02/main.cpp
 
 
-
-
-
-
-Always		Check against subject, correction sheet, tester, write tests with python, Postman 
-
-
 Matteo:
 		- 	test CGI
 		- 	test generatePOSTResponse - not chunked + finish the todo at the function
@@ -71,11 +68,9 @@ DONE	-Response : rimuovi subito query string se non é GET
 		-check for every member that should be a reference
 		- (forse)togliere set buffer size del socket nel Worker (setsockopt)
 		- implement redirections
-		- implement client body_size
 		- implement chuncked Encoding
 		- implement timers
 		- scrivere script per le CGI
-		- fare correction sheet e scrivere una lista de tutte le cose da dimonstrare
 
 
 
@@ -85,9 +80,6 @@ Final cleaning :
 		-	refactor isDirectory 
 		-	clean all unuseful comments
 		-	put all implementations in .cpp
-
-Final testing:
-		-	Check HTTP status codes		// https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
 
 Additional tasks if there is time:
 		- binary data
