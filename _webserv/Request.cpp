@@ -6,7 +6,7 @@
 /*   By: avilla-m <avilla-m@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 17:19:26 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/10 13:28:33 by avilla-m         ###   ########.fr       */
+/*   Updated: 2023/07/10 14:37:00 by avilla-m         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,8 @@ Request::Request(
 	parser_status = e_READING_HEADS;
 	cur_body_size = 0;
 	chunked = false;
+	next_chunk_arrived = false;
+	cur_chunk_size = 0;
 
 	req.clear();
 	payload.clear();
@@ -51,14 +53,7 @@ Request::~Request( void ) {
 std::vector<char>		Request::getIncomingData( void )
 {
 	const struct epoll_event*		eevent = edata.getEpollEvent(this->sock_fd);
-	const std::vector<char>			try_again;
-	static std::vector<char>		incomingData;
-	
-	//*		static variable only works if we have one process
-	//*		...which is the case for our webserv
-	static bool						next_chunk_arrived = false;
-	static size_t					cur_chunk_size;
-
+	std::vector<char>				incomingData;
 	std::vector<char>::iterator		cr_pos;
 	std::vector<char>				line;
 
@@ -79,16 +74,21 @@ std::vector<char>		Request::getIncomingData( void )
 			line.push_back('\0');
 			cur_chunk_size = std::stoll(line);
 			next_chunk_arrived = true;
-
-			throw (ChunkNotComplete());
 		}
+		throw (ChunkNotComplete());
 	}
 	else
 	{
 		if (payload.size() < cur_chunk_size + 2)
-			return (try_again);
+			throw (ChunkNotComplete());
+		if (
+			payload[cur_chunk_size] != '\r' ||
+			payload[cur_chunk_size + 1] != '\n' 
+		)
+			throw std::invalid_argument("Invalid Chunk read");
+		incomingData.clear();
 		incomingData.insert(
-			incomingData.end(),
+			incomingData.begin(),
 			payload.begin(),
 			payload.begin() + cur_chunk_size
 		);
@@ -96,12 +96,10 @@ std::vector<char>		Request::getIncomingData( void )
 			payload.begin(),
 			payload.begin() + cur_chunk_size
 		);
-		if (0 == cur_chunk_size) {
-			next_chunk_arrived = false;
-			return (incomingData);
-		}
+		next_chunk_arrived = false;
+
+		return (incomingData);
 	}
-	return try_again;
 }
 
 const std::map<std::string, std::string>&	Request::getRequest( void ) {
@@ -109,7 +107,7 @@ const std::map<std::string, std::string>&	Request::getRequest( void ) {
 }
 
 const std::vector<char>&	Request::getPayload( void ) {
-	return begin() + ->payload);
+	return (this->payload);
 }
 
 bool						Request::isChunked( void ) {

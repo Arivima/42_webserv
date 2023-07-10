@@ -54,8 +54,10 @@ Response::Response(
 		sock_fd(sock_fd),
 		client_IP(client_IP),
 		server_IP(server_IP),
-		edata(edata)
+		edata(edata),
+		uri_path(uri_remove_queryString(req.at("url")))
 {
+	dechunking = false;
 	this->cgi = NULL;
 }
 
@@ -107,6 +109,11 @@ void	Response::send_line( void )
 	}
 }
 
+bool	Response::isDechunking(void)
+{
+	return (this->dechunking);
+}
+
 // check request against body size value, else throw 413 Content Too Large
 	// value validity is checked in config
 	// body_size always exists as its default value (1M) was set in value validity checking
@@ -135,7 +142,6 @@ void	Response::generateResponse( void )
 			/*Bad req*/	throw HttpError(400, matching_directives, location_root);  	
 		if (check_body_size() == false)
 			/*Content Too Large*/	throw HttpError(413, this->matching_directives, location_root);
-
 
 		cgi_extension = take_cgi_extension(
 			req.at("url"), matching_directives.directives
@@ -172,7 +178,13 @@ void	Response::generateResponse( void )
 		if ("GET" == this->req.at("method"))
 			return (generateGETResponse(url_no_query_str));
 		if ("POST" == this->req.at("method"))
+		{
+			if (this->request->isChunked()) {
+				this->dechunking = true;
+				return (generateChunkedPOSTResponse(url_no_query_str));
+			}
 			return (generatePOSTResponse(url_no_query_str));
+		}
 		// if ("PUT" == this->req.at("method"))
 		// 	return (generatePUTResponse());
 		if ("DELETE" == this->req.at("method"))
@@ -180,6 +192,7 @@ void	Response::generateResponse( void )
 		throw (HttpError(501, this->matching_directives, location_root));
 	}
 	catch (const HttpError& e) {
+		this->dechunking = false;
 		this->response = e.getErrorPage();
 	}
 }
@@ -334,7 +347,7 @@ void	Response::generatePOSTResponse( const std::string uri_path )
 {
 	std::string						root = location_root;
 	std::string						reqPath(uri_path);
-	std::string						dir;
+	std::string						newFileDir;
 	std::string						newFileName;
 	std::string						fileExtension;
 	std::string						fullDirPath;
@@ -354,15 +367,15 @@ void	Response::generatePOSTResponse( const std::string uri_path )
 		//! check behavior ? throw ?
 		newFileName = "POST_test";
 	}
-	dir = reqPath.substr(0, pos);
+	newFileDir = reqPath.substr(0, pos);
 	
 	//! check upload_path is indeed correct
-	fullDirPath		= root + "/" + dir;
-	fullFilePath	= root + "/" + dir + "/" + newFileName;
+	fullDirPath		= root + "/" + newFileDir;
+	fullFilePath	= root + "/" + newFileDir + "/" + newFileName;
 
 	std::cout << "POST reqPath : "	 	<< reqPath << std::endl;
 	std::cout << "POST root : "	 		<< root << std::endl;
-	std::cout << "POST dir : "	 		<< dir << std::endl;
+	std::cout << "POST dir : "	 		<< newFileDir << std::endl;
 	std::cout << "POST newFileName : "	<< newFileName << std::endl;
 	std::cout << "POST fullDirPath : "	<< fullDirPath << std::endl;
 	std::cout << "POST fullFilePath : "	<< fullFilePath << std::endl;
@@ -372,7 +385,7 @@ void	Response::generatePOSTResponse( const std::string uri_path )
 	size_t							extension_pos;
 
 	errno = 0;
-	if (isDirectory(root, dir))
+	if (isDirectory(root, newFileDir))
 	{
 			// create the new resource at the location
 			std::cout << MAGENTA << "Trying to add a resource to DIRECTORY : " << fullDirPath << RESET << std::endl;
@@ -390,7 +403,7 @@ void	Response::generatePOSTResponse( const std::string uri_path )
 				newFileName += "_cpy" + fileExtension;
 				if (newFileName.size() >= 255)
 					/*Server Err*/	throw HttpError(500, this->matching_directives, root);
-				fullFilePath	= root + "/" + dir + "/" + newFileName;
+				fullFilePath	= root + "/" + newFileDir + "/" + newFileName;
 			}
 			if (errno && ENOENT != errno)
 				throw return_HttpError_errno_stat(root, matching_directives);
@@ -426,8 +439,8 @@ void	Response::generatePOSTResponse( const std::string uri_path )
 	std::string						newResourceRelPath;
 
 	domainName		= std::string(server_IP) + ":" + matching_directives.directives.at("listen");
-	newResourceUrl	= "http://" + domainName + "/" + dir + "/" + newFileName;
-	newResourceRelPath = dir + "/" + newFileName;
+	newResourceUrl	= "http://" + domainName + "/" + newFileDir + "/" + newFileName;
+	newResourceRelPath = newFileDir + "/" + newFileName;
 
 	body				= "Resource " +  newResourceUrl  + " at directory\"" +  reqPath  + "\" was successfully created\n";
 	location_header	= std::string("Location: " + newResourceUrl);
@@ -857,4 +870,146 @@ void	Response::print_resp( void )
 	std::cout << "Response len : " << response.size() << std::endl;
 	
 	std::cout << GREEN "END---PRINTING Response" RESET << std::endl;
+}
+
+
+
+
+///////////////////////////
+//_______________________ METHOD : POST Chunked _______________________
+//TODO
+//TODO	1. line 49 : check if upload_path must be appended to the root
+//TODO	2. line 53 : move (and maybe correct) check in generateResponse
+//TODO	3. line 69 : check exact behavior
+//TODO	4. line 103 : check max path length
+//TODO	5. line 110 : check open_mode
+//TODO	6. line 139 : check if location points to an absolute or relative path
+//TODO
+void	Response::generateChunkedPOSTResponse( const std::string uri_path )
+{
+	std::string						root = location_root;
+	std::string						reqPath(uri_path);
+	std::string&					newFileDir = this->newFileDir;
+	std::string&					newFileName = this->newFileName;
+	std::string						fileExtension;
+	std::string						fullDirPath;
+	std::string						fullFilePath;
+
+	std::cout << "POST uri_path : " << uri_path << std::endl;
+
+	path_remove_leading_slash(root);
+	path_remove_leading_slash(reqPath);
+
+	// check if existing filename and splits reqPath into dir and newFileName
+	size_t pos = reqPath.rfind("/");
+	if (pos != std::string::npos && pos < reqPath.length() - 1){//if / exists and there's characters after it
+		newFileName = reqPath.substr(pos + 1);
+	}
+	else {// if no filename given
+		//! check behavior ? throw ?
+		newFileName = "POST_test";
+	}
+	dir = reqPath.substr(0, pos);
+	
+	//! check upload_path is indeed correct
+	fullDirPath		= root + "/" + dir;
+	fullFilePath	= root + "/" + dir + "/" + newFileName;
+
+	std::cout << "POST reqPath : "	 	<< reqPath << std::endl;
+	std::cout << "POST root : "	 		<< root << std::endl;
+	std::cout << "POST dir : "	 		<< dir << std::endl;
+	std::cout << "POST newFileName : "	<< newFileName << std::endl;
+	std::cout << "POST fullDirPath : "	<< fullDirPath << std::endl;
+	std::cout << "POST fullFilePath : "	<< fullFilePath << std::endl;
+
+// checks if fullDirPath is pointing to a valid location (directory)
+    struct stat						fileStat;
+	size_t							extension_pos;
+
+	errno = 0;
+	if (isDirectory(root, dir))
+	{
+			// create the new resource at the location
+			std::cout << MAGENTA << "Trying to add a resource to DIRECTORY : " << fullDirPath << RESET << std::endl;
+
+			// check if file exists at the given location and updating the name if it does
+			//TODO Replace with fileExists ?
+			extension_pos = newFileName.rfind(".");
+			if (std::string::npos != extension_pos)
+				fileExtension = newFileName.substr(extension_pos);
+			else
+				fileExtension = "";
+			while (stat(fullFilePath.c_str(), &fileStat) == 0) {
+				if (fileExtension.empty() == false)
+					newFileName	= newFileName.substr(0, newFileName.rfind(fileExtension));
+				newFileName += "_cpy" + fileExtension;
+				if (newFileName.size() >= 255)
+					/*Server Err*/	throw HttpError(500, this->matching_directives, root);
+				fullFilePath	= root + "/" + dir + "/" + newFileName;
+			}
+			if (errno && ENOENT != errno)
+				throw return_HttpError_errno_stat(root, matching_directives);
+			
+			// writes body to new file
+			stream_newFile.open(fullFilePath);
+			if (false == stream_newFile.is_open())
+				/*Server Err*/	throw HttpError(500, this->matching_directives, root);
+	}
+	else if (errno)
+	{
+		throw return_HttpError_errno_stat(root, matching_directives);
+	}
+	else
+	{
+		/*Not allowed*/	throw HttpError(405, this->matching_directives, root, "url should point to a directory (POST)");
+	}
+}
+
+void	Response::POSTNextChunk( void )
+{
+	std::vector<char>	incomingData;
+	std::string			root = location_root;
+	std::string			reqPath(uri_path);
+
+	//TODO	gestire catch eccezioni di request->getIncomingData()
+	incomingData = request->getIncomingData();
+	if (incomingData.empty())//*last chunk
+	{
+		dechunking = false;
+		stream_newFile.close();
+		if (stream_newFile.fail()) {
+			stream_newFile.close();
+			unlink(newFileName.c_str());
+			/*Server Err*/	throw HttpError(500, this->matching_directives, root);
+		}
+
+		// update the response
+		std::string						location_header;
+		std::string						headers;
+		std::string						tmp;
+		std::string						body;
+		std::string						domainName;
+		std::string						newResourceUrl;
+		std::string						newResourceRelPath;
+
+		domainName		= std::string(server_IP) + ":" + matching_directives.directives.at("listen");
+		newResourceUrl	= "http://" + domainName + "/" + newFileDir + "/" + newFileName;
+		newResourceRelPath = newFileDir + "/" + newFileName;
+
+		body				= "Resource " +  newResourceUrl  + " at directory\"" +  reqPath  + "\" was successfully created\n";
+		location_header	= std::string("Location: " + newResourceUrl);
+		headers			= getHeaders(201, "OK", newResourceRelPath, body.size(), location_header);
+
+		this->response.insert(this->response.begin(), headers.begin(), headers.end());
+		this->response.insert(this->response.end(), body.begin(), body.end());
+	}
+	else
+	{
+		stream_newFile.write(incomingData.data(), incomingData.size());
+		if (stream_newFile.fail()) {
+			stream_newFile.close();
+			unlink(newFileName.c_str());
+			/*Server Err*/	throw HttpError(500, this->matching_directives, root);
+		}
+	}
 }

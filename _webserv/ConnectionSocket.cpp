@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConnectionSocket.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: avilla-m <avilla-m@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 18:07:39 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/08 07:06:42 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/10 16:03:31 by avilla-m         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,7 +69,10 @@ void	ConnectionSocket::serve_client( void ) {
 			request->parse_line();
 		}
 		else {
-			response->send_line();
+			if (response->dechunking())
+				response->POSTNextChunk();
+			else
+				response->send_line();
 		}
 	}
 	catch (const TaskFulfilled& e) {

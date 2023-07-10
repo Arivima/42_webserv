@@ -65,6 +65,13 @@ private:
 	std::vector<char>							response;
 	CGI* 										cgi;
 
+	//*	POST data
+	const std::string							uri_path;
+	bool										dechunking;
+	std::string									newFileName;
+	std::ofstream								stream_newFile;
+	std::string									newFileDir;
+
 public: 
 	//*		main Constructors and Destructors
 							Response(
@@ -79,6 +86,7 @@ public:
 
 	//*		main functionalities
 	void					send_line( void );
+	bool					isDechunking(void);
 	void					generateResponse( void );
 	void					print_resp( void );
 
@@ -98,6 +106,8 @@ private:
 									);
 	void							generateGETResponse( const std::string uri_path );
 	void							generatePOSTResponse( const std::string uri_path );
+	void							generateChunkedPOSTResponse( const std::string uri_path );
+	void							POSTNextChunk( void );
 	void							generateDELETEResponse( const std::string uri_path );
 	std::string						getHeaders(
 										int status, std::string description,

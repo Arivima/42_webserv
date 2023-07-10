@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: avilla-m <avilla-m@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 15:41:58 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/09 19:56:02 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/10 14:33:15 by avilla-m         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,8 +50,11 @@ private:
 	char									rcv_buf[RCV_BUF_SIZE + 1];	//*	buffer upon which we recv()
 	std::vector<char>						sock_stream;				//*	vector on which we dump the request incoming data for a more convenient handling
 	std::vector<char>						cur_line;					//*	current req line
+
 	int										cur_body_size;				//*	remaining body bytes to be read
 	bool									chunked;
+	bool									next_chunk_arrived;
+	size_t									cur_chunk_size;
 
 public:
 
