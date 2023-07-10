@@ -12,10 +12,6 @@ If one of those rules is not respected, config file is considered non-valid.
 
 ### Directives Specification
 
-name | root | http | server | location |
-| --------- | :----:| :-----:| :-----:| -----: |
-host | - | - | Y | -
-listen | - | - | Y | - |
 
 
 

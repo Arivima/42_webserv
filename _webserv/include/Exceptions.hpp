@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Exceptions.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: avilla-m <avilla-m@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/30 12:37:05 by avilla-m          #+#    #+#             */
-/*   Updated: 2023/07/10 13:28:12 by avilla-m         ###   ########.fr       */
+/*   Updated: 2023/07/10 20:49:01 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,9 @@ class SystemCallException: public std::exception
     public:
         const std::string _sysCall;
         SystemCallException(const std::string & s) : _sysCall(s){}
-        virtual const char * what () const throw(){return (("system call " + _sysCall + " failed.").c_str());}
+        virtual const char * what () const throw(){
+			return (("system call " + _sysCall + " failed.").c_str());
+		}
 };
 
 class ConfigFileException: public std::exception
@@ -34,14 +36,16 @@ class ConfigFileException: public std::exception
     public:
         const std::string _message;
         ConfigFileException(const std::string & s) : _message(s){}
-        virtual const char * what () const throw(){return (("Configuration file error: " + _message + ".").c_str());}
+        virtual const char * what () const throw(){
+			return (("Configuration file error: " + _message + ".").c_str());
+		}
 };
 
 class TaskFulfilled : public std::exception {
-public:
-	virtual const char*	what( void ) const throw() {
-		return ("TaskFulfilled : switch connection status");
-	}
+	public:
+		virtual const char*	what( void ) const throw() {
+			return ("TaskFulfilled : switch connection status");
+		}
 };
 
 class SockEof : public std::exception {

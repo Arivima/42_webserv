@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConnectionSocket.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: avilla-m <avilla-m@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 18:07:39 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/10 16:03:31 by avilla-m         ###   ########.fr       */
+/*   Updated: 2023/07/10 18:29:59 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,12 +64,30 @@ void	ConnectionSocket::status_switch( void ) {
 }
 
 void	ConnectionSocket::serve_client( void ) {
+
+	//TODO verificare se il timer é scaduto
+	//TODO	se é scaduto, dobbiamo lanciare SockEof()
+
+	// clock_t	current;
+
+	// current = this_moment;
+	// current - timestamp > time_chosen
+	// 	throw SockEof()
+
+// #include <ctime>
+
+//     clock_t start = clock();
+//     clock_t now = clock();
+//     double elapsedSecs = static_cast<double>(now - start) / CLOCKS_PER_SEC;
+
+// 	HTTP 504 Gateway Timeout
+
 	try {
 		if (e_REQ_MODE == status) {
 			request->parse_line();
 		}
 		else {
-			if (response->dechunking())
+			if (response->isDechunking())
 				response->POSTNextChunk();
 			else
 				response->send_line();

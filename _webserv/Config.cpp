@@ -174,7 +174,7 @@ void	Config::parse( t_conf_block& current ) {
 void	Config::set_up_default_values(t_conf_block& current)
 {
 	if (current.directives.find("body_size") == current.directives.end())
-		current.directives.at("body_size") = std::to_string(DEFAULT_CLIENT_MAX_BODY_SIZE);	
+		current.directives["body_size"] = std::to_string(DEFAULT_CLIENT_MAX_BODY_SIZE);	
 }
 
 
@@ -420,7 +420,7 @@ void	Config::add_directive(t_conf_block& current, std::string& key, std::string&
 	}
 }
 
-void	check_value_validity(std::string& key, std::string & value)
+void	Config::check_value_validity(std::string& key, std::string & value)
 {
 	if ("body_size" ==  key)
 		check_value_validity_body_size(value);
@@ -431,7 +431,7 @@ void	check_value_validity(std::string& key, std::string & value)
 // from 1 byte to 1e+9 bytes (1G) 
 // 0 -> use default value // default value -> 1M 1e+6 bytes // limit value -> 1G 1e+9 bytes
 // abbreviation accepted K and M  // 1K 1e+3 bytes // 1M 1e+6 bytes // 1G 1e+9 bytes
-void	check_value_validity_body_size(std::string & value)
+void	Config::check_value_validity_body_size(std::string & value)
 {
 	std::string body_size_value = value;
 

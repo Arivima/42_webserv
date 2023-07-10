@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/05 15:27:54 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/08 01:36:27 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/10 20:59:39 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,11 +16,6 @@
 # include "Colors.hpp"
 # include "Types.hpp"
 # include "Exceptions.hpp"
-// # include "../config_types.hpp"
-
-// # ifndef DEBUG
-// #  define DEBUG 0
-// # endif
 
 # ifdef DEBUG
 #  define COUT_DEBUG_INSERTION(x) std::cout << x;
@@ -51,8 +46,7 @@ Connection: close\r\n\
 # define MAX_HTTP_REQ_LINE 8000
 # define MAX_HTTP_HEAD_LINE 4096
 
-//!	REMEMBER TO TOGLIEREEEE!!!!!!
-# define RCV_BUF_SIZE 4//(MAX_HTTP_HEAD_LINE > MAX_HTTP_REQ_LINE ? MAX_HTTP_HEAD_LINE : MAX_HTTP_REQ_LINE)
+# define RCV_BUF_SIZE (MAX_HTTP_HEAD_LINE > MAX_HTTP_REQ_LINE ? MAX_HTTP_HEAD_LINE : MAX_HTTP_REQ_LINE)
 // # define RCV_BUF_SIZE 1024
 # define SND_BUF_SIZE 1024
 

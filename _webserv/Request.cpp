@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: avilla-m <avilla-m@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 17:19:26 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/10 14:37:00 by avilla-m         ###   ########.fr       */
+/*   Updated: 2023/07/10 20:54:04 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 #include <sys/socket.h>	//recv
 #include <iostream>		//cout
 #include <sstream>		//string stream
-#include <string>		//stol
+#include <string>		//stoi
 #include <cstring>		//memset
 #include <algorithm>	//std::remove, std::find
 
@@ -51,13 +51,18 @@ Request::~Request( void ) {
 //*		Main Functions
 
 std::vector<char>		Request::getIncomingData( void )
-{
-	const struct epoll_event*		eevent = edata.getEpollEvent(this->sock_fd);
+{ COUT_DEBUG_INSERTION(YELLOW "Request::getIncomingData()" RESET << std::endl);
 	std::vector<char>				incomingData;
 	std::vector<char>::iterator		cr_pos;
 	std::vector<char>				line;
 
-	read_line();
+	COUT_DEBUG_INSERTION("BEFORE\n")
+	printVectorChar(payload, "payload");
+	parse_line();
+	if(payload.empty())
+		throw (ChunkNotComplete());
+	COUT_DEBUG_INSERTION("AFTER\n")
+	printVectorChar(payload, "payload");
 	if (false == next_chunk_arrived)
 	{
 		if (hasHttpHeaderDelimiter(payload))
@@ -72,7 +77,8 @@ std::vector<char>		Request::getIncomingData( void )
 			payload.erase(payload.begin(), cr_pos + 2);//*taking line off the payload
 
 			line.push_back('\0');
-			cur_chunk_size = std::stoll(line);
+			cur_chunk_size = std::stoi(line.data(), nullptr, 16);
+			COUT_DEBUG_INSERTION("current chunk size : " << cur_chunk_size << std::endl);
 			next_chunk_arrived = true;
 		}
 		throw (ChunkNotComplete());
@@ -94,9 +100,10 @@ std::vector<char>		Request::getIncomingData( void )
 		);
 		payload.erase(
 			payload.begin(),
-			payload.begin() + cur_chunk_size
+			payload.begin() + cur_chunk_size + 2
 		);
 		next_chunk_arrived = false;
+		printVectorChar(incomingData, "Chunk bytes");
 
 		return (incomingData);
 	}
@@ -232,11 +239,12 @@ void	Request::parse_header( void )
 				
 				std::getline(str_stream, key, ':');
 				std::getline(str_stream, value);
+				strip_trailing_and_leading_spaces(value);
 				req[key] = value;
 				if (
 					"Transfer-Encoding" == key &&
 					"chunked" == value
-				)
+				) 
 					chunked = true;
 			}
 		}
@@ -309,10 +317,12 @@ void	Request::printVectorChar(std::vector<char>& v, std::string name)
 		for (std::vector<char>::iterator it = v.begin(); it != v.end(); it++)
 		{
 			if ((*it) == '\n')
-				std::cout << "n";
+				std::cout << RED "n" RESET;
+			else
 			if ((*it) == '\r')
-				std::cout << "r";
-			std::cout << *it ;
+				std::cout << RED "r" RESET;
+			else
+				std::cout << *it ;
 		}
 		std::cout << std::endl;
 	}

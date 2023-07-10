@@ -28,7 +28,7 @@
 */
 class Response
 {
-	//*		TYPEDEFS (private)
+//*		Private typedefs ____________________________________________
 private:
 	/**
 	 * @brief this structure represents location matching data.
@@ -51,7 +51,7 @@ private:
 		}
 	}	t_location_match;
 
-	//*		MEMBER FIELDS
+//*		Private member attributes ___________________________________
 private:
 	const t_conf_block&							matching_directives;
 	Request*									request;				//*	request object
@@ -72,6 +72,7 @@ private:
 	std::ofstream								stream_newFile;
 	std::string									newFileDir;
 
+//*		Public member functions _____________________________________
 public: 
 	//*		main Constructors and Destructors
 							Response(
@@ -83,14 +84,19 @@ public:
 								const t_epoll_data&	edata
 							);
 							~Response();
-
 	//*		main functionalities
 	void					send_line( void );
+	void					POSTNextChunk( void );
 	bool					isDechunking(void);
 	void					generateResponse( void );
 	void					print_resp( void );
 
+//*		Private member functions ____________________________________
 private:
+	//* 	Unused canonical form
+									Response( void );
+									Response( const Response& other );
+	Response&						operator=( const Response& other );
 	//*		Main Private Helper functions
 	const t_conf_block&				takeMatchingDirectives(
 										const t_conf_block& conf_server_block,
@@ -107,7 +113,6 @@ private:
 	void							generateGETResponse( const std::string uri_path );
 	void							generatePOSTResponse( const std::string uri_path );
 	void							generateChunkedPOSTResponse( const std::string uri_path );
-	void							POSTNextChunk( void );
 	void							generateDELETEResponse( const std::string uri_path );
 	std::string						getHeaders(
 										int status, std::string description,
@@ -115,7 +120,6 @@ private:
 										size_t	body_size, std::string additional_header = ""
 									);
 	std::string						getIndexPage( const std::string& root, std::string path );
-
 	//*		Secondary Helper Functions
 	bool							isMethodAllowed(void);
 	void							deleteFile( const std::string pathname );
@@ -129,8 +133,5 @@ private:
 									);
 	void							throw_HttpError_errno_stat();
 	std::string						take_location_root( void );
-
 };
-
-
 #endif

@@ -27,7 +27,7 @@
 #include <sys/select.h>     // select, FT_ISSET, FT_CLR, etc
 
 #include <map>
-#include <vector>           // vector
+#include <vector>
 
 #include <unistd.h>         // close
 #include <stdlib.h>         // exit, EXIT_FAILURE
@@ -35,7 +35,6 @@
 #include "Webserv.hpp"
 #include "ConnectionSocket.hpp"
 #include "EpollData.hpp"
-// #include "Exceptions.hpp"
 
 /**
  * @brief The Purpose of this class is to manage multiple servers using a event-driven model.
@@ -44,48 +43,43 @@
  * 
  */
 class Worker{
+//*		Private member attributes ___________________________________
 private:
 	//*	vector holding t_serv (server conf block with virtual servers sub_blocks + server port and sock fd
 	//*	+ vector of open connections) objects.
 	VectorServ				servers;
 	t_epoll_data			edata;		//*	epoll instance fd + epoll current events 
 
-	//*		Member functions
+//*		Public member functions _____________________________________
 public:
-	Worker(const t_conf_block& root_block);
-	~Worker();
-	
-	void workerLoop();
+	//*		main Constructors and destructors
+			Worker(const t_conf_block& root_block);
+			~Worker();
+	//*		main functionalities
+	void 	workerLoop();
 
+//*		Private member functions ____________________________________
 private:
+	//* 	Unused canonical form
+			Worker(const Worker & cpy);
+	Worker&	operator=(const Worker & cpy);
 	//*		private helper functions
 	void	_io_multiplexing_using_epoll();
 	void	_serve_clientS( void );
 	void	_handle_new_connectionS( void );
 	void	_handle_new_connection();
-
 	//*		private initialization functions
 	void	_server_init(const t_conf_block& conf_server_block);
 	void	_create_server_socket();
-	int		_create_ConnectionSocket(
-		t_server& server,
-		std::string& client_IP, std::string& server_IP
-	);
+	int		_create_ConnectionSocket(t_server& server, std::string& client_IP, std::string& server_IP);
 	void	_epoll_register_ConnectionSocket(int cli_socket);
 	void	_set_socket_as_reusable();
-	void	_init_server_addr(
-		const std::map<std::string, std::string>& server_directives
-	);
+	void	_init_server_addr(const std::map<std::string, std::string>& server_directives);
 	void	_print_server_ip_info();
 	void	_bind_server_socket_to_ip();
 	void	_make_server_listening();
 	void	_make_socket_non_blocking(int sock_fd);
 	void	_init_io_multiplexing();
-
-	//*		Canonical Form
-	Worker(const Worker & cpy);
-	Worker& operator=(const Worker & cpy);
-
 };
 
 #endif

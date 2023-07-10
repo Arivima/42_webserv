@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 17:56:31 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/06/30 19:58:08 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/10 20:38:08 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,17 +27,18 @@
  */
 class ConnectionSocket
 {
+//*		Public typedefs ____________________________________________
 public:
-	//*		Typedefs
 	typedef enum e_CONNECTION_STATUS
 	{
 		e_REQ_MODE,
 		e_RESP_MODE,
 	}	t_CONNECTION_STATUS;
-	
+
+//*		Private member attributes ___________________________________
 private:
 	t_CONNECTION_STATUS						status;						//*	REQUEST or RESPONSE
-	const int								sock_fd;					//*	connetction socket fd
+	const int								sock_fd;					//*	connection socket fd
 	const std::string						client_IP;					//*	ip of remote client
 	const std::string						server_IP;					//*	the interface, among all the assigned_server utilized interfaces, where the connection got accepted.
 	const t_server&							assigned_server;			//* struct containing server + open connections + server conf block
@@ -45,6 +46,7 @@ private:
 	Response*								response;					//*	response data of current request
 	Request*								request;					//*	request data of current request
 
+//*		Public member functions _____________________________________
 public:
 	//*		main Constructors and Destructors
 						ConnectionSocket(
@@ -55,22 +57,19 @@ public:
 								const t_epoll_data&			edata
 						);
 						~ConnectionSocket();
-	//*		main Functions
+	//*	main functionalities
 	void				serve_client( void );
 	int					getSockFD( void );
 	t_CONNECTION_STATUS	getStatus( void );
 	const t_server&		getAssignedServer( void ) const;
 
+//*		Private member functions ____________________________________
 private:
-	//*		CANONICAL FORM
+	//* Unused canonical form
 						ConnectionSocket( void );
 						ConnectionSocket( const ConnectionSocket & sock );
 	ConnectionSocket&	operator=(const ConnectionSocket& sock);
-	
-private:
 	//*		helper functions
 	void				status_switch( void );
 };
-
-
 #endif

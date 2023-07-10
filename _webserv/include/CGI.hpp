@@ -12,48 +12,45 @@
 # define	CGI_INFILE		".cgi_input"
 # define	CGI_OUTFILE		".cgi_output"
 
-
-//? N.B : see dictionnary of all ENV variabbles at end of this file
-
 class CGI {
-	//*		Private member attributes
-	private:
-		const int									sock_fd;
-		char*										cgi_env[CGI_ENV_SIZE + 1];
-		std::vector<char>							response;
-		Request*									request;
-		const std::map<std::string, std::string>&	req;
-		const t_conf_block&							matching_directives;
+//*		Private member attributes ___________________________________
+private:
+	const int									sock_fd;
+	char*										cgi_env[CGI_ENV_SIZE + 1];
+	std::vector<char>							response;
+	Request*									request;
+	const std::map<std::string, std::string>&	req;
+	const t_conf_block&							matching_directives;
 
-	//*		Public member functions
-	public:
-		CGI(
-			int											sock_fd,
-			const std::string &							client_IP,
-			const std::string &							server_IP,
-			Request*									request,
-			const t_conf_block &						matching_directives,
-			const std::string&							location_root,
-			const std::string &							cgi_extension,
-			const std::string &							interpreter_path
-		);
-		~CGI();
-		void				launch();
-		std::vector<char>	getResponse();
-		std::string			get_env_value(const std::string & key);
+//*		Public member functions _____________________________________
+public:
+	//*	main Constructors and destructors
+	CGI(
+		int											sock_fd,
+		const std::string &							client_IP,
+		const std::string &							server_IP,
+		Request*									request,
+		const t_conf_block &						matching_directives,
+		const std::string&							location_root,
+		const std::string &							cgi_extension,
+		const std::string &							interpreter_path
+	);
+	~CGI();
+	//*	main functionalities
+	void				launch();
+	std::vector<char>	getResponse();
+	std::string			get_env_value(const std::string & key);
 
-	//*		Private member functions
-	private:
-		void				init_env_paths(const std::string & root, const std::string & cgi_extension, const std::string & interpreter_path);
-		void				init_env(const t_conf_block& matching_directives, const std::string& client_IP, const std::string& server_IP);
-
-		//* Unused default/copy constructor, copy operator
-		CGI();
-		CGI(const CGI & c);
-		CGI&				operator=(const CGI & c);
-
-		//* Debug
-		void				print_arr(char ** arr, const std::string & title);
+//*		Private member functions ____________________________________
+private:
+	void				init_env_paths(const std::string & root, const std::string & cgi_extension, const std::string & interpreter_path);
+	void				init_env(const t_conf_block& matching_directives, const std::string& client_IP, const std::string& server_IP);
+	//* Unused canonical form
+	CGI();
+	CGI(const CGI & c);
+	CGI&				operator=(const CGI & c);
+	//*	helper functions
+	void				print_arr(char ** arr, const std::string & title);
 };
 #endif
 

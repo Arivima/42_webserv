@@ -909,15 +909,15 @@ void	Response::generateChunkedPOSTResponse( const std::string uri_path )
 		//! check behavior ? throw ?
 		newFileName = "POST_test";
 	}
-	dir = reqPath.substr(0, pos);
+	newFileDir = reqPath.substr(0, pos);
 	
 	//! check upload_path is indeed correct
-	fullDirPath		= root + "/" + dir;
-	fullFilePath	= root + "/" + dir + "/" + newFileName;
+	fullDirPath		= root + "/" + newFileDir;
+	fullFilePath	= root + "/" + newFileDir + "/" + newFileName;
 
 	std::cout << "POST reqPath : "	 	<< reqPath << std::endl;
 	std::cout << "POST root : "	 		<< root << std::endl;
-	std::cout << "POST dir : "	 		<< dir << std::endl;
+	std::cout << "POST dir : "	 		<< newFileDir << std::endl;
 	std::cout << "POST newFileName : "	<< newFileName << std::endl;
 	std::cout << "POST fullDirPath : "	<< fullDirPath << std::endl;
 	std::cout << "POST fullFilePath : "	<< fullFilePath << std::endl;
@@ -927,7 +927,7 @@ void	Response::generateChunkedPOSTResponse( const std::string uri_path )
 	size_t							extension_pos;
 
 	errno = 0;
-	if (isDirectory(root, dir))
+	if (isDirectory(root, newFileDir))
 	{
 			// create the new resource at the location
 			std::cout << MAGENTA << "Trying to add a resource to DIRECTORY : " << fullDirPath << RESET << std::endl;
@@ -945,7 +945,7 @@ void	Response::generateChunkedPOSTResponse( const std::string uri_path )
 				newFileName += "_cpy" + fileExtension;
 				if (newFileName.size() >= 255)
 					/*Server Err*/	throw HttpError(500, this->matching_directives, root);
-				fullFilePath	= root + "/" + dir + "/" + newFileName;
+				fullFilePath	= root + "/" + newFileDir + "/" + newFileName;
 			}
 			if (errno && ENOENT != errno)
 				throw return_HttpError_errno_stat(root, matching_directives);
@@ -966,50 +966,66 @@ void	Response::generateChunkedPOSTResponse( const std::string uri_path )
 }
 
 void	Response::POSTNextChunk( void )
-{
+{ COUT_DEBUG_INSERTION(YELLOW "Response::POSTNextChunk()" RESET << std::endl);
 	std::vector<char>	incomingData;
 	std::string			root = location_root;
 	std::string			reqPath(uri_path);
 
-	//TODO	gestire catch eccezioni di request->getIncomingData()
-	incomingData = request->getIncomingData();
-	if (incomingData.empty())//*last chunk
-	{
-		dechunking = false;
-		stream_newFile.close();
-		if (stream_newFile.fail()) {
+	try {
+		try
+		{
+			incomingData = request->getIncomingData();
+		}
+		catch (const ChunkNotComplete& e) {
+			return ;
+		}
+		catch (const std::invalid_argument& e) {//*invalid chunk
 			stream_newFile.close();
 			unlink(newFileName.c_str());
-			/*Server Err*/	throw HttpError(500, this->matching_directives, root);
+			throw (HttpError(400, matching_directives, location_root));
 		}
 
-		// update the response
-		std::string						location_header;
-		std::string						headers;
-		std::string						tmp;
-		std::string						body;
-		std::string						domainName;
-		std::string						newResourceUrl;
-		std::string						newResourceRelPath;
+		if (incomingData.empty())//*last chunk
+		{
+			dechunking = false;
+			stream_newFile.close();
+			if (stream_newFile.fail()) {
+				unlink(newFileName.c_str());
+				/*Server Err*/	throw HttpError(500, this->matching_directives, root);
+			}
 
-		domainName		= std::string(server_IP) + ":" + matching_directives.directives.at("listen");
-		newResourceUrl	= "http://" + domainName + "/" + newFileDir + "/" + newFileName;
-		newResourceRelPath = newFileDir + "/" + newFileName;
+			// update the response
+			std::string						location_header;
+			std::string						headers;
+			std::string						tmp;
+			std::string						body;
+			std::string						domainName;
+			std::string						newResourceUrl;
+			std::string						newResourceRelPath;
 
-		body				= "Resource " +  newResourceUrl  + " at directory\"" +  reqPath  + "\" was successfully created\n";
-		location_header	= std::string("Location: " + newResourceUrl);
-		headers			= getHeaders(201, "OK", newResourceRelPath, body.size(), location_header);
+			domainName		= std::string(server_IP) + ":" + matching_directives.directives.at("listen");
+			newResourceUrl	= "http://" + domainName + "/" + newFileDir + "/" + newFileName;
+			newResourceRelPath = newFileDir + "/" + newFileName;
 
-		this->response.insert(this->response.begin(), headers.begin(), headers.end());
-		this->response.insert(this->response.end(), body.begin(), body.end());
+			body				= "Resource " +  newResourceUrl  + " at directory\"" +  reqPath  + "\" was successfully created\n";
+			location_header	= std::string("Location: " + newResourceUrl);
+			headers			= getHeaders(201, "OK", newResourceRelPath, body.size(), location_header);
+
+			this->response.insert(this->response.begin(), headers.begin(), headers.end());
+			this->response.insert(this->response.end(), body.begin(), body.end());
+		}
+		else
+		{
+			stream_newFile.write(incomingData.data(), incomingData.size());
+			if (stream_newFile.fail()) {
+				stream_newFile.close();
+				unlink(newFileName.c_str());
+				/*Server Err*/	throw HttpError(500, this->matching_directives, root);
+			}
+		}
 	}
-	else
-	{
-		stream_newFile.write(incomingData.data(), incomingData.size());
-		if (stream_newFile.fail()) {
-			stream_newFile.close();
-			unlink(newFileName.c_str());
-			/*Server Err*/	throw HttpError(500, this->matching_directives, root);
-		}
+	catch (const HttpError& e) {
+		this->dechunking = false;
+		this->response = e.getErrorPage();
 	}
 }
