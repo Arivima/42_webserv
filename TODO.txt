@@ -11,17 +11,17 @@ Monday 10 July
 	Arielle
 		1-	Timers
 		4-	cgi script for file Upload
-		2-	redirections
-			- gestire direttamente in generateResponse
-				1.	verificare che matching_directives.directives.find("redirect")
-				2.	Se si, rispondere con un messaggio http redirect (studiare)
-				3.	--da gestire in generateResponse, quindi NON in GET, POST, DELETE
+
 
 TESTING
 		-	Check against subject, correction sheet, tester, write tests with python, Postman 
 		-	fare correction sheet e scrivere una lista de tutte le cose da dimonstrare
 		-	test body size
-
+		-	redirections
+			- gestire direttamente in generateResponse
+				1.	verificare che matching_directives.directives.find("redirect")
+				2.	Se si, rispondere con un messaggio http redirect (studiare)
+				3.	--da gestire in generateResponse, quindi NON in GET, POST, DELETE
 			
 
 Timers Idea (devo studiarlo meglio)
@@ -77,7 +77,6 @@ DONE	-Response : rimuovi subito query string se non é GET
 
 Final cleaning : 
 		-	clean exceptions / error syntax to make it consistent throughout files
-		-	refactor isDirectory 
 		-	clean all unuseful comments
 		-	put all implementations in .cpp
 

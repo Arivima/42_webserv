@@ -33,7 +33,7 @@ note:
 
 
 ### List of implemented directives, single/multi values
-| name | single | multi | value_type | value | value_ex | value_default |
+| name | single | multi | value_type | Description | value_ex | value_default |
 | ----- | :-----:| :----:| :---------:| :----| :--------| :--------|
 | host | Y | . | str | IP | localhost, 192.168.1.14 | localhost |
 | listen | Y | . | int | port | 8080 |
@@ -43,7 +43,7 @@ note:
 | root | Y | . | str | f_sys_path | /var/www/html|
 | index | . | Y | str | rel_path | index.html |
 | autoindex | Y | . | bool | | on/off |
-| body_size | Y | . | int | | 4096 |
+| body_size | Y | . | int | max_body_size | 5000, 500K, 200M | 1M|
 | error_page | . | Y | int[...int]/str | http errcode + rel_path | 400 404 /404.html |
 | return | Y | . | int/str | http redircode + str/rel_path | 301 http://example.com/new-url |
 | exec_cgi | Y | . |
