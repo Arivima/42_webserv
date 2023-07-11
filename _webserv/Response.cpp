@@ -145,12 +145,19 @@ void	Response::generateResponse( void )
 	std::string		url_no_query_str = uri_remove_queryString(req.at("url"));
 	try
 	{
-		if (false == isMethodAllowed())
+		std::cout << BOLDGREEN "generateResponse() for : " RESET << url_no_query_str << std::endl;
+		if (false == isMethodAllowed()) {
 			/*Not Allowed*/	throw (HttpError(405, matching_directives, location_root));
-		if (req.at("url").find("/..") != std::string::npos)//*input sanitization
-			/*Bad req*/	throw HttpError(400, matching_directives, location_root);  	
-		if (check_body_size() == false)
+		}
+		if (matching_directives.directives.find("return") != matching_directives.directives.end()) {
+			return (handle_redirection(matching_directives.directives.at("return")));
+		}
+		if (req.at("url").find("/..") != std::string::npos) {//*input sanitization
+			/*Bad req*/	throw HttpError(400, matching_directives, location_root);
+		}
+		if (check_body_size() == false) {
 			/*Content Too Large*/	throw HttpError(413, this->matching_directives, location_root);
+		}
 
 		cgi_extension = take_cgi_extension(
 			req.at("url"), matching_directives.directives
@@ -1037,4 +1044,47 @@ void	Response::POSTNextChunk( void )
 		this->dechunking = false;
 		this->response = e.getErrorPage();
 	}
+}
+
+
+// validity of configuration has been checked in the parsing
+	// code can be 307 or 308
+	// URL is validity is not checked -> responsibility of admin
+
+// 307	Temporary redirect		- Method and body not changed 
+							//	- The Web page is temporarily unavailable for unforeseen reasons.
+							//	- Better than 302 when non-GET operations are available on the site.
+// 308	Permanent Redirect
+							//	- Method and body not changed.
+							//	- Reorganization of a website, with non-GET links/operations.
+
+void	Response::handle_redirection(const std::string & value){
+	// get the redirection information from the matching directives
+    std::istringstream	iss(value);
+	std::string			http_status_code;
+	std::string			redirection_url;
+
+    iss >> http_status_code;
+    iss >> redirection_url;
+
+	strip_trailing_and_leading_spaces(redirection_url);
+	strip_trailing_and_leading_spaces(http_status_code);
+	std::cout
+		<< GREEN
+		<< "http_status_code : " << http_status_code << std::endl
+		<< "redirection_url : " << redirection_url << std::endl
+		<< RESET
+		<< std::endl;
+
+	// update the response
+	std::stringstream				headersStream;
+	std::string						headers;
+
+	headersStream
+		<< "HTTP/1.1 " << http_status_code << " " << (http_status_code == "307" ? "Temporary redirect" : "Permanent Redirect") << "\r\n"
+		<< std::string("Location: " + redirection_url) + "\r\n"
+		<< "\r\n";
+	
+	headers = headersStream.str();
+	this->response.insert(this->response.begin(), headers.begin(), headers.end());
 }

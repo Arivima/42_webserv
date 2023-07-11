@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 17:19:26 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/11 13:39:02 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/11 16:48:48 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -129,6 +129,7 @@ void	Request::parse_line( void )
 		false == sock_stream.empty() ||
 		(NULL != eevent &&  eevent->events & EPOLLIN))
 	{
+		std::cout << RED "dentro" RESET << std::endl;
 		read_line();
 		if (e_READING_HEADS == parser_status) {
 			parse_header();
@@ -298,9 +299,9 @@ void	Request::print_req( void ) {
 	COUT_DEBUG_INSERTION( GREEN "END---PRINTING HEADERS" RESET << std::endl );
 
 	COUT_DEBUG_INSERTION( BOLDGREEN "PRINTING body" RESET << std::endl );
-	for (std::vector<char>::iterator it = payload.begin(); it != payload.end(); it++)
-		COUT_DEBUG_INSERTION( *it );
-	COUT_DEBUG_INSERTION( std::endl );
+	// for (std::vector<char>::iterator it = payload.begin(); it != payload.end(); it++)
+	// 	COUT_DEBUG_INSERTION( *it );
+	// COUT_DEBUG_INSERTION( std::endl );
 	COUT_DEBUG_INSERTION( "body len : " << payload.size() << std::endl );
 	COUT_DEBUG_INSERTION( GREEN "END---PRINTING body" RESET << std::endl );
 

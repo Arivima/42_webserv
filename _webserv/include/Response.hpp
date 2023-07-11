@@ -124,6 +124,7 @@ private:
 	bool							isMethodAllowed(void);
 	void							deleteFile( const std::string pathname );
 	void							deleteDirectory( const std::string pathname );
+	void							handle_redirection(const std::string & value);
 	bool							check_body_size();
 
 	//TODO		forse move in utils

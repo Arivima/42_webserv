@@ -424,8 +424,69 @@ void	Config::check_value_validity(std::string& key, std::string & value)
 {
 	if ("body_size" ==  key)
 		check_value_validity_body_size(value);
+	if ("return" ==  key)
+		check_value_validity_return(value);
 }
 
+// check if return directive is correct
+// only one (optional) code, only one address 
+// syntax -> return 307 http://example.com/new-page;
+// syntax -> return http://example.com/new-page;
+
+// 307	Temporary redirect		- Method and body not changed 
+							//	- The Web page is temporarily unavailable for unforeseen reasons.
+							//	- Better than 302 when non-GET operations are available on the site.
+// 308	Permanent Redirect
+							//	- Method and body not changed.
+							//	- Reorganization of a website, with non-GET links/operations.
+void	Config::check_value_validity_return(std::string & value)
+{ std::cout << YELLOW "check_value_validity_return()" RESET << std::endl;
+    std::istringstream					iss(value);
+    std::pair<std::string, std::string> val;
+    std::string							word;
+	size_t								status_code;
+
+
+	std::cout
+		<< GREEN
+		<< "value : " << value
+		<< RESET
+		<< std::endl;
+
+	// Get the first word
+	if (!(iss >> val.first))
+        throw (std::invalid_argument("Config::check_value_validity_return() : directive : return : empty input."));
+	// Get the second word (optional)
+	if ((iss >> val.second))
+	{
+		// Check if there are more than two words in the directive
+		if ((iss >> word))	
+			throw (std::invalid_argument("Config::check_value_validity_return() : directive : return : invalid config."));
+	}
+
+    // check code part of the directive
+	// if status_code is not an int, it may be a url (as code is optional)
+	if (std::string::npos != val.first.find_first_not_of("0123456789"))
+	{
+		if (val.second.empty() == false)
+			throw (std::invalid_argument("Config::check_value_validity_return() : directive : return : invalid config."));
+		// if indeed a url -> manually correcting directive : updating default value for code (307)
+		else					
+			value = "307 " + val.first;
+	}
+	else
+	{
+		status_code = std::atol(val.first.c_str()); // throws std::invalid_argument or std::out_of_range
+		if ( status_code < 307 || status_code > 308 )
+			throw (std::invalid_argument("Config::check_value_validity_return() : directive : return : invalid config (redirection code allowed : 307, 308)."));
+	}
+
+	std::cout
+		<< GREEN
+		<< "value : " << value
+		<< RESET
+		<< std::endl;
+}
 
 // check if body size directive is correct
 // from 1 byte to 1e+9 bytes (1G) 

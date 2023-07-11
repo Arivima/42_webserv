@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/16 14:09:56 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/10 20:25:27 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/11 15:37:30 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,6 +59,7 @@ private:
 	void					check_directive_validity(const std::string& directive, t_config_block_level level);
 	void					add_directive(t_conf_block& current, std::string& key, std::string& value);
 	void					check_value_validity(std::string& key, std::string & value);
+	void					check_value_validity_return(std::string & value);
 	void					check_value_validity_body_size(std::string & value);
  	void					parse_server_block( t_conf_block& current );
 	void					parse_location_block( t_conf_block& current, std::string& cur_line );
