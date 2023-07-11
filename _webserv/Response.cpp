@@ -121,7 +121,7 @@ bool	Response::check_body_size()
 {
 	if (this->req.find("Content-Lenght") != this->req.end())
 	{
-		int req_body_size = std::stoi(this->req.at("Content-Lenght")); // stoi throws
+		int req_body_size = std::atol(this->req.at("Content-Lenght").c_str());
 		int max_body_size = std::stoi(this->matching_directives.directives.at("body_size"));
 		
 		return (req_body_size <= max_body_size);
