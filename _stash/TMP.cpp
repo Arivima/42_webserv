@@ -67,9 +67,9 @@ bool	check_value_validity_body_size()
 	// body_size always exists as its default value (1M) was set in value validity checking
 bool	check_body_size()
 {
-	if (this->req.find("Content-Lenght") != this->req.end())
+	if (this->req.find("Content-Length") != this->req.end())
 	{
-		int req_body_size = std::stoi(this->req.at("Content-Lenght")); // stoi throws
+		int req_body_size = std::stoi(this->req.at("Content-Length")); // stoi throws
 		int max_body_size = std::stoi(this->matching_directives.directives.at("body_size"));
 
 		if ( req_body_size > max_body_size )

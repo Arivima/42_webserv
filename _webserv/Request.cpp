@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 17:19:26 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/10 20:54:04 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/11 13:39:02 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -289,22 +289,22 @@ void	Request::parse_body( void ) {
 //*		helper functions
 
 void	Request::print_req( void ) {
-	std::cout << "| START print_req |" << std::endl;
+	COUT_DEBUG_INSERTION( "| START print_req |" << std::endl );
 
-	std::cout << BOLDGREEN "PRINTING HEADERS" RESET << std::endl;
+	COUT_DEBUG_INSERTION( BOLDGREEN "PRINTING HEADERS" RESET << std::endl );
 	for (std::map<std::string, std::string>::iterator it = req.begin(); it != req.end(); it++) {
-		std::cout << "|" << it->first << " : " << it->second << "|" << std::endl;
+		COUT_DEBUG_INSERTION( "|" << it->first << " : " << it->second << "|" << std::endl );
 	}
-	std::cout << GREEN "END---PRINTING HEADERS" RESET << std::endl;
+	COUT_DEBUG_INSERTION( GREEN "END---PRINTING HEADERS" RESET << std::endl );
 
-	std::cout << BOLDGREEN "PRINTING body" RESET << std::endl;
+	COUT_DEBUG_INSERTION( BOLDGREEN "PRINTING body" RESET << std::endl );
 	for (std::vector<char>::iterator it = payload.begin(); it != payload.end(); it++)
-		std::cout << *it;
-	std::cout << std::endl;
-	std::cout << "body len : " << payload.size() << std::endl;
-	std::cout << GREEN "END---PRINTING body" RESET << std::endl;
+		COUT_DEBUG_INSERTION( *it );
+	COUT_DEBUG_INSERTION( std::endl );
+	COUT_DEBUG_INSERTION( "body len : " << payload.size() << std::endl );
+	COUT_DEBUG_INSERTION( GREEN "END---PRINTING body" RESET << std::endl );
 
-	std::cout << "| END print_req |" << std::endl;
+	COUT_DEBUG_INSERTION( "| END print_req |" << std::endl);
 }
 
 void	Request::printVectorChar(std::vector<char>& v, std::string name)

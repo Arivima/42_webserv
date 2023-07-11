@@ -356,7 +356,7 @@ void	Config::parse_directive( t_conf_block& current, std::string& cur_line )
 }
 
 void	Config::check_directive_validity(const std::string& directive, t_config_block_level level){
-	std::cout << " check_directive_validity | directive : " << directive << " | level : " << level << std::endl;
+	COUT_DEBUG_INSERTION(" check_directive_validity | directive : " << directive << " | level : " << level << std::endl);
 
 	static const char*					allowed_directives[] = {
 		"listen", "location", "server_name", "host", "index", "body_size",
@@ -452,19 +452,15 @@ void	Config::check_value_validity_body_size(std::string & value)
 	}
 	
 	// check value validity using stoi (will throw if value isn't a number)
-	try
-	{
-		int size = std::stoi(body_size_value);
-		if (size > LIMIT_CLIENT_MAX_BODY_SIZE)
-			throw (std::invalid_argument("Config::check_value_validity() : invalid value for body size directive (max 1G)."));
-		if (size == 0)
-			value = std::to_string(DEFAULT_CLIENT_MAX_BODY_SIZE);
-
-	}
-	catch (std::exception& e)
-	{
+	if (std::string::npos != body_size_value.find_first_not_of("0123456789"))
 		throw (std::invalid_argument("Config::check_value_validity() : invalid value for body size directive."));
-	}
+	size_t size = std::atol(body_size_value.c_str());
+	if (size > LIMIT_CLIENT_MAX_BODY_SIZE)
+		throw (std::invalid_argument("Config::check_value_validity() : invalid value for body size directive (max 1G)."));
+	if (size == 0)
+		value = std::to_string(DEFAULT_CLIENT_MAX_BODY_SIZE);
+
+	COUT_DEBUG_INSERTION(BOLDGREEN "body_size: " RESET << value << std::endl);
 }
 
 //*		non member helper functions

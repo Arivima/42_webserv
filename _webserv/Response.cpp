@@ -119,11 +119,20 @@ bool	Response::isDechunking(void)
 	// body_size always exists as its default value (1M) was set in value validity checking
 bool	Response::check_body_size()
 {
-	if (this->req.find("Content-Lenght") != this->req.end())
+	if (this->req.find("Content-Length") != this->req.end())
 	{
-		int req_body_size = std::atol(this->req.at("Content-Lenght").c_str());
-		int max_body_size = std::stoi(this->matching_directives.directives.at("body_size"));
+		size_t req_body_size = std::atol(this->req.at("Content-Length").c_str());
+		size_t max_body_size = std::atol(this->matching_directives.directives.at("body_size").c_str());
 		
+		COUT_DEBUG_INSERTION(
+			GREEN
+			<< "Content-Length : " << this->req.at("Content-Length") << std::endl
+			<< "body_size : " << this->matching_directives.directives.at("body_size") << std::endl
+			<< "req_body_size : " << req_body_size << std::endl
+			<< "max_body_size : " << max_body_size << std::endl
+			<< RESET << std::endl
+		);
+
 		return (req_body_size <= max_body_size);
 	}
 	return (true);
@@ -353,7 +362,7 @@ void	Response::generatePOSTResponse( const std::string uri_path )
 	std::string						fullDirPath;
 	std::string						fullFilePath;
 
-	std::cout << "POST uri_path : " << uri_path << std::endl;
+	COUT_DEBUG_INSERTION("POST uri_path : " << uri_path << std::endl);
 
 	path_remove_leading_slash(root);
 	path_remove_leading_slash(reqPath);
@@ -373,12 +382,12 @@ void	Response::generatePOSTResponse( const std::string uri_path )
 	fullDirPath		= root + "/" + newFileDir;
 	fullFilePath	= root + "/" + newFileDir + "/" + newFileName;
 
-	std::cout << "POST reqPath : "	 	<< reqPath << std::endl;
-	std::cout << "POST root : "	 		<< root << std::endl;
-	std::cout << "POST dir : "	 		<< newFileDir << std::endl;
-	std::cout << "POST newFileName : "	<< newFileName << std::endl;
-	std::cout << "POST fullDirPath : "	<< fullDirPath << std::endl;
-	std::cout << "POST fullFilePath : "	<< fullFilePath << std::endl;
+	COUT_DEBUG_INSERTION("POST reqPath : "	 	<< reqPath << std::endl);
+	COUT_DEBUG_INSERTION("POST root : "	 		<< root << std::endl);
+	COUT_DEBUG_INSERTION("POST dir : "	 		<< newFileDir << std::endl);
+	COUT_DEBUG_INSERTION("POST newFileName : "	<< newFileName << std::endl);
+	COUT_DEBUG_INSERTION("POST fullDirPath : "	<< fullDirPath << std::endl);
+	COUT_DEBUG_INSERTION("POST fullFilePath : "	<< fullFilePath << std::endl);
 
 // checks if fullDirPath is pointing to a valid location (directory)
     struct stat						fileStat;
