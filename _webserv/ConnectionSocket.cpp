@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 18:07:39 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/10 18:29:59 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/11 20:11:24 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,33 +54,17 @@ void	ConnectionSocket::status_switch( void ) {
 	}
 	else {
 		COUT_DEBUG_INSERTION(YELLOW "ConnectionSocket::status_switch()---request" RESET << std::endl);
-		delete response;
-		response = NULL;
 		delete request;
 		request = NULL;
+		delete response;
+		response = NULL;
+		// throw (SockEof());
 		request = new Request(sock_fd, edata);
 		status = e_REQ_MODE;
 	}
 }
 
 void	ConnectionSocket::serve_client( void ) {
-
-	//TODO verificare se il timer é scaduto
-	//TODO	se é scaduto, dobbiamo lanciare SockEof()
-
-	// clock_t	current;
-
-	// current = this_moment;
-	// current - timestamp > time_chosen
-	// 	throw SockEof()
-
-// #include <ctime>
-
-//     clock_t start = clock();
-//     clock_t now = clock();
-//     double elapsedSecs = static_cast<double>(now - start) / CLOCKS_PER_SEC;
-
-// 	HTTP 504 Gateway Timeout
 
 	try {
 		if (e_REQ_MODE == status) {

@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 17:19:26 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/11 16:48:48 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/11 20:13:58 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,6 +37,8 @@ Request::Request(
 	payload.clear();
 	sock_stream.clear();
 	cur_line.clear();
+
+	timestamp_start = clock();
 }
 
 Request::~Request( void ) {
@@ -121,16 +123,30 @@ bool						Request::isChunked( void ) {
 	return (this->chunked);
 }
 
+// https://github.com/mmarinel/42RomaLuiss__Cpp09/blob/master/ex02/main.cpp
+bool						Request::isRequestTimeout( void ){
+    clock_t			timestamp_now;
+	double			elapsed_secs;
+	const double	timeout_value = 60.0; // 60 seconds
+	
+	timestamp_now	= clock();
+    elapsed_secs	= static_cast<double>(timestamp_now - this->timestamp_start) / CLOCKS_PER_SEC;
+	
+	return (elapsed_secs > timeout_value);
+}
+
 void	Request::parse_line( void )
 {
 	const struct epoll_event*	eevent = edata.getEpollEvent(this->sock_fd);
-
+	
+	// if (request.isRequestTimeout())
+	// 	throw TaskFulfilled();
 	if (
 		false == sock_stream.empty() ||
 		(NULL != eevent &&  eevent->events & EPOLLIN))
 	{
-		std::cout << RED "dentro" RESET << std::endl;
 		read_line();
+		//! printVectorChar(cur_line, "cur_line");
 		if (e_READING_HEADS == parser_status) {
 			parse_header();
 		}
@@ -198,6 +214,7 @@ void	Request::read_body( void ) {
 		sock_stream.end()
 	);
 	sock_stream.clear();
+	//! std::cout << "read " << bytes_read << " bytes of body" << std::endl;
 	if (false == chunked)
 		cur_body_size -= bytes_read;
 }
@@ -217,6 +234,9 @@ void	Request::parse_header( void )
 			{
 				parser_status = e_READING_BODY;
 				cur_body_size = std::atol(req["Content-Length"].c_str());
+				//! std::cout << "cur_body_size : " << cur_body_size << std::endl;
+				if (0 == cur_body_size)
+					throw TaskFulfilled();
 			}
 			else {
 				if (chunked)

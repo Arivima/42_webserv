@@ -150,6 +150,7 @@ void	Response::generateResponse( void )
 			/*Not Allowed*/	throw (HttpError(405, matching_directives, location_root));
 		}
 		if (matching_directives.directives.find("return") != matching_directives.directives.end()) {
+			//!std::cout << GREEN << "return" << RESET << std::endl;
 			return (handle_redirection(matching_directives.directives.at("return")));
 		}
 		if (req.at("url").find("/..") != std::string::npos) {//*input sanitization

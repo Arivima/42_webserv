@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 15:41:58 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/10 20:38:16 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/11 17:34:31 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 # include <map>		//*	parsed request (body included)
 # include <string>
 # include <sstream>	//*	socket stream
+# include <ctime>
 
 # include "Webserv.hpp"
 # include "EpollData.hpp"
@@ -42,7 +43,8 @@ private:
 	const t_epoll_data&						edata;
 	std::map<std::string, std::string>		req;	//*	map holding the request headers
 	std::vector<char>						payload;//*	request body
-	
+	clock_t									timestamp_start;
+
 	char									rcv_buf[RCV_BUF_SIZE + 1];	//*	buffer upon which we recv()
 	std::vector<char>						sock_stream;				//*	vector on which we dump the request incoming data for a more convenient handling
 	std::vector<char>						cur_line;					//*	current req line
@@ -66,6 +68,7 @@ public:
 	const std::vector<char>&					getPayload( void );
 	std::vector<char>							getIncomingData( void );
 	bool										isChunked( void );
+	bool										isRequestTimeout();
 	//*		public helper functions
 	void										print_req( void );
 

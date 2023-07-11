@@ -7,6 +7,7 @@ TO DO
 		3-	Config : overwrite multi-valued directive if it comes from outer block
 		-check for every member that should be a reference
 		- (forse)togliere set buffer size del socket nel Worker (setsockopt)
+		4. SEND Server Internal Error on SockEof (pensare se fare cosí)
 
 
 	Arielle
