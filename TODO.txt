@@ -11,15 +11,17 @@ TO DO
 
 
 	Arielle
-		-	test body size
 		-	implementare directive per timeout
+		-	cgi script for file Upload (pagina html con un immagine al centro, bottoni a destra sx, e pulsante per fare upload)
+		-	cgi script for chunked encoding (reading from input and printing to output)
 
 		Final cleaning : 
 			-	clean exceptions / error syntax to make it consistent throughout files
 			-	clean all unuseful comments
 			-	put all implementations in .cpp
-			-	clean webserv.hpp and utils.cpp		
-		4-	cgi script for file Upload
+			-	clean webserv.hpp and utils.cpp
+			- 	update webserv.doc
+			-	create project flowchart
 
 
 
@@ -49,28 +51,9 @@ TO DO
 
 
 
-Timers Idea (devo studiarlo meglio)
-
-		STUDIARE
-			1-	HTTP 504 Gateway Timeout (https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/504)
-			2-	
-
-		class :	ConnectionSocket && usare Exceptions.hpp getErrorPage()
-				e poi chiudere la connessione nel Worker (vedi sotto)
-		function : serve_client()
-
-		workflow : serve_client---->throw HttpError---->Worker::_serve_clientS
-															--->getErrorPage,
-															send and close connection.
-
-		idea :
-			1.	prima di fare parse_line() o send_line(),
-				controllare che elapsed_time < tempo scelto (scegliere un tempo--studiare)
-			2.	Se il tempo é >, throw HttpError()
 
 
-		quali timers ? clock_gettime (#include <time.h>)
-			-Example. (https://github.com/mmarinel/42RomaLuiss__Cpp09.git) ex02/main.cpp
+
 
 
 
