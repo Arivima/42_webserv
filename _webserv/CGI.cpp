@@ -3,7 +3,6 @@
 # include	<sys/socket.h>
 # include	<arpa/inet.h>
 # include	<unistd.h>		// fork, dup2, execve, write, close
-# include	<sys/wait.h>	// wait
 # include	<fcntl.h>		// open
 # include	<sys/stat.h>	// stat
 # include	<sstream>
@@ -17,6 +16,7 @@ CGI::CGI(
 	const std::string&							client_IP,
 	const std::string&							server_IP,
 	Request*									request,
+	bool										chunked,
 	const t_conf_block&							matching_directives,
 	const std::string&							location_root,
 	const std::string &							cgi_extension,
@@ -30,6 +30,8 @@ CGI::CGI(
 
 	init_env_paths(location_root, cgi_extension, interpreter_path);
 	init_env(matching_directives, client_IP, server_IP);
+
+	this->chunked = chunked;
 
 	print_arr(this->cgi_env, std::string("CGI Environment"));
 }
@@ -58,8 +60,6 @@ std::string CGI::get_env_value(const std::string & key){
 void CGI::launch()
 {COUT_DEBUG_INSERTION(YELLOW "CGI::launch()" RESET << std::endl);
 
-	pid_t				 pid = 0;
-
 	check_file_accessibility(
 		X_OK,
 		get_env_value("INTERPRETER_PATH"), "",
@@ -70,66 +70,137 @@ void CGI::launch()
 		get_env_value("SCRIPT_NAME"), get_env_value("ROOT"),
 		matching_directives
 	);
+	if (-1 == pipe(sendPayload_pipe))
+		throw_HttpError_debug("CGI::launch()", "pipe()", 500, this->matching_directives, get_env_value("ROOT"));
+	
 	pid = fork();
 	if (pid == -1)
 		throw_HttpError_debug("CGI::launch()", "fork()", 500, this->matching_directives, get_env_value("ROOT"));
 	else if (pid == 0)  // child -> CGI
-	{		
-		
-	//* CHANGED
-	// create an input file and write the content of body and query string
-		std::ofstream	stream_cgi_infile(CGI_INFILE, std::ios::out | std::ios::trunc | std::ios::binary);
-		if (false == stream_cgi_infile.is_open())
-			throw_HttpError_debug("CGI::launch()", "is_open()", 500, this->matching_directives, get_env_value("ROOT"));
-		
-		stream_cgi_infile.write(request->getPayload().data(), request->getPayload().size());
-	//* CHANGED
-		
-		if (stream_cgi_infile.fail())
-			throw_HttpError_debug("CGI::launch()", "stream <<", 500, this->matching_directives, get_env_value("ROOT"));
-		stream_cgi_infile.close();
+	{
+		//*	redirecting script's STDIN to PIPE
+		if (-1 == dup2(sendPayload_pipe[0], STDIN_FILENO))
+			throw_HttpError_debug("CGI::launch()", "dup2()", 500, this->matching_directives, get_env_value("ROOT"));
+		close(sendPayload_pipe[1]);
 
-	// open input and output files
-		int fd_in = open(CGI_INFILE, O_RDONLY, 0666);
-		if (fd_in == -1)
-			throw_HttpError_debug("CGI::launch()", "open CGI_INFILE", 500, this->matching_directives, get_env_value("ROOT"));
-		int fd_out = open(CGI_OUTFILE, O_RDWR | O_CREAT | O_TRUNC, 0666);
+		//*	creating outfile fd and dupping to STDOUT
+		fd_out = open(CGI_OUTFILE, O_RDWR | O_CREAT | O_TRUNC, 0666);
 		if (fd_out == -1)
 			throw_HttpError_debug("CGI::launch()", "open CGI_OUTFILE", 500, this->matching_directives, get_env_value("ROOT"));
-
-	// duping fd // if no body ? dup or not ? -> handled by CGI ?
-		if (dup2(fd_in, STDIN_FILENO) == -1)
-			throw_HttpError_debug("CGI::launch()", "dup2(fd_in, STDIN_FILENO)", 500, this->matching_directives, get_env_value("ROOT"));
 		if (dup2(fd_out, STDOUT_FILENO) == -1)
 			throw_HttpError_debug("CGI::launch()", "dup2(fd_out, STDOUT_FILENO)", 500, this->matching_directives, get_env_value("ROOT"));
-	// creates arguments for execve
+		
+		//* creates arguments for execve
 		char* const cmd[3] = {
 			strdup(get_env_value("INTERPRETER_PATH").c_str()),
 			strdup((get_env_value("ROOT") + get_env_value("SCRIPT_NAME")).c_str()),
 			nullptr
 		};
-	// executing cgi
+		//* executing cgi
 		if (execve(cmd[0], cmd, this->cgi_env) == -1)
 			throw_HttpError_debug("CGI::launch()", "execve()", 500, this->matching_directives, get_env_value("ROOT"));
 	}
 	else 	// back to parent
-	{              
-		if (wait(0) == -1)
-			throw_HttpError_debug("CGI::launch()", "wait()", 500, this->matching_directives, get_env_value("ROOT"));
-		// Update the response
-		std::ifstream	stream_cgi_outfile(CGI_OUTFILE, std::ios::in);
-		if (false == stream_cgi_outfile.is_open())
-			throw_HttpError_debug("CGI::launch()", "is_open()", 500, this->matching_directives, get_env_value("ROOT"));
-        
-		response.assign(std::istreambuf_iterator<char>(stream_cgi_outfile), std::istreambuf_iterator<char>());
-        
-	// delete files
-		if (unlink(CGI_OUTFILE) == -1) 
-			throw_HttpError_debug("CGI::launch()", "unlink(CGI_OUTFILE)", 500, this->matching_directives, get_env_value("ROOT"));
-		if (unlink(CGI_INFILE) == -1) 
-			throw_HttpError_debug("CGI::launch()", "unlink(CGI_INFILE)", 500, this->matching_directives, get_env_value("ROOT"));
+	{
+		close(sendPayload_pipe[0]);
+		if (false == chunked)
+		{
+			//*	printing body into the pipe
+			backupStdout = dup(STDOUT_FILENO);
+			dup2(sendPayload_pipe[1], STDOUT_FILENO);
+			for (
+				std::vector<char>::const_iterator it = request->getPayload().begin();
+				it != request->getPayload().end();
+				it++
+			)
+			{
+				std::cout << (*it);
+			}
+				//*	putting back STDOUT where it belongs
+			dup2(backupStdout, STDOUT_FILENO);
+			close(sendPayload_pipe[1]);
+
+			//*	waiting for cgi to terminate
+			if (wait(0) == -1)
+				throw_HttpError_debug("CGI::launch()", "wait()", 500, this->matching_directives, get_env_value("ROOT"));
+
+			//* Update the response
+			std::ifstream	stream_cgi_outfile(CGI_OUTFILE, std::ios::in);
+			if (false == stream_cgi_outfile.is_open())
+				throw_HttpError_debug("CGI::launch()", "is_open()", 500, this->matching_directives, get_env_value("ROOT"));
+			response.assign(std::istreambuf_iterator<char>(stream_cgi_outfile), std::istreambuf_iterator<char>());
+
+			//* delete files
+			stream_cgi_outfile.close();
+			if (unlink(CGI_OUTFILE) == -1) 
+				throw_HttpError_debug("CGI::launch()", "unlink(CGI_OUTFILE)", 500, this->matching_directives, get_env_value("ROOT"));
+		}
 	}
 }
+
+
+void	CGI::CGINextChunk( void )
+{
+	std::vector<char>	incomingData;
+
+	try
+	{
+		try
+		{
+			incomingData = request->getIncomingData();
+		}
+		catch (const ChunkNotComplete& e) {
+			return ;
+		}
+
+		if (incomingData.empty())
+		{
+			//*	sending EOF to the CGI and waiting the script to be done
+			close(sendPayload_pipe[1]);
+			if ( -1 == wait(0) )
+				throw_HttpError_debug(
+					"CGI::CGINextChunk()", "wait",
+					500,
+					matching_directives, get_env_value("ROOT")
+				);
+			
+			//* Update the response
+			std::ifstream	stream_cgi_outfile(CGI_OUTFILE, std::ios::in);
+			if (false == stream_cgi_outfile.is_open())
+				throw_HttpError_debug("CGI::launch()", "is_open()", 500, this->matching_directives, get_env_value("ROOT"));
+			response.assign(std::istreambuf_iterator<char>(stream_cgi_outfile), std::istreambuf_iterator<char>());
+
+			//* delete files
+			stream_cgi_outfile.close();
+			if (unlink(CGI_OUTFILE) == -1) 
+				throw_HttpError_debug("CGI::launch()", "unlink(CGI_OUTFILE)", 500, this->matching_directives, get_env_value("ROOT"));
+			
+			//*	signaling end of work
+			chunked = false;
+			throw TaskFulfilled();
+		}
+		else
+		{
+			backupStdout = dup(STDOUT_FILENO);
+			dup2(sendPayload_pipe[1], STDOUT_FILENO);
+			for (
+				std::vector<char>::iterator it = incomingData.begin();
+				it != incomingData.end();
+				it++
+			)
+			{
+				std::cout << (*it);
+			}
+			dup2(backupStdout, STDOUT_FILENO);
+		}
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+	}
+	
+}
+
 
 
 //*		Private member functions

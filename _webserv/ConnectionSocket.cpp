@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 18:07:39 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/12 16:51:22 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/12 20:08:29 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,7 +77,7 @@ void	ConnectionSocket::serve_client( void ) {
 		}
 		else {
 			if (response->isDechunking())
-				response->POSTNextChunk();
+				response->handle_next_chunk(); //response->POSTNextChunk();
 			else
 				response->send_line();
 		}

@@ -110,6 +110,20 @@ void	Response::send_line( void )
 	}
 }
 
+void	Response::handle_next_chunk( void )
+{
+	try {
+		if (this->cgi)
+			this->cgi->CGINextChunk();
+		else
+			this->POSTNextChunk();
+	}
+	catch (const TaskFulfilled& e) {
+		dechunking = false;
+		this->response = cgi->getResponse();
+	}
+}
+
 void	Response::POSTNextChunk( void )
 { COUT_DEBUG_INSERTION(YELLOW "Response::POSTNextChunk()" RESET << std::endl);
 	std::vector<char>	incomingData;
@@ -214,6 +228,8 @@ void	Response::generateResponse( void )
 		}
 		if (false == cgi_extension.empty())
 		{
+			if (this->request->isChunked())
+				this->dechunking = true;
 			return (generateCGIResponse(cgi_extension));
 		}
 		if ("GET" == this->req.at("method"))
@@ -587,7 +603,8 @@ void	Response::generateCGIResponse(const std::string& cgi_extension)
 	);
 	this->cgi = new CGI(
 		sock_fd, client_IP, server_IP,
-		request, matching_directives, location_root,
+		request, dechunking,
+		matching_directives, location_root,
 		cgi_extension, cgi_interpreter_path
 	);
 	this->cgi->launch();

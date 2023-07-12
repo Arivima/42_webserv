@@ -64,6 +64,7 @@ private:
 	const t_epoll_data&							edata;
 	std::vector<char>							response;
 	bool										redirect;
+	// bool										iscgi;
 	CGI* 										cgi;
 
 	//*	POST data
@@ -87,6 +88,7 @@ public:
 							~Response();
 	//*		main functionalities
 	void					send_line( void );
+	void					handle_next_chunk( void );
 	void					POSTNextChunk( void );
 	bool					isDechunking(void);
 	bool					isRedirect( void );
