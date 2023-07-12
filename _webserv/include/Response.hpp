@@ -112,10 +112,11 @@ private:
 										const t_conf_block& location,
 										const std::string& req_url
 									);
-	void							generateGETResponse( const std::string uri_path );
-	void							generatePOSTResponse( const std::string uri_path );
-	void							generateChunkedPOSTResponse( const std::string uri_path );
-	void							generateDELETEResponse( const std::string uri_path );
+	void							generateGETResponse( void );
+	void							generatePOSTResponse( void );
+	void							generateChunkedPOSTResponse( void );
+	void							generateDELETEResponse( void );
+	void							generateCGIResponse(const std::string& cgi_extension);
 	std::string						getHeaders(
 										int status, std::string description,
 										std::string& filepath,
@@ -123,18 +124,16 @@ private:
 									);
 	std::string						getIndexPage( const std::string& root, std::string path );
 	//*		Secondary Helper Functions
+	std::string						take_location_root( void );
 	bool							isMethodAllowed(void);
-	void							deleteFile( const std::string pathname );
-	void							deleteDirectory( const std::string pathname );
 	void							handle_redirection(const std::string & value);
 	bool							check_body_size();
-
-	//TODO		forse move in utils
 	std::string						http_req_complete_url_path(
 										const std::string& uri,
 										const std::string& root
 									);
+	void							deleteFile( const std::string pathname );
+	void							deleteDirectory( const std::string pathname );
 	void							throw_HttpError_errno_stat();
-	std::string						take_location_root( void );
 };
 #endif

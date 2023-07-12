@@ -27,9 +27,6 @@
 #include <dirent.h>
 #include <cerrno>		// errno
 
-//*		non-member helper functions
-//*		/////////////////////////////////////////////////
-
 
 //*		Main Constructor and Destructor
 Response::Response(
@@ -58,7 +55,10 @@ Response::Response(
 		uri_path(uri_remove_queryString(req.at("url")))
 {
 	dechunking = false;
-	redirect = false;
+	redirect = (
+		matching_directives.directives.end() !=
+		matching_directives.directives.find("return")
+	);
 	this->cgi = NULL;
 }
 
@@ -110,6 +110,73 @@ void	Response::send_line( void )
 	}
 }
 
+void	Response::POSTNextChunk( void )
+{ COUT_DEBUG_INSERTION(YELLOW "Response::POSTNextChunk()" RESET << std::endl);
+	std::vector<char>	incomingData;
+	std::string			root = location_root;
+	std::string			reqPath(uri_path);
+
+	try {
+		try
+		{
+			incomingData = request->getIncomingData();
+		}
+		catch (const ChunkNotComplete& e) {
+			return ;
+		}
+		catch (const std::invalid_argument& e) {//*invalid chunk
+			stream_newFile.close();
+			unlink(newFileName.c_str());
+			throw (HttpError(400, matching_directives, location_root));
+		}
+
+		if (incomingData.empty())//*last chunk
+		{
+			//*	closing newly created file
+			dechunking = false;
+			stream_newFile.close();
+			if (stream_newFile.fail()) {
+				unlink(newFileName.c_str());
+				/*Server Err*/	throw HttpError(500, this->matching_directives, root);
+			}
+
+			//* update the response
+			std::string						location_header;
+			std::string						headers;
+			std::string						tmp;
+			std::string						body;
+			std::string						domainName;
+			std::string						newResourceUrl;
+			std::string						newResourceRelPath;
+
+			domainName		= std::string(server_IP) + ":" + matching_directives.directives.at("listen");
+			newResourceUrl	= "http://" + domainName + "/" + newFileDir + "/" + newFileName;
+			newResourceRelPath = newFileDir + "/" + newFileName;
+
+			body				= "Resource " +  newResourceUrl  + " at directory\"" +  reqPath  + "\" was successfully created\n";
+			location_header	= std::string("Location: " + newResourceUrl);
+			headers			= getHeaders(201, "OK", newResourceRelPath, body.size(), location_header);
+
+			this->response.insert(this->response.begin(), headers.begin(), headers.end());
+			this->response.insert(this->response.end(), body.begin(), body.end());
+		}
+		else
+		{
+			//*	printing next chunk bytes into body
+			stream_newFile.write(incomingData.data(), incomingData.size());
+			if (stream_newFile.fail()) {
+				stream_newFile.close();
+				unlink(newFileName.c_str());
+				/*Server Err*/	throw HttpError(500, this->matching_directives, root);
+			}
+		}
+	}
+	catch (const HttpError& e) {
+		this->dechunking = false;
+		this->response = e.getErrorPage();
+	}
+}
+
 bool	Response::isDechunking(void)
 {
 	return (this->dechunking);
@@ -120,102 +187,49 @@ bool	Response::isRedirect( void )
 	return (this->redirect);
 }
 
-// check request against body size value, else throw 413 Content Too Large
-	// value validity is checked in config
-	// body_size always exists as its default value (1M) was set in value validity checking
-bool	Response::check_body_size()
-{
-	if (this->req.find("Content-Length") != this->req.end())
-	{
-		size_t req_body_size = std::atol(this->req.at("Content-Length").c_str());
-		size_t max_body_size = std::atol(this->matching_directives.directives.at("body_size").c_str());
-		
-		COUT_DEBUG_INSERTION(
-			GREEN
-			<< "Content-Length : " << this->req.at("Content-Length") << std::endl
-			<< "body_size : " << this->matching_directives.directives.at("body_size") << std::endl
-			<< "req_body_size : " << req_body_size << std::endl
-			<< "max_body_size : " << max_body_size << std::endl
-			<< RESET << std::endl
-		);
-
-		return (req_body_size <= max_body_size);
-	}
-	return (true);
-}
-
 void	Response::generateResponse( void )
 {
-	std::string		cgi_extension;
-	std::string		cgi_interpreter_path;
+	std::string		cgi_extension = take_cgi_extension(
+						req.at("url"), matching_directives.directives
+					);
 	std::string		url_no_query_str = uri_remove_queryString(req.at("url"));
+
 	try
 	{
-		std::cout << BOLDGREEN "generateResponse() for : " RESET << url_no_query_str << std::endl;
+		COUT_DEBUG_INSERTION("generateResponse() for : " RESET << url_no_query_str << std::endl);
 		if (request->timedOut()) {
 			/*Gateway Timeout*/	throw (HttpError(504, matching_directives, location_root));
+		}
+		if (std::string::npos != req.at("url").find("/..")) {//*input sanitization
+			/*Bad req*/	throw HttpError(400, matching_directives, location_root);
 		}
 		if (false == isMethodAllowed()) {
 			/*Not Allowed*/	throw (HttpError(405, matching_directives, location_root));
 		}
-		if (matching_directives.directives.find("return") != matching_directives.directives.end()) {
-			redirect = true;
-			return (handle_redirection(matching_directives.directives.at("return")));
-		}
-		if (req.at("url").find("/..") != std::string::npos) {//*input sanitization
-			/*Bad req*/	throw HttpError(400, matching_directives, location_root);
-		}
-		if (check_body_size() == false) {
+		if (false == check_body_size()) {
 			/*Content Too Large*/	throw HttpError(413, this->matching_directives, location_root);
 		}
-
-		cgi_extension = take_cgi_extension(
-			req.at("url"), matching_directives.directives
-		);
+		if (redirect) {
+			return (handle_redirection(matching_directives.directives.at("return")));
+		}
 		if (false == cgi_extension.empty())
 		{
-			std::cout << GREEN << "Response::generateResponse there is a CGI extension" << RESET << std::endl;
-			
-			cgi_interpreter_path = take_cgi_interpreter_path(
-										cgi_extension,
-										matching_directives.directives.at("cgi_enable")//* safe to call in this branch
-									);
-			COUT_DEBUG_INSERTION(
-				"cgi interpreter full path : |"
-				<< cgi_interpreter_path
-				<< "|"
-				<< std::endl
-			);
-			this->cgi = new CGI(
-				sock_fd, client_IP, server_IP,
-				request, matching_directives, location_root,
-				cgi_extension, cgi_interpreter_path
-			);
-			this->cgi->launch();
-			this->response = this->cgi->getResponse();
-
-			std::string	debug(this->response.begin(), this->response.end());
-			COUT_DEBUG_INSERTION(
-				"CGI response : " << std::endl
-				<< "|" << debug << "|" << std::endl;
-			);
-			return ;
+			return (generateCGIResponse(cgi_extension));
 		}
 		if ("GET" == this->req.at("method"))
-			return (generateGETResponse(url_no_query_str));
+			return (generateGETResponse());
 		if ("POST" == this->req.at("method"))
 		{
 			if (this->request->isChunked()) {
 				this->dechunking = true;
-				return (generateChunkedPOSTResponse(url_no_query_str));
+				return (generateChunkedPOSTResponse());
 			}
-			return (generatePOSTResponse(url_no_query_str));
+			return (generatePOSTResponse());
 		}
-		// if ("PUT" == this->req.at("method"))
-		// 	return (generatePUTResponse());
 		if ("DELETE" == this->req.at("method"))
-			return (generateDELETEResponse(url_no_query_str));
-		throw (HttpError(501, this->matching_directives, location_root));
+			return (generateDELETEResponse());
+		
+		throw (/*Not Implemented*/	HttpError(501, this->matching_directives, location_root));
 	}
 	catch (const HttpError& e) {
 		this->dechunking = false;
@@ -224,9 +238,10 @@ void	Response::generateResponse( void )
 }
 
 
+
 //_______________________ METHOD : GET _______________________
 // refactor to clean + test and make sure all cases are covered
-void	Response::generateGETResponse(  const std::string uri_path  )
+void	Response::generateGETResponse(  void  )
 {COUT_DEBUG_INSERTION(YELLOW "Response::generateGETResponse()" RESET << std::endl);
 
 	const std::string				root = location_root;
@@ -235,7 +250,7 @@ void	Response::generateGETResponse(  const std::string uri_path  )
 	std::vector<char>				page;
 	std::string						filePath = "";
 
-	std::cout << "Path of the request : " << (reqPath.empty()? "EMPTY" : reqPath ) << std::endl;
+	COUT_DEBUG_INSERTION("Path of the request : " << (reqPath.empty()? "EMPTY" : reqPath ) << std::endl);
 	if (reqPath.empty()) {
 		if (
 			(this->matching_directives.directives.find("autoindex") != this->matching_directives.directives.end())
@@ -292,74 +307,6 @@ void	Response::generateGETResponse(  const std::string uri_path  )
 	response.insert(response.end(), page.begin(), page.end());
 }
 
-//_______________________ METHOD : DELETE _______________________
-/**
- * @brief this function implements the DELETE method : delete a given file or directory and return a status of the operation
- * 
- * @param uri_path - the path of the file/directory to delete
- * @exception throws HTTPError when given file or directory is invalid for deleting, or syscall functions fail
- * @return (void)
- */
-
-// A successful DELETE response SHOULD be 
-	// 200 (OK) if the response includes an entity describing the status
-	// 202 (Accepted) if the action has not yet been enacted
-	// 204 (No Content) if the action has been enacted but the response does not include an entity.
-// failed request
-// 400 Bad Request: The request could not be understood or was malformed. The server should include information in the response body or headers about the nature of the error.
-// 403 Forbidden: The server understood the request, but the client does not have permission to access the requested resource.
-// 404 Not Found: The requested resource could not be found on the server.
-// 414 URI Too Long : The URI requested by the client is longer than the server is willing to interpret.
-// 409 Conflict: The request could not be completed due to a conflict with the current state of the resource. This is often used for data validation errors or when trying to create a resource that already exists.
-// 500 Internal Server Error: An unexpected error occurred on the server, indicating a problem with the server's configuration or processing of the request.
-
-void	Response::generateDELETEResponse( const std::string uri_path )
-{
-	const std::string				root = location_root;
-	std::string						reqPath(uri_path);
-	std::string						filePath;
-
-    struct stat						fileStat;
-	bool							is_dir;
-	bool							is_reg;
-
-	std::string						headers;
-	std::vector<char>				body;
-	std::string						tmp;	
-
-	std::cout << "method: DELETE" << std::endl;
-	std::cout << "uri_path : " << uri_path << std::endl;
-	path_remove_leading_slash(reqPath);
-	filePath = root + reqPath;
-	std::cout << "filePath : " << filePath << std::endl;
-
-	errno = 0;
-	if (stat(filePath.c_str(), &fileStat) == 0) {
-		is_dir = S_ISDIR(fileStat.st_mode);
-		is_reg = S_ISREG(fileStat.st_mode);
-		std::cout << MAGENTA << filePath <<" : " << (is_dir? "is a directory" : "") << (is_reg? "is a regular file" : "") << ((!is_dir && !is_reg)? "is neither a file nor a directory" : "") << RESET << std::endl;
-
-		if (is_dir)
-			deleteDirectory(filePath); 			// recursive call to delete content of directory (all files and subdirectories)
-		else if (is_reg)
-			deleteFile(filePath);
-		else 									// existing resource that is not a regular file nor a directory
-			/*Not allowed*/	throw HttpError(405, matching_directives, root, "url should point to a directory (POST)");
-    }
-	else {
-		COUT_DEBUG_INSERTION(YELLOW"Response::generateDELETEResponse()---stat failed" RESET << std::endl);
-		throw return_HttpError_errno_stat(location_root, matching_directives);
-		// throw_HttpError_errno_stat(); 			// throws accurate http status code according to errno
-	}
-
-// update the response
-	tmp = (is_dir == true ? "Directory: " : "File: ") +  filePath  + " was successfully deleted\n";
-	body.insert(body.begin(), tmp.begin(), tmp.end());
-	headers = getHeaders(200, "OK", filePath, body.size());
-	this->response.insert(this->response.begin(), headers.begin(), headers.end());
-	this->response.insert(this->response.end(), body.begin(), body.end());
-}
-
 //_______________________ METHOD : POST _______________________
 //TODO
 //TODO	1. line 49 : check if upload_path must be appended to the root
@@ -369,7 +316,7 @@ void	Response::generateDELETEResponse( const std::string uri_path )
 //TODO	5. line 110 : check open_mode
 //TODO	6. line 139 : check if location points to an absolute or relative path
 //TODO
-void	Response::generatePOSTResponse( const std::string uri_path )
+void	Response::generatePOSTResponse( void )
 {
 	std::string						root = location_root;
 	std::string						reqPath(uri_path);
@@ -474,6 +421,184 @@ void	Response::generatePOSTResponse( const std::string uri_path )
 	
 	this->response.insert(this->response.begin(), headers.begin(), headers.end());
 	this->response.insert(this->response.end(), body.begin(), body.end());
+}
+
+//_______________________ METHOD : POST Chunked _______________________
+void	Response::generateChunkedPOSTResponse( void )
+{
+	std::string						root = location_root;
+	std::string						reqPath(uri_path);
+	std::string						fullFilePath;
+	std::string						fullDirPath;
+	std::string						fileExtension;
+
+	std::cout << "POST uri_path : " << uri_path << std::endl;
+
+	path_remove_leading_slash(root);
+	path_remove_leading_slash(reqPath);
+
+	// check if existing filename and splits reqPath into dir and newFileName
+	size_t pos = reqPath.rfind("/");
+	if (pos != std::string::npos && pos < reqPath.length() - 1){//if / exists and there's characters after it
+		newFileName = reqPath.substr(pos + 1);
+	}
+	else {// if no filename given
+		//! check behavior ? throw ?
+		newFileName = "POST_test";
+	}
+	newFileDir = reqPath.substr(0, pos);
+	
+	//! check upload_path is indeed correct
+	fullDirPath		= root + "/" + newFileDir;
+	fullFilePath	= root + "/" + newFileDir + "/" + newFileName;
+
+	std::cout << "POST reqPath : "	 	<< reqPath << std::endl;
+	std::cout << "POST root : "	 		<< root << std::endl;
+	std::cout << "POST dir : "	 		<< newFileDir << std::endl;
+	std::cout << "POST newFileName : "	<< newFileName << std::endl;
+	std::cout << "POST fullDirPath : "	<< fullDirPath << std::endl;
+	std::cout << "POST fullFilePath : "	<< fullFilePath << std::endl;
+
+// checks if fullDirPath is pointing to a valid location (directory)
+    struct stat						fileStat;
+	size_t							extension_pos;
+
+	errno = 0;
+	if (isDirectory(root, newFileDir))
+	{
+			// create the new resource at the location
+			std::cout << MAGENTA << "Trying to add a resource to DIRECTORY : " << fullDirPath << RESET << std::endl;
+
+			// check if file exists at the given location and updating the name if it does
+			//TODO Replace with fileExists ?
+			extension_pos = newFileName.rfind(".");
+			if (std::string::npos != extension_pos)
+				fileExtension = newFileName.substr(extension_pos);
+			else
+				fileExtension = "";
+			while (stat(fullFilePath.c_str(), &fileStat) == 0) {
+				if (fileExtension.empty() == false)
+					newFileName	= newFileName.substr(0, newFileName.rfind(fileExtension));
+				newFileName += "_cpy" + fileExtension;
+				if (newFileName.size() >= 255)
+					/*Server Err*/	throw HttpError(500, this->matching_directives, root);
+				fullFilePath	= root + "/" + newFileDir + "/" + newFileName;
+			}
+			if (errno && ENOENT != errno)
+				throw return_HttpError_errno_stat(root, matching_directives);
+			
+			// writes body to new file
+			stream_newFile.open(fullFilePath);
+			if (false == stream_newFile.is_open())
+				/*Server Err*/	throw HttpError(500, this->matching_directives, root);
+	}
+	else if (errno)
+	{
+		throw return_HttpError_errno_stat(root, matching_directives);
+	}
+	else
+	{
+		/*Not allowed*/	throw HttpError(405, this->matching_directives, root, "url should point to a directory (POST)");
+	}
+}
+
+//_______________________ METHOD : DELETE _______________________
+// A successful DELETE response SHOULD be 
+	// 200 (OK) if the response includes an entity describing the status
+	// 202 (Accepted) if the action has not yet been enacted
+	// 204 (No Content) if the action has been enacted but the response does not include an entity.
+// failed request
+// 400 Bad Request: The request could not be understood or was malformed. The server should include information in the response body or headers about the nature of the error.
+// 403 Forbidden: The server understood the request, but the client does not have permission to access the requested resource.
+// 404 Not Found: The requested resource could not be found on the server.
+// 414 URI Too Long : The URI requested by the client is longer than the server is willing to interpret.
+// 409 Conflict: The request could not be completed due to a conflict with the current state of the resource. This is often used for data validation errors or when trying to create a resource that already exists.
+// 500 Internal Server Error: An unexpected error occurred on the server, indicating a problem with the server's configuration or processing of the request.
+/**
+ * @brief this function implements the DELETE method : delete a given file or directory and return a status of the operation
+ * 
+ * @param uri_path - the path of the file/directory to delete
+ * @exception throws HTTPError when given file or directory is invalid for deleting, or syscall functions fail
+ * @return (void)
+ */
+void	Response::generateDELETEResponse( void )
+{
+	const std::string				root = location_root;
+	std::string						reqPath(uri_path);
+	std::string						filePath;
+
+    struct stat						fileStat;
+	bool							is_dir;
+	bool							is_reg;
+
+	std::string						headers;
+	std::vector<char>				body;
+	std::string						tmp;	
+
+	std::cout << "method: DELETE" << std::endl;
+	std::cout << "uri_path : " << uri_path << std::endl;
+	path_remove_leading_slash(reqPath);
+	filePath = root + reqPath;
+	std::cout << "filePath : " << filePath << std::endl;
+
+	errno = 0;
+	if (stat(filePath.c_str(), &fileStat) == 0) {
+		is_dir = S_ISDIR(fileStat.st_mode);
+		is_reg = S_ISREG(fileStat.st_mode);
+		std::cout << MAGENTA << filePath <<" : " << (is_dir? "is a directory" : "") << (is_reg? "is a regular file" : "") << ((!is_dir && !is_reg)? "is neither a file nor a directory" : "") << RESET << std::endl;
+
+		if (is_dir)
+			deleteDirectory(filePath); 			// recursive call to delete content of directory (all files and subdirectories)
+		else if (is_reg)
+			deleteFile(filePath);
+		else 									// existing resource that is not a regular file nor a directory
+			/*Not allowed*/	throw HttpError(405, matching_directives, root, "url should point to a directory (POST)");
+    }
+	else {
+		COUT_DEBUG_INSERTION(YELLOW"Response::generateDELETEResponse()---stat failed" RESET << std::endl);
+		throw return_HttpError_errno_stat(location_root, matching_directives);
+		// throw_HttpError_errno_stat(); 			// throws accurate http status code according to errno
+	}
+
+// update the response
+	tmp = (is_dir == true ? "Directory: " : "File: ") +  filePath  + " was successfully deleted\n";
+	body.insert(body.begin(), tmp.begin(), tmp.end());
+	headers = getHeaders(200, "OK", filePath, body.size());
+	this->response.insert(this->response.begin(), headers.begin(), headers.end());
+	this->response.insert(this->response.end(), body.begin(), body.end());
+}
+
+//_______________________ CGI - METHOD : ANY _______________________
+void	Response::generateCGIResponse(const std::string& cgi_extension)
+{
+	std::string		cgi_interpreter_path;
+
+	COUT_DEBUG_INSERTION(GREEN << "Response::generateResponse there is a CGI extension" << RESET << std::endl);
+	
+	cgi_interpreter_path = take_cgi_interpreter_path(
+								cgi_extension,
+								matching_directives.directives.at("cgi_enable")//* safe to call in this branch
+							);
+	COUT_DEBUG_INSERTION(
+		"cgi interpreter full path : |"
+		<< cgi_interpreter_path
+		<< "|"
+		<< std::endl
+	);
+	this->cgi = new CGI(
+		sock_fd, client_IP, server_IP,
+		request, matching_directives, location_root,
+		cgi_extension, cgi_interpreter_path
+	);
+	this->cgi->launch();
+	this->response = this->cgi->getResponse();
+	
+	std::string	debug(this->response.begin(), this->response.end());
+	COUT_DEBUG_INSERTION(
+		"CGI response : " << std::endl
+		<< "|" << debug << "|" << std::endl;
+	);
+	return ;
 }
 
 
@@ -693,6 +818,7 @@ std::string		Response::getHeaders(
 }
 
 
+
 //*		Secondary Helper Functions
 
 bool			Response::isMethodAllowed(void)
@@ -712,6 +838,72 @@ bool			Response::isMethodAllowed(void)
 			return (true);
 	}
 	return (false);
+}
+
+// check request against body size value, else throw 413 Content Too Large
+	// value validity is checked in config
+	// body_size always exists as its default value (1M) was set in value validity checking
+bool	Response::check_body_size()
+{
+	if (this->req.find("Content-Length") != this->req.end())
+	{
+		size_t req_body_size = std::atol(this->req.at("Content-Length").c_str());
+		size_t max_body_size = std::atol(this->matching_directives.directives.at("body_size").c_str());
+		
+		COUT_DEBUG_INSERTION(
+			GREEN
+			<< "Content-Length : " << this->req.at("Content-Length") << std::endl
+			<< "body_size : " << this->matching_directives.directives.at("body_size") << std::endl
+			<< "req_body_size : " << req_body_size << std::endl
+			<< "max_body_size : " << max_body_size << std::endl
+			<< RESET << std::endl
+		);
+
+		return (req_body_size <= max_body_size);
+	}
+	return (true);
+}
+
+// validity of configuration has been checked in the parsing
+	// code can be 307 or 308
+	// URL is validity is not checked -> responsibility of admin
+// 307	Temporary redirect		- Method and body not changed 
+							//	- The Web page is temporarily unavailable for unforeseen reasons.
+							//	- Better than 302 when non-GET operations are available on the site.
+// 308	Permanent Redirect
+							//	- Method and body not changed.
+							//	- Reorganization of a website, with non-GET links/operations.
+void	Response::handle_redirection(const std::string & value)
+{ COUT_DEBUG_INSERTION(YELLOW "Response::handle_redirection()" RESET << std::endl);
+	// get the redirection information from the matching directives
+    std::istringstream	iss(value);
+	std::string			http_status_code;
+	std::string			redirection_url;
+
+    iss >> http_status_code;
+    iss >> redirection_url;
+
+	strip_trailing_and_leading_spaces(redirection_url);
+	strip_trailing_and_leading_spaces(http_status_code);
+	COUT_DEBUG_INSERTION(
+		GREEN
+		<< "http_status_code : " << http_status_code << std::endl
+		<< "redirection_url : " << redirection_url << std::endl
+		<< RESET
+		<< std::endl
+	);
+
+	// update the response
+	std::stringstream				headersStream;
+	std::string						headers;
+
+	headersStream
+		<< "HTTP/1.1 " << http_status_code << " " << (http_status_code == "307" ? "Temporary redirect" : "Permanent Redirect") << "\r\n"
+		<< std::string("Location: " + redirection_url) + "\r\n"
+		<< "\r\n";
+	
+	headers = headersStream.str();
+	this->response.insert(this->response.begin(), headers.begin(), headers.end());
 }
 
 /**
@@ -886,215 +1078,16 @@ void			Response::deleteDirectory(const std::string directoryPath)
 }
 
 
+
+//*		Minor utils
 void	Response::print_resp( void )
 {
-	std::cout << BOLDGREEN "PRINTING Response" RESET << std::endl;
+	COUT_DEBUG_INSERTION(BOLDGREEN "PRINTING Response" RESET << std::endl);
 
 	for (std::vector<char>::iterator it = response.begin(); it != response.end(); it++)
-		std::cout << *it;
-	std::cout << std::endl;
-	std::cout << "Response len : " << response.size() << std::endl;
+		COUT_DEBUG_INSERTION(*it);
+	COUT_DEBUG_INSERTION(std::endl);
+	COUT_DEBUG_INSERTION("Response len : " << response.size() << std::endl);
 	
-	std::cout << GREEN "END---PRINTING Response" RESET << std::endl;
-}
-
-
-
-
-///////////////////////////
-//_______________________ METHOD : POST Chunked _______________________
-//TODO
-//TODO	1. line 49 : check if upload_path must be appended to the root
-//TODO	2. line 53 : move (and maybe correct) check in generateResponse
-//TODO	3. line 69 : check exact behavior
-//TODO	4. line 103 : check max path length
-//TODO	5. line 110 : check open_mode
-//TODO	6. line 139 : check if location points to an absolute or relative path
-//TODO
-void	Response::generateChunkedPOSTResponse( const std::string uri_path )
-{
-	std::string						root = location_root;
-	std::string						reqPath(uri_path);
-	std::string&					newFileDir = this->newFileDir;
-	std::string&					newFileName = this->newFileName;
-	std::string						fileExtension;
-	std::string						fullDirPath;
-	std::string						fullFilePath;
-
-	std::cout << "POST uri_path : " << uri_path << std::endl;
-
-	path_remove_leading_slash(root);
-	path_remove_leading_slash(reqPath);
-
-	// check if existing filename and splits reqPath into dir and newFileName
-	size_t pos = reqPath.rfind("/");
-	if (pos != std::string::npos && pos < reqPath.length() - 1){//if / exists and there's characters after it
-		newFileName = reqPath.substr(pos + 1);
-	}
-	else {// if no filename given
-		//! check behavior ? throw ?
-		newFileName = "POST_test";
-	}
-	newFileDir = reqPath.substr(0, pos);
-	
-	//! check upload_path is indeed correct
-	fullDirPath		= root + "/" + newFileDir;
-	fullFilePath	= root + "/" + newFileDir + "/" + newFileName;
-
-	std::cout << "POST reqPath : "	 	<< reqPath << std::endl;
-	std::cout << "POST root : "	 		<< root << std::endl;
-	std::cout << "POST dir : "	 		<< newFileDir << std::endl;
-	std::cout << "POST newFileName : "	<< newFileName << std::endl;
-	std::cout << "POST fullDirPath : "	<< fullDirPath << std::endl;
-	std::cout << "POST fullFilePath : "	<< fullFilePath << std::endl;
-
-// checks if fullDirPath is pointing to a valid location (directory)
-    struct stat						fileStat;
-	size_t							extension_pos;
-
-	errno = 0;
-	if (isDirectory(root, newFileDir))
-	{
-			// create the new resource at the location
-			std::cout << MAGENTA << "Trying to add a resource to DIRECTORY : " << fullDirPath << RESET << std::endl;
-
-			// check if file exists at the given location and updating the name if it does
-			//TODO Replace with fileExists ?
-			extension_pos = newFileName.rfind(".");
-			if (std::string::npos != extension_pos)
-				fileExtension = newFileName.substr(extension_pos);
-			else
-				fileExtension = "";
-			while (stat(fullFilePath.c_str(), &fileStat) == 0) {
-				if (fileExtension.empty() == false)
-					newFileName	= newFileName.substr(0, newFileName.rfind(fileExtension));
-				newFileName += "_cpy" + fileExtension;
-				if (newFileName.size() >= 255)
-					/*Server Err*/	throw HttpError(500, this->matching_directives, root);
-				fullFilePath	= root + "/" + newFileDir + "/" + newFileName;
-			}
-			if (errno && ENOENT != errno)
-				throw return_HttpError_errno_stat(root, matching_directives);
-			
-			// writes body to new file
-			stream_newFile.open(fullFilePath);
-			if (false == stream_newFile.is_open())
-				/*Server Err*/	throw HttpError(500, this->matching_directives, root);
-	}
-	else if (errno)
-	{
-		throw return_HttpError_errno_stat(root, matching_directives);
-	}
-	else
-	{
-		/*Not allowed*/	throw HttpError(405, this->matching_directives, root, "url should point to a directory (POST)");
-	}
-}
-
-void	Response::POSTNextChunk( void )
-{ COUT_DEBUG_INSERTION(YELLOW "Response::POSTNextChunk()" RESET << std::endl);
-	std::vector<char>	incomingData;
-	std::string			root = location_root;
-	std::string			reqPath(uri_path);
-
-	try {
-		try
-		{
-			incomingData = request->getIncomingData();
-		}
-		catch (const ChunkNotComplete& e) {
-			return ;
-		}
-		catch (const std::invalid_argument& e) {//*invalid chunk
-			stream_newFile.close();
-			unlink(newFileName.c_str());
-			throw (HttpError(400, matching_directives, location_root));
-		}
-
-		if (incomingData.empty())//*last chunk
-		{
-			dechunking = false;
-			stream_newFile.close();
-			if (stream_newFile.fail()) {
-				unlink(newFileName.c_str());
-				/*Server Err*/	throw HttpError(500, this->matching_directives, root);
-			}
-
-			// update the response
-			std::string						location_header;
-			std::string						headers;
-			std::string						tmp;
-			std::string						body;
-			std::string						domainName;
-			std::string						newResourceUrl;
-			std::string						newResourceRelPath;
-
-			domainName		= std::string(server_IP) + ":" + matching_directives.directives.at("listen");
-			newResourceUrl	= "http://" + domainName + "/" + newFileDir + "/" + newFileName;
-			newResourceRelPath = newFileDir + "/" + newFileName;
-
-			body				= "Resource " +  newResourceUrl  + " at directory\"" +  reqPath  + "\" was successfully created\n";
-			location_header	= std::string("Location: " + newResourceUrl);
-			headers			= getHeaders(201, "OK", newResourceRelPath, body.size(), location_header);
-
-			this->response.insert(this->response.begin(), headers.begin(), headers.end());
-			this->response.insert(this->response.end(), body.begin(), body.end());
-		}
-		else
-		{
-			stream_newFile.write(incomingData.data(), incomingData.size());
-			if (stream_newFile.fail()) {
-				stream_newFile.close();
-				unlink(newFileName.c_str());
-				/*Server Err*/	throw HttpError(500, this->matching_directives, root);
-			}
-		}
-	}
-	catch (const HttpError& e) {
-		this->dechunking = false;
-		this->response = e.getErrorPage();
-	}
-}
-
-
-// validity of configuration has been checked in the parsing
-	// code can be 307 or 308
-	// URL is validity is not checked -> responsibility of admin
-
-// 307	Temporary redirect		- Method and body not changed 
-							//	- The Web page is temporarily unavailable for unforeseen reasons.
-							//	- Better than 302 when non-GET operations are available on the site.
-// 308	Permanent Redirect
-							//	- Method and body not changed.
-							//	- Reorganization of a website, with non-GET links/operations.
-
-void	Response::handle_redirection(const std::string & value){
-	// get the redirection information from the matching directives
-    std::istringstream	iss(value);
-	std::string			http_status_code;
-	std::string			redirection_url;
-
-    iss >> http_status_code;
-    iss >> redirection_url;
-
-	strip_trailing_and_leading_spaces(redirection_url);
-	strip_trailing_and_leading_spaces(http_status_code);
-	std::cout
-		<< GREEN
-		<< "http_status_code : " << http_status_code << std::endl
-		<< "redirection_url : " << redirection_url << std::endl
-		<< RESET
-		<< std::endl;
-
-	// update the response
-	std::stringstream				headersStream;
-	std::string						headers;
-
-	headersStream
-		<< "HTTP/1.1 " << http_status_code << " " << (http_status_code == "307" ? "Temporary redirect" : "Permanent Redirect") << "\r\n"
-		<< std::string("Location: " + redirection_url) + "\r\n"
-		<< "\r\n";
-	
-	headers = headersStream.str();
-	this->response.insert(this->response.begin(), headers.begin(), headers.end());
+	COUT_DEBUG_INSERTION(GREEN "END---PRINTING Response" RESET << std::endl);
 }
