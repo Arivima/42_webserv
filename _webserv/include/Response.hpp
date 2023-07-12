@@ -63,6 +63,7 @@ private:
 	const std::string&							server_IP;				//*	the interface, among all the assigned_server utilized interfaces, where the connection got accepted.
 	const t_epoll_data&							edata;
 	std::vector<char>							response;
+	bool										redirect;
 	CGI* 										cgi;
 
 	//*	POST data
@@ -88,6 +89,7 @@ public:
 	void					send_line( void );
 	void					POSTNextChunk( void );
 	bool					isDechunking(void);
+	bool					isRedirect( void );
 	void					generateResponse( void );
 	void					print_resp( void );
 

@@ -58,6 +58,7 @@ Response::Response(
 		uri_path(uri_remove_queryString(req.at("url")))
 {
 	dechunking = false;
+	redirect = false;
 	this->cgi = NULL;
 }
 
@@ -114,6 +115,11 @@ bool	Response::isDechunking(void)
 	return (this->dechunking);
 }
 
+bool	Response::isRedirect( void )
+{
+	return (this->redirect);
+}
+
 // check request against body size value, else throw 413 Content Too Large
 	// value validity is checked in config
 	// body_size always exists as its default value (1M) was set in value validity checking
@@ -153,7 +159,7 @@ void	Response::generateResponse( void )
 			/*Not Allowed*/	throw (HttpError(405, matching_directives, location_root));
 		}
 		if (matching_directives.directives.find("return") != matching_directives.directives.end()) {
-			//!std::cout << GREEN << "return" << RESET << std::endl;
+			redirect = true;
 			return (handle_redirection(matching_directives.directives.at("return")));
 		}
 		if (req.at("url").find("/..") != std::string::npos) {//*input sanitization
