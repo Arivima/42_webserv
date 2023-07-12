@@ -6,7 +6,7 @@
 /*   By: avilla-m <avilla-m@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 17:19:26 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/12 15:13:00 by avilla-m         ###   ########.fr       */
+/*   Updated: 2023/07/12 19:46:41 by avilla-m         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -319,42 +319,46 @@ void	Request::parse_body( void ) {
 //*		helper functions
 
 void	Request::print_req( void ) {
-	COUT_DEBUG_INSERTION( "| START print_req |" << std::endl );
-
-	COUT_DEBUG_INSERTION( BOLDGREEN "PRINTING HEADERS" RESET << std::endl );
+	std::cout	<< BOLDCYAN "\n\nNew Request ----------------- " << RESET 
+				<< CYAN " | cli_socket: " << this->sock_fd << RESET
+				<< " | body_lenght: " << payload.size()
+				<< std::endl ;
+	
+	std::cout << BOLDCYAN "| HEADERS _________________________" RESET << std::endl ;
 	for (std::map<std::string, std::string>::iterator it = req.begin(); it != req.end(); it++) {
-		COUT_DEBUG_INSERTION( "|" << it->first << " : " << it->second << "|" << std::endl );
+		std::cout << CYAN "| " RESET << it->first << " : " << it->second << CYAN " |" RESET << std::endl ;
 	}
-	COUT_DEBUG_INSERTION( GREEN "END---PRINTING HEADERS" RESET << std::endl );
+	std::cout << CYAN "| END HEADERS _____________________" RESET << std::endl ;
 
-	COUT_DEBUG_INSERTION( BOLDGREEN "PRINTING body" RESET << std::endl );
-	// for (std::vector<char>::iterator it = payload.begin(); it != payload.end(); it++)
-	// 	COUT_DEBUG_INSERTION( *it );
-	// COUT_DEBUG_INSERTION( std::endl );
-	COUT_DEBUG_INSERTION( "body len : " << payload.size() << std::endl );
-	COUT_DEBUG_INSERTION( GREEN "END---PRINTING body" RESET << std::endl );
-
-	COUT_DEBUG_INSERTION( "| END print_req |" << std::endl);
+	std::cout << BOLDCYAN "\n| BODY ____________________________ " << RESET << std::endl ;
+	for (std::vector<char>::iterator it = payload.begin(); it != payload.end(); it++)
+		std::cout <<  CYAN "| " RESET << *it ;
+	if (payload.size())
+		std::cout << std::endl ;
+	std::cout << CYAN "| END BODY ________________________" RESET << std::endl ;
+	std::cout << CYAN "END REQUEST -----------------\n" RESET << std::endl ;
 }
 
 void	Request::printVectorChar(std::vector<char>& v, std::string name)
 {
-	if (v.empty())
-		std::cout << name << " is empty !" << std::endl;
-	else
-	{
-		std::cout << name << ": " << std::endl;
-		for (std::vector<char>::iterator it = v.begin(); it != v.end(); it++)
+	if (DEBUG){
+		if (v.empty())
+			std::cout << name << " is empty !" << std::endl;
+		else
 		{
-			if ((*it) == '\n')
-				std::cout << RED "n" RESET;
-			else
-			if ((*it) == '\r')
-				std::cout << RED "r" RESET;
-			else
-				std::cout << *it ;
+			std::cout << name << ": " << std::endl;
+			for (std::vector<char>::iterator it = v.begin(); it != v.end(); it++)
+			{
+				if ((*it) == '\n')
+					std::cout << RED "n" RESET;
+				else
+				if ((*it) == '\r')
+					std::cout << RED "r" RESET;
+				else
+					std::cout << *it;
+			}
+			std::cout << std::endl;
 		}
-		std::cout << std::endl;
 	}
 }
 

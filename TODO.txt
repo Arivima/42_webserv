@@ -11,7 +11,6 @@ TO DO
 
 
 	Arielle
-		-	implementare directive per timeout
 		-	cgi script for file Upload (pagina html con un immagine al centro, bottoni a destra sx, e pulsante per fare upload)
 		-	cgi script for chunked encoding (reading from input and printing to output)
 
@@ -20,6 +19,7 @@ TO DO
 			-	clean all unuseful comments
 			-	put all implementations in .cpp
 			-	clean webserv.hpp and utils.cpp
+			
 			- 	update webserv.doc
 			-	create project flowchart
 

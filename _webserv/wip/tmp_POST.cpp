@@ -53,7 +53,7 @@ void	Response::generatePOSTResponse( const std::string uri_path )
 	std::string						fullDirPath;
 	std::string						fullFilePath;
 
-	std::cout << "POST uri_path : " << uri_path << std::endl;
+	COUT_DEBUG_INSERTION("POST uri_path : " << uri_path << std::endl);
 	//! to move to generate response
 	if (reqPath.find("/..") != std::string::npos)
 		/*Bad req*/	throw HttpError(400, matching_directives, root);  	
@@ -77,13 +77,13 @@ void	Response::generatePOSTResponse( const std::string uri_path )
 	fullDirPath		= root + "/" + upload_path + "/" + dir;
 	fullFilePath	= root + "/" + upload_path + "/" + dir + "/" + newFileName;
 
-	std::cout << "POST reqPath : "	 	<< reqPath << std::endl;
-	std::cout << "POST root : "	 		<< root << std::endl;
-	std::cout << "POST upload_path : "	<< upload_path << std::endl;
-	std::cout << "POST dir : "	 		<< dir << std::endl;
-	std::cout << "POST newFileName : "	<< newFileName << std::endl;
-	std::cout << "POST fullDirPath : "	<< fullDirPath << std::endl;
-	std::cout << "POST fullFilePath : "	<< fullFilePath << std::endl;
+	COUT_DEBUG_INSERTION("POST reqPath : "	 	<< reqPath << std::endl);
+	COUT_DEBUG_INSERTION("POST root : "	 		<< root << std::endl);
+	COUT_DEBUG_INSERTION("POST upload_path : "	<< upload_path << std::endl);
+	COUT_DEBUG_INSERTION("POST dir : "	 		<< dir << std::endl);
+	COUT_DEBUG_INSERTION("POST newFileName : "	<< newFileName << std::endl);
+	COUT_DEBUG_INSERTION("POST fullDirPath : "	<< fullDirPath << std::endl);
+	COUT_DEBUG_INSERTION("POST fullFilePath : "	<< fullFilePath << std::endl);
 
 // checks if fullDirPath is pointing to a valid location (directory)
     struct stat						fileStat;
@@ -92,10 +92,10 @@ void	Response::generatePOSTResponse( const std::string uri_path )
 	errno = 0;
     if (stat(fullDirPath.c_str(), &fileStat) == 0) {
 		is_dir = S_ISDIR(fileStat.st_mode);
-		std::cout << MAGENTA << fullDirPath <<" : " << (is_dir? "is a directory" : "is not a directory") << RESET << std::endl;
+		COUT_DEBUG_INSERTION(MAGENTA << fullDirPath <<" : " << (is_dir? "is a directory" : "is not a directory") << RESET << std::endl);
 		if (is_dir){
 // create the new resource at the location
-			std::cout << MAGENTA << "Trying to add a resource to DIRECTORY : " << fullDirPath << RESET << std::endl;
+			COUT_DEBUG_INSERTION(MAGENTA << "Trying to add a resource to DIRECTORY : " << fullDirPath << RESET << std::endl);
 
 			// check if file exists at the given location and updating the name if it does
 			//TODO Replace with fileExists ?

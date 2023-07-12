@@ -3,25 +3,26 @@
 /*                                                        :::      ::::::::   */
 /*   Webserv.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: avilla-m <avilla-m@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/05 15:27:54 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/10 20:59:39 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/12 16:47:30 by avilla-m         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef WEBSERV_HPP
 # define WEBSERV_HPP
 
-# include "Colors.hpp"
-# include "Types.hpp"
-# include "Exceptions.hpp"
-
 # ifdef DEBUG
 #  define COUT_DEBUG_INSERTION(x) std::cout << x;
 # else
 #  define COUT_DEBUG_INSERTION(x)
+#  define DEBUG 0
 # endif
+
+# include "Colors.hpp"
+# include "Types.hpp"
+# include "Exceptions.hpp"
 
 # define DEFAULT_PORT_NUM 8080
 

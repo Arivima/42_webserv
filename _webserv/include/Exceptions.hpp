@@ -6,7 +6,7 @@
 /*   By: avilla-m <avilla-m@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/30 12:37:05 by avilla-m          #+#    #+#             */
-/*   Updated: 2023/07/12 11:30:07 by avilla-m         ###   ########.fr       */
+/*   Updated: 2023/07/12 16:42:36 by avilla-m         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -174,7 +174,7 @@ private:
 		return (err_page.str());
 	}
 
-	std::string		errPage_getPath( void ) {std::cout << "errPage_getPath()" << std::endl;
+	std::string		errPage_getPath( void ) {COUT_DEBUG_INSERTION("errPage_getPath()" << std::endl);
 
 		std::string									directive
 			= this->matching_directives.directives.at("error_page");
@@ -198,7 +198,7 @@ private:
 		std::getline(directiveStream, path, ' ');
 
 		//*		return empty string in case of missing pathname
-		std::cout << "trying error page " << path << std::endl;
+		COUT_DEBUG_INSERTION("trying error page " << path << std::endl);
 		if ("/" == path)
 			return ("");
 		return (path);

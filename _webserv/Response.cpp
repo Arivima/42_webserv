@@ -210,7 +210,7 @@ void	Response::generateResponse( void )
 
 	try
 	{
-		COUT_DEBUG_INSERTION("generateResponse() for : " RESET << url_no_query_str << std::endl);
+		COUT_DEBUG_INSERTION( BOLDGREEN "generateResponse() for : " RESET << url_no_query_str << std::endl);
 		if (request->timedOut()) {
 			/*Gateway Timeout*/	throw (HttpError(504, matching_directives, location_root));
 		}
@@ -232,10 +232,13 @@ void	Response::generateResponse( void )
 				this->dechunking = true;
 			return (generateCGIResponse(cgi_extension));
 		}
-		if ("GET" == this->req.at("method"))
+		if ("GET" == this->req.at("method")){
+			std::cout << BOLDMAGENTA << "METHOD : GET" << RESET << std::endl;
 			return (generateGETResponse());
+		}
 		if ("POST" == this->req.at("method"))
 		{
+			std::cout << BOLDMAGENTA << "METHOD : POST" << RESET << std::endl;
 			if (this->request->isChunked()) {
 				this->dechunking = true;
 				return (generateChunkedPOSTResponse());
@@ -243,8 +246,9 @@ void	Response::generateResponse( void )
 			return (generatePOSTResponse());
 		}
 		if ("DELETE" == this->req.at("method"))
+			std::cout << BOLDMAGENTA << "METHOD : DELETE" << RESET << std::endl;
 			return (generateDELETEResponse());
-		
+			
 		throw (/*Not Implemented*/	HttpError(501, this->matching_directives, location_root));
 	}
 	catch (const HttpError& e) {
@@ -289,7 +293,7 @@ void	Response::generateGETResponse(  void  )
 			// finire gestire ls
 		}
 		else {
-			std::cout << "autoindex not set" << std::endl;
+			COUT_DEBUG_INSERTION("autoindex not set" << std::endl);
 			/*Forbidden*/	throw HttpError(403, this->matching_directives, root);
 		}
 	}
@@ -377,7 +381,7 @@ void	Response::generatePOSTResponse( void )
 	if (isDirectory(root, newFileDir))
 	{
 			// create the new resource at the location
-			std::cout << MAGENTA << "Trying to add a resource to DIRECTORY : " << fullDirPath << RESET << std::endl;
+			COUT_DEBUG_INSERTION(MAGENTA << "Trying to add a resource to DIRECTORY : " << fullDirPath << RESET << std::endl);
 
 			// check if file exists at the given location and updating the name if it does
 			//TODO Replace with fileExists ?
@@ -1008,7 +1012,7 @@ std::string		Response::getIndexPage( const std::string& root, std::string path )
  */
 void			Response::deleteFile( const std::string filePath )
 {
-	std::cout << YELLOW << "Trying to delete FILE : " << filePath << RESET << std::endl;
+	COUT_DEBUG_INSERTION(YELLOW << "Trying to delete FILE : " << filePath << RESET << std::endl);
 // 	const std::string	dirPath = filePath.substr(0, filePath.rfind("/"));
 // // does the resource exists
 // 	errno = 0;
@@ -1052,7 +1056,7 @@ void			Response::deleteFile( const std::string filePath )
 //        stream from an error, set errno to zero before calling readdir() and then check the value of errno if NULL is returned.
 void			Response::deleteDirectory(const std::string directoryPath)
 {
-	std::cout << YELLOW << "Trying to delete DIRECTORY : " << directoryPath << RESET << std::endl;
+	COUT_DEBUG_INSERTION(YELLOW << "Trying to delete DIRECTORY : " << directoryPath << RESET << std::endl);
 	const std::string	root = location_root;
 
 	check_directory_deletable(directoryPath, "", matching_directives);
@@ -1068,7 +1072,17 @@ void			Response::deleteDirectory(const std::string directoryPath)
 					/*Server Err*/	throw HttpError(500, matching_directives, root);
             	if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
 					continue;
-				std::cout << CYAN << "| dir: " << directoryPath << "| entry : " << entry->d_name << ((entry->d_type == DT_DIR)? "is a directory" : "") << (((entry->d_type == DT_REG) || (entry->d_type == DT_LNK))? "is a regular file" : "") << ((!(entry->d_type == DT_DIR) && !(entry->d_type == DT_REG) && !(entry->d_type == DT_LNK))? "is neither a file nor a directory" : "") << RESET << std::endl;
+
+				COUT_DEBUG_INSERTION(
+					CYAN 
+					<< "| dir: " << directoryPath 
+					<< "| entry : " << entry->d_name 
+					<< ((entry->d_type == DT_DIR)? "is a directory" : "") 
+					<< (((entry->d_type == DT_REG) || (entry->d_type == DT_LNK))? "is a regular file" : "") 
+					<< ((!(entry->d_type == DT_DIR) && !(entry->d_type == DT_REG) && !(entry->d_type == DT_LNK))? "is neither a file nor a directory" : "") 
+					<< RESET 
+					<< std::endl);
+
 				if (entry->d_type == DT_DIR)
 					deleteDirectory(directoryPath + "/" + entry->d_name);
 				else if ((entry->d_type == DT_REG) || (entry->d_type == DT_LNK))
@@ -1099,12 +1113,18 @@ void			Response::deleteDirectory(const std::string directoryPath)
 //*		Minor utils
 void	Response::print_resp( void )
 {
-	COUT_DEBUG_INSERTION(BOLDGREEN "PRINTING Response" RESET << std::endl);
+	std::cout	<< BOLDCYAN "\nNew Response ----------------- " << RESET 
+				<< CYAN " | cli_socket: " << this->sock_fd << RESET
+				<< " | lenght: " << response.size() 
+				<< std::endl ;
 
-	for (std::vector<char>::iterator it = response.begin(); it != response.end(); it++)
-		COUT_DEBUG_INSERTION(*it);
-	COUT_DEBUG_INSERTION(std::endl);
-	COUT_DEBUG_INSERTION("Response len : " << response.size() << std::endl);
+	std::cout << CYAN "| " RESET ;
+	for (std::vector<char>::iterator it = response.begin(); it != response.end(); it++){
+		std::cout << *it;
+		if (*it == '\n' && (it + 1) != response.end())
+			std::cout << CYAN "| " RESET ;
+	}
+	std::cout << std::endl;
 	
-	COUT_DEBUG_INSERTION(GREEN "END---PRINTING Response" RESET << std::endl);
+	std::cout << CYAN "END Response -----------------" RESET << std::endl;
 }

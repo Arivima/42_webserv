@@ -26,8 +26,6 @@ CGI::CGI(
 		response(), request(request), req(request->getRequest()),
 		matching_directives(matching_directives)
 {
-	std::cout << "CGI Constructor" << std::endl;
-
 	init_env_paths(location_root, cgi_extension, interpreter_path);
 	init_env(matching_directives, client_IP, server_IP);
 
@@ -295,13 +293,17 @@ void	CGI::init_env(const t_conf_block& matching_directives, const std::string& c
 
 //* Debug
 void CGI::print_arr(char ** arr, const std::string& title)
-{COUT_DEBUG_INSERTION(YELLOW "CGI::print_arr()" RESET << std::endl);
+{
+	if (DEBUG){
+		std::cout << YELLOW "CGI::print_arr()" RESET << std::endl;
 
-	if (!arr)
-		return;
-	std::cout << "Printing " << title << std::endl;
-	for(int i = 0; arr[i]; ++i)
-		std::cout << i << " : " << arr[i] << std::endl;
+		if (!arr)
+			return;
+		std::cout << "Printing " << title << std::endl;
+		for(int i = 0; arr[i]; ++i)
+			std::cout << i << " : " << arr[i] << std::endl;
 
-	COUT_DEBUG_INSERTION(YELLOW "END_____CGI::print_arr()" RESET << std::endl)
+		std::cout << YELLOW "END_____CGI::print_arr()" RESET << std::endl;		
+	}
+
 }

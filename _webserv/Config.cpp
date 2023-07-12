@@ -350,7 +350,7 @@ void	Config::parse_directive( t_conf_block& current, std::string& cur_line )
 		add_directive(current, key, value);
 	}
 	catch (const std::invalid_argument& e) {
-		std::cout << "Config::parse_directive() : catched exception >> " << e.what() << std::endl;
+		std::cout << BOLDRED << "Config::parse_directive() : catched exception >> " << e.what() << RESET << std::endl;
 		current.invalidated = true;
 	}
 }
@@ -440,18 +440,11 @@ void	Config::check_value_validity(std::string& key, std::string & value)
 							//	- Method and body not changed.
 							//	- Reorganization of a website, with non-GET links/operations.
 void	Config::check_value_validity_return(std::string & value)
-{ std::cout << YELLOW "check_value_validity_return()" RESET << std::endl;
+{ COUT_DEBUG_INSERTION(YELLOW "check_value_validity_return()" RESET << std::endl);
     std::istringstream					iss(value);
     std::pair<std::string, std::string> val;
     std::string							word;
 	size_t								status_code;
-
-
-	std::cout
-		<< GREEN
-		<< "value : " << value
-		<< RESET
-		<< std::endl;
 
 	// Get the first word
 	if (!(iss >> val.first))
@@ -480,12 +473,6 @@ void	Config::check_value_validity_return(std::string & value)
 		if ( status_code < 307 || status_code > 308 )
 			throw (std::invalid_argument("Config::check_value_validity_return() : directive : return : invalid config (redirection code allowed : 307, 308)."));
 	}
-
-	std::cout
-		<< GREEN
-		<< "value : " << value
-		<< RESET
-		<< std::endl;
 }
 
 // check if body size directive is correct

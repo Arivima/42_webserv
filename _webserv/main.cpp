@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: avilla-m <avilla-m@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/30 13:20:37 by avilla-m          #+#    #+#             */
-/*   Updated: 2023/06/29 18:11:52 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/12 18:44:07 by avilla-m         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 int main(int ac, char** av)
 {(void)ac;
 	
-	COUT_DEBUG_INSERTION("Welcome to mini-serv" << std::endl);
+	std::cout << BOLDYELLOW << "Welcome to Webserv" << RESET<< std::endl;
 	try
 	{
 		Config	config(av[1]);

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   utils.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: avilla-m <avilla-m@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/18 10:41:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/08 03:51:52 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/12 16:10:02 by avilla-m         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -396,7 +396,14 @@ void	check_directory_deletable(
 					/*Server Err*/	throw HttpError(500, matching_directives, location_root);
             	if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
 					continue;
-				std::cout << CYAN << "| dir: " << dirFullPath << "| entry : " << entry->d_name << ((entry->d_type == DT_DIR)? "is a directory" : "") << (((entry->d_type == DT_REG) || (entry->d_type == DT_LNK))? "is a regular file" : "") << ((!(entry->d_type == DT_DIR) && !(entry->d_type == DT_REG) && !(entry->d_type == DT_LNK))? "is neither a file nor a directory" : "") << RESET << std::endl;
+				COUT_DEBUG_INSERTION(CYAN 
+					<< "| dir: " << dirFullPath 
+					<< "| entry : " << entry->d_name 
+					<< ((entry->d_type == DT_DIR)? "is a directory" : "") 
+					<< (((entry->d_type == DT_REG) || (entry->d_type == DT_LNK))? "is a regular file" : "") 
+					<< ((!(entry->d_type == DT_DIR) && !(entry->d_type == DT_REG) && !(entry->d_type == DT_LNK))? "is neither a file nor a directory" : "") 
+					<< RESET 
+					<< std::endl);
 				if (entry->d_type == DT_DIR)
 					check_directory_deletable(dirRelPath + "/" + entry->d_name, location_root, matching_directives);
 				else if ((entry->d_type == DT_REG) || (entry->d_type == DT_LNK))
@@ -655,8 +662,7 @@ bool			isDirectory(const std::string root, std::string path)
 
 std::string getDirectoryContentList(const std::string directoryPath)
 {
-	COUT_DEBUG_INSERTION(MAGENTA << "getDirectoryContentList("<< directoryPath <<"): " << RESET << std::endl;);
-	std::cout << MAGENTA << "getDirectoryContentList : path ->"<< directoryPath << RESET << std::endl;
+	COUT_DEBUG_INSERTION(MAGENTA << "getDirectoryContentList : path ->"<< directoryPath << RESET << std::endl);
 	std::string contentList;
     DIR* dir = opendir(directoryPath.c_str());
     if (dir){

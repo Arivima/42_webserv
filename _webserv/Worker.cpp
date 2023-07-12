@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Worker.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: avilla-m <avilla-m@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/06 21:15:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/03 13:05:12 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/12 18:52:59 by avilla-m         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,7 +75,7 @@ Worker::~Worker() {
 			conn_it = (*serv_it).open_connections.erase(conn_it);
 		}
 		(*serv_it).open_connections.clear();
-		std::cout << "Closing server: " << (*serv_it).server_fd << std::endl;
+		std::cout << BOLDRED<< "Closing server: " << (*serv_it).server_fd << RESET << std::endl;
 		close((*serv_it).server_fd);
 	}
 }
@@ -87,6 +87,7 @@ Worker::~Worker() {
 void Worker::workerLoop() {
 	std::vector<ConnectionSocket *>::iterator	it;
 	
+	std::cout << BOLDGREEN << "\nStarting worker" << RESET << std::endl;
 	while (true) {
 		// COUT_DEBUG_INSERTION("workerloop\n");
 		try {
@@ -200,17 +201,22 @@ int	Worker::_create_ConnectionSocket(
 	socklen_t				server_addr_len		= sizeof(server_addr);
 
 	//*		Accepting
-	std::cout  << std::endl << "\033[1m\033[32m""handle_new_connection() called()""\033[0m" << std::endl;
-	COUT_DEBUG_INSERTION("accept on port " << server.server_port << std::endl)
-	std::cout << "---------------accept()" << std::endl;
+	COUT_DEBUG_INSERTION(std::endl << YELLOW << "_create_ConnectionSocket() called()" << RESET << std::endl);
+
 	cli_socket = accept(server.server_fd, (struct sockaddr *)&cli_addr, &cli_addr_len);
 	if (-1 == cli_socket){
 		throw (SystemCallException("accept()"));
 	}
+	std::cout << BOLDGREEN << "\nAccepting new connection" << RESET << std::endl;
+	std::cout	<< "----------------  accept()" 
+				<< " | ip: " << _getIP()
+				<< " | port: " << server.server_port 
+				<< " | server_fd: " << server.server_fd 
+				<< " | cli_socket: " << cli_socket
+				<< std::endl;
 	
 	//*		Making non-blocking
 	_make_socket_non_blocking(cli_socket);
-	std::cout << "new connection socket : " << cli_socket << std::endl;
 
 	//*		Setting Remote Client IP
 	client_IP = inet_ntoa(cli_addr.sin_addr);
@@ -269,33 +275,24 @@ void	Worker::_server_init(const t_conf_block& conf_server_block) {
 	const std::map<std::string, std::string>&	server_directives
 		= conf_server_block.sub_blocks[0].directives;
 	
+	std::cout << BOLDGREEN "Starting new server--------------" << RESET << std::endl;
 	
 	this->servers.push_back(t_server(conf_server_block));
 	this->servers.back().server_port = std::atoi(
 		server_directives.at("listen").c_str()
 	);
-	COUT_DEBUG_INSERTION(
-		"new server port is : " << std::atoi(
-			server_directives.at("listen").c_str()
-		) << std::endl
-	);
-	COUT_DEBUG_INSERTION(
-		"adding new Connection Socket with port "
-		<< this->servers.back().server_port
-		<< std::endl
-	);
 	_create_server_socket();
 	_set_socket_as_reusable();
 	_init_server_addr(server_directives);
-	_print_server_ip_info();
 	_bind_server_socket_to_ip();
 	_make_server_listening();
 	_make_socket_non_blocking(this->servers.back().server_fd);
-	COUT_DEBUG_INSERTION("end of server init\n");
+
+	_print_server_ip_info();
 }
 
 void	Worker::_create_server_socket() {
-	std::cout << "---------------socket()" << std::endl;
+	std::cout << "----------------  socket()" << std::endl;
 	this->servers.back().server_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (-1 == this->servers.back().server_fd)
 		throw SystemCallException("socket()");
@@ -339,17 +336,8 @@ void	Worker::_init_server_addr(
 	this->servers.back().server_addr.sin_addr.s_addr = ip;
 }
 
-void	Worker::_print_server_ip_info() {
-	char ip[INET_ADDRSTRLEN];
-
-	inet_ntop(AF_INET, &(this->servers.back().server_addr.sin_addr), ip, INET_ADDRSTRLEN);
-	std::cout << "Local fam\t: " << this->servers.back().server_addr.sin_family << std::endl;
-	std::cout << "Local address\t: " << ip << std::endl;
-	std::cout << "Local port\t: " << ntohs(this->servers.back().server_addr.sin_port) << std::endl;  
-}
-
 void	Worker::_bind_server_socket_to_ip() {
-	std::cout << "---------------bind()" << std::endl;
+	std::cout << "----------------  bind()" << std::endl;
 	// COUT_DEBUG_INSERTION("socket fd: " << this->servers.back().server_fd << std::endl);
 	if (-1 == bind(
 		this->servers.back().server_fd,
@@ -360,7 +348,7 @@ void	Worker::_bind_server_socket_to_ip() {
 }
 
 void	Worker::_make_server_listening() {
-	std::cout << "---------------listen()" << std::endl;
+	std::cout << "----------------  listen()" << std::endl;
 	if (-1 == listen(this->servers.back().server_fd, INT_MAX))
 		throw SystemCallException("listen()");
 }
@@ -372,6 +360,23 @@ void	Worker::_make_socket_non_blocking(int sock_fd) {
 	flags |= O_NONBLOCK;
 	if (-1 == fcntl(sock_fd, F_SETFL, flags))
 		throw SystemCallException("fcntl()");
+}
+
+std::string		Worker::_getIP(){
+	char ip[INET_ADDRSTRLEN];
+
+	inet_ntop(AF_INET, &(this->servers.back().server_addr.sin_addr), ip, INET_ADDRSTRLEN);
+
+	return ((static_cast<char*>(ip)));
+}
+
+void	Worker::_print_server_ip_info() {
+
+	std::cout << "Local address\t: " << _getIP() << std::endl;
+	std::cout << "Local port\t: " << ntohs(this->servers.back().server_addr.sin_port) << std::endl;  
+	std::cout << "Server_fd\t: " << this->servers.back().server_fd << std::endl;  
+	
+	// std::cout << "Local fam\t: " << this->servers.back().server_addr.sin_family << std::endl;
 }
 
 
