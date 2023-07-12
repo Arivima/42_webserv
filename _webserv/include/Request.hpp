@@ -6,7 +6,7 @@
 /*   By: avilla-m <avilla-m@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 15:41:58 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/12 11:27:24 by avilla-m         ###   ########.fr       */
+/*   Updated: 2023/07/12 15:12:38 by avilla-m         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,8 @@
 
 # include "Webserv.hpp"
 # include "EpollData.hpp"
+
+# define	DEFAULT_TIMEOUT		60				// 60.0 seconds
 
 /**
  * @brief The purpose of this class is to parse a http request into a more convenient format.

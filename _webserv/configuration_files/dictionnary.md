@@ -12,10 +12,29 @@ If one of those rules is not respected, config file is considered non-valid.
 
 ### Directives Specification
 
+void	Config::check_directive_validity(const std::string& directive, t_config_block_level level){
+	static const char*					allowed_directives[] = {
+		"listen", "location", "server_name", "host", "index", "body_size",
+		"error_page", "method", "root", "upload_path", "return", "autoindex",
+		"cgi_enable", "timeout"
+	};
+	static const char*					virtual_server_directives[] = {
+		"listen", "location", "server_name", "host", "index",
+		"body_size", "error_page", "method", "root", "upload_path", "return",
+		"autoindex",  "cgi_enable", "timeout"
+	};
+	static const char*					location_directives[] = {
+		"location", "index", "body_size", "error_page", "method", "root",
+		"upload_path", "return", "autoindex", "cgi_enable", "timeout"
+	};
+}
 
 
-
-
+void	Config::add_directive(t_conf_block& current, std::string& key, std::string& value)
+{
+	const std::string	singleValued = "listen body_size root upload_path return autoindex location timeout";
+	const std::string	multiValued = "server_name error_page method index cgi_enable";
+}
 
 ## DICTIONNARY OF ALL CGI PROTOCOL ENVIRONMENT VARIABLES
 env_type : char** env

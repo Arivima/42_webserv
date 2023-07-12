@@ -476,7 +476,7 @@ void	Config::check_value_validity_return(std::string & value)
 	}
 	else
 	{
-		status_code = std::atol(val.first.c_str()); // throws std::invalid_argument or std::out_of_range
+		status_code = std::atol(val.first.c_str());
 		if ( status_code < 307 || status_code > 308 )
 			throw (std::invalid_argument("Config::check_value_validity_return() : directive : return : invalid config (redirection code allowed : 307, 308)."));
 	}

@@ -6,7 +6,7 @@
 /*   By: avilla-m <avilla-m@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 17:19:26 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/12 12:00:46 by avilla-m         ###   ########.fr       */
+/*   Updated: 2023/07/12 15:13:00 by avilla-m         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -127,7 +127,7 @@ bool						Request::isChunked( void ) {
 bool						Request::isRequestTimeout( void ){
     struct timespec	timestamp_now;
 	double			elapsed_secs;
-	const double	timeout_value = 05.0; // 5 seconds
+	const double	timeout_value = DEFAULT_TIMEOUT;
 	long			timestamp_now_us;
 	long			timestamp_start_us;
 	
