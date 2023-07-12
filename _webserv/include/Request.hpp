@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: avilla-m <avilla-m@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 15:41:58 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/11 17:34:31 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/12 11:27:24 by avilla-m         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,8 @@
 # include <map>		//*	parsed request (body included)
 # include <string>
 # include <sstream>	//*	socket stream
-# include <ctime>
+# include <ctime>	//* clock_gettime
+# include <math.h>	//* pow
 
 # include "Webserv.hpp"
 # include "EpollData.hpp"
@@ -43,7 +44,8 @@ private:
 	const t_epoll_data&						edata;
 	std::map<std::string, std::string>		req;	//*	map holding the request headers
 	std::vector<char>						payload;//*	request body
-	clock_t									timestamp_start;
+	struct timespec							timestamp_start;
+	bool									timed_out;
 
 	char									rcv_buf[RCV_BUF_SIZE + 1];	//*	buffer upon which we recv()
 	std::vector<char>						sock_stream;				//*	vector on which we dump the request incoming data for a more convenient handling
@@ -68,7 +70,7 @@ public:
 	const std::vector<char>&					getPayload( void );
 	std::vector<char>							getIncomingData( void );
 	bool										isChunked( void );
-	bool										isRequestTimeout();
+	bool										timedOut( void );
 	//*		public helper functions
 	void										print_req( void );
 
@@ -85,6 +87,7 @@ private:
 	void			parse_header( void );
 	void			parse_req_line( std::vector<char>& req_line );
 	void			parse_body( void );
+	bool			isRequestTimeout();
 	//*		Secondary helper functions
 	void			printVectorChar(std::vector<char>& v, std::string name);
 };

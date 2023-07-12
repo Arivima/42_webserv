@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Exceptions.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: avilla-m <avilla-m@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/30 12:37:05 by avilla-m          #+#    #+#             */
-/*   Updated: 2023/07/10 20:49:01 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/12 11:30:07 by avilla-m         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -245,6 +245,8 @@ private:
 				return ("Not Implemented");
 			case 502:
 				return ("Bad Gateway");
+			case 504:
+				return ("Gateway Timeout");
 			default:
 				return ("Http Unknown Error");
 		}

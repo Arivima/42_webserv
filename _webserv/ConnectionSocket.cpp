@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConnectionSocket.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: avilla-m <avilla-m@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 18:07:39 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/11 20:11:24 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/12 11:31:47 by avilla-m         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,10 @@ ConnectionSocket::ConnectionSocket(
 
 //*		Main Functions
 
-void	ConnectionSocket::status_switch( void ) {
+void	ConnectionSocket::status_switch( void )
+{
+	bool	close_connection;
+
 	if (e_REQ_MODE == this->status) {
 		COUT_DEBUG_INSERTION(YELLOW "ConnectionSocket::status_switch()---response" RESET << std::endl);
 		request->print_req();
@@ -54,11 +57,13 @@ void	ConnectionSocket::status_switch( void ) {
 	}
 	else {
 		COUT_DEBUG_INSERTION(YELLOW "ConnectionSocket::status_switch()---request" RESET << std::endl);
+		close_connection = request->timedOut();
 		delete request;
 		request = NULL;
 		delete response;
 		response = NULL;
-		// throw (SockEof());
+		if (close_connection)
+			throw (SockEof());
 		request = new Request(sock_fd, edata);
 		status = e_REQ_MODE;
 	}

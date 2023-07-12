@@ -146,6 +146,9 @@ void	Response::generateResponse( void )
 	try
 	{
 		std::cout << BOLDGREEN "generateResponse() for : " RESET << url_no_query_str << std::endl;
+		if (request->timedOut()) {
+			/*Gateway Timeout*/	throw (HttpError(504, matching_directives, location_root));
+		}
 		if (false == isMethodAllowed()) {
 			/*Not Allowed*/	throw (HttpError(405, matching_directives, location_root));
 		}

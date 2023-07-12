@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: avilla-m <avilla-m@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 17:19:26 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/11 20:13:58 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/12 12:00:46 by avilla-m         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,8 @@ Request::Request(
 	sock_stream.clear();
 	cur_line.clear();
 
-	timestamp_start = clock();
+	clock_gettime(CLOCK_BOOTTIME, &timestamp_start);
+	timed_out = false;
 }
 
 Request::~Request( void ) {
@@ -123,14 +124,17 @@ bool						Request::isChunked( void ) {
 	return (this->chunked);
 }
 
-// https://github.com/mmarinel/42RomaLuiss__Cpp09/blob/master/ex02/main.cpp
 bool						Request::isRequestTimeout( void ){
-    clock_t			timestamp_now;
+    struct timespec	timestamp_now;
 	double			elapsed_secs;
-	const double	timeout_value = 60.0; // 60 seconds
+	const double	timeout_value = 05.0; // 5 seconds
+	long			timestamp_now_us;
+	long			timestamp_start_us;
 	
-	timestamp_now	= clock();
-    elapsed_secs	= static_cast<double>(timestamp_now - this->timestamp_start) / CLOCKS_PER_SEC;
+	clock_gettime(CLOCK_BOOTTIME, &timestamp_now);
+	timestamp_start_us	= (this->timestamp_start.tv_sec * pow(10, 9)) + this->timestamp_start.tv_nsec;
+	timestamp_now_us	= (timestamp_now.tv_sec * pow(10, 9)) + timestamp_now.tv_nsec;
+    elapsed_secs		= static_cast<double>(timestamp_now_us - timestamp_start_us) / pow(10, 9);
 	
 	return (elapsed_secs > timeout_value);
 }
@@ -139,8 +143,13 @@ void	Request::parse_line( void )
 {
 	const struct epoll_event*	eevent = edata.getEpollEvent(this->sock_fd);
 	
-	// if (request.isRequestTimeout())
-	// 	throw TaskFulfilled();
+	if (this->isRequestTimeout()) {
+		timed_out = true;
+		req["method"] = "UNKNOWN";
+		req["url"] = "/";
+		req["http_version"] = "HTTP/1.1";
+		throw TaskFulfilled();
+	}
 	if (
 		false == sock_stream.empty() ||
 		(NULL != eevent &&  eevent->events & EPOLLIN))
@@ -347,4 +356,9 @@ void	Request::printVectorChar(std::vector<char>& v, std::string name)
 		}
 		std::cout << std::endl;
 	}
+}
+
+bool	Request::timedOut( void )
+{
+	return (this->timed_out);
 }

@@ -12,13 +12,7 @@ TO DO
 
 	Arielle
 		-	test body size
-		-	test redirections		
-			- gestire direttamente in generateResponse
-				1.	verificare che matching_directives.directives.find("redirect")
-				2.	Se si, rispondere con un messaggio http redirect (studiare)
-				3.	--da gestire in generateResponse, quindi NON in GET, POST, DELETE
-
-		1-	Timers
+		-	implementare directive per timeout
 
 		Final cleaning : 
 			-	clean exceptions / error syntax to make it consistent throughout files
