@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 17:23:17 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/13 18:15:59 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/13 20:14:19 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,16 +72,6 @@ std::string CGI::get_env_value(const std::string & key){
 void CGI::launch()
 {COUT_DEBUG_INSERTION(YELLOW "CGI::launch()" RESET << std::endl);
 
-	check_file_accessibility(
-		X_OK,
-		get_env_value("INTERPRETER_PATH"), "",
-		matching_directives
-	);
-	check_file_accessibility(
-		R_OK,
-		get_env_value("SCRIPT_NAME"), get_env_value("ROOT"),
-		matching_directives
-	);
 	if (-1 == pipe(sendPayload_pipe))
 		throw_HttpError_debug("CGI::launch()", "pipe()", 500, this->matching_directives, get_env_value("ROOT"));
 	

@@ -7,20 +7,22 @@ TODO
 				-	fare correction sheet e scrivere una lista de tutte le cose da dimonstrare
 				-	Check against subject, correction sheet, tester, write tests with python, Postman
 			2. Timeout browser (creare la nuova request solo quando arriva qualcosa di nuovo)
+			3. Body size for chunked
 			3. add Makefile
 				-	includepath makefile
-			4. script for file Upload
-			5. file binary with POST redirect
+				-	add chmod a-rwx notauthorized in program build
+			4.	script for file Upload
+			5. - Response getDirectoryContentList wrap try catch in generateGETResponse, catch SystemCallException and rethrow as HttpError 500
+			6. file binary with POST redirect
 
 		meno importante
 		-	Change req url name to "uri"
 		-	check for every member that should be a reference
 
 	Arielle
+		-	Landing Page carina
 		Final cleaning : 
 			-	clean exceptions / error syntax to make it consistent throughout files
-				- Response getDirectoryContentList wrap try catch in generateGETResponse, catch SystemCallException and rethrow as HttpError 500
-			-	clean all unuseful comments
 			
 			- 	update webserv.doc
 			-	create project flowchart

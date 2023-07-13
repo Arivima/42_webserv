@@ -214,12 +214,6 @@ void	Response::generateResponse( void )
 		if (std::string::npos != req.at("url").find("/..")) {//*input sanitization
 			/*Bad req*/	throw HttpError(400, matching_directives, location_root);
 		}
-		if (false == isMethodAllowed()) {
-			/*Not Allowed*/	throw (HttpError(405, matching_directives, location_root));
-		}
-		if (false == check_body_size()) {
-			/*Content Too Large*/	throw HttpError(413, this->matching_directives, location_root);
-		}
 		if (redirect) {
 			return (handle_redirection(matching_directives.directives.at("return")));
 		}
@@ -337,8 +331,6 @@ void	Response::generatePOSTResponse( void )
 
 	COUT_DEBUG_INSERTION("POST uri_path : " << uri_path << std::endl);
 
-	path_remove_leading_slash(root);
-	path_remove_leading_slash(reqPath);
 
 	// check if existing filename and splits reqPath into dir and newFileName
 	size_t pos = reqPath.rfind("/");
@@ -349,9 +341,12 @@ void	Response::generatePOSTResponse( void )
 		newFileName = "test_POST";
 	}
 	newFileDir = reqPath.substr(0, pos);
+	path_remove_leading_slash(newFileDir);
+	path_remove_leading_slash(root);
+	path_remove_leading_slash(reqPath);
 	
-	fullDirPath		= root + "/" + newFileDir;
-	fullFilePath	= root + "/" + newFileDir + "/" + newFileName;
+	fullDirPath		= root + (newFileDir.empty() ? "" : "/" + newFileDir);
+	fullFilePath	= root + (newFileDir.empty() ? "" : "/" + newFileDir) + (newFileName.empty() ? "" : "/" + newFileName);
 
 	COUT_DEBUG_INSERTION("POST reqPath : "	 	<< reqPath << std::endl);
 	COUT_DEBUG_INSERTION("POST root : "	 		<< root << std::endl);
@@ -367,6 +362,12 @@ void	Response::generatePOSTResponse( void )
 	errno = 0;
 	if (isDirectory(root, newFileDir))
 	{
+			if (false == isMethodAllowed()) {
+				/*Not Allowed*/	throw (HttpError(405, matching_directives, location_root));
+			}
+			if (false == check_body_size()) {
+				/*Content Too Large*/	throw HttpError(413, this->matching_directives, location_root);
+			}
 			// create the new resource at the location
 			COUT_DEBUG_INSERTION(MAGENTA << "Trying to add a resource to DIRECTORY : " << fullDirPath << RESET << std::endl);
 
@@ -376,6 +377,7 @@ void	Response::generatePOSTResponse( void )
 				fileExtension = newFileName.substr(extension_pos);
 			else
 				fileExtension = "";
+			errno = 0;
 			while (stat(fullFilePath.c_str(), &fileStat) == 0) {
 				if (fileExtension.empty() == false)
 					newFileName	= newFileName.substr(0, newFileName.rfind(fileExtension));
@@ -470,6 +472,9 @@ void	Response::generateChunkedPOSTResponse( void )
 	errno = 0;
 	if (isDirectory(root, newFileDir))
 	{
+			if (false == isMethodAllowed()) {
+				/*Not Allowed*/	throw (HttpError(405, matching_directives, location_root));
+			}
 			// create the new resource at the location
 			COUT_DEBUG_INSERTION(MAGENTA << "Trying to add a resource to DIRECTORY : " << fullDirPath << RESET << std::endl);
 
@@ -479,6 +484,7 @@ void	Response::generateChunkedPOSTResponse( void )
 				fileExtension = newFileName.substr(extension_pos);
 			else
 				fileExtension = "";
+			errno = 0;
 			while (stat(fullFilePath.c_str(), &fileStat) == 0) {
 				if (fileExtension.empty() == false)
 					newFileName	= newFileName.substr(0, newFileName.rfind(fileExtension));
@@ -486,6 +492,7 @@ void	Response::generateChunkedPOSTResponse( void )
 				if (newFileName.size() >= 255)
 					/*Server Err*/	throw HttpError(500, this->matching_directives, root);
 				fullFilePath	= root + "/" + newFileDir + "/" + newFileName;
+				errno = 0;
 			}
 			if (errno && ENOENT != errno)
 				throw return_HttpError_errno_stat(root, matching_directives);
@@ -545,6 +552,9 @@ void	Response::generateDELETEResponse( void )
 
 	errno = 0;
 	if (stat(filePath.c_str(), &fileStat) == 0) {
+		if (false == isMethodAllowed()) {
+			/*Not Allowed*/	throw (HttpError(405, matching_directives, location_root));
+		}
 		is_dir = S_ISDIR(fileStat.st_mode);
 		is_reg = S_ISREG(fileStat.st_mode);
 		COUT_DEBUG_INSERTION(
@@ -599,6 +609,23 @@ void	Response::generateCGIResponse(const std::string& cgi_extension)
 		matching_directives, location_root,
 		cgi_extension, cgi_interpreter_path
 	);
+	check_file_accessibility(
+		X_OK,
+		this->cgi->get_env_value("INTERPRETER_PATH"), "",
+		matching_directives
+	);
+	check_file_accessibility(
+		R_OK,
+		this->cgi->get_env_value("SCRIPT_NAME"),
+		this->cgi->get_env_value("ROOT"),
+		matching_directives
+	);
+	if (false == isMethodAllowed()) {
+		/*Not Allowed*/	throw (HttpError(405, matching_directives, location_root));
+	}
+	if (false == dechunking && false == check_body_size()) {
+		/*Content Too Large*/	throw HttpError(413, this->matching_directives, location_root);
+	}
 	this->cgi->launch();
 	if (false == dechunking)
 	{
@@ -1036,12 +1063,15 @@ void			Response::deleteDirectory(const std::string directoryPath)
     DIR* dir = opendir(directoryPath.c_str());
     if (dir){
         dirent* entry;
-		errno = 0;
-        while ((entry = readdir(dir)) != NULL)
+        while (true)
 		{
+			errno = 0;
+			entry = readdir(dir);
 			try {
 				if (entry == NULL && errno != 0)								// errno, see above
 					/*Server Err*/	throw HttpError(500, matching_directives, root);
+				else if (entry == NULL)
+					break ;
             	if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
 					continue;
 

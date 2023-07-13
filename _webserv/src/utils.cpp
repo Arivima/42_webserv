@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/18 10:41:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/13 18:16:32 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/13 19:20:36 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -300,6 +300,7 @@ void			check_file_accessibility(
 	struct stat			fileStat;
 	int					statReturn;
 
+	errno = 0;
 	statReturn = stat(fileFullPath.c_str(), &fileStat);
 	if (
 		0 == statReturn && 
@@ -364,12 +365,15 @@ void	check_directory_deletable(
     DIR* dir = opendir(dirFullPath.c_str());
     if (dir){
         dirent* entry;
-		errno = 0;
-        while ((entry = readdir(dir)) != NULL)
+        while (true)
 		{
+			errno = 0;
+			entry = readdir(dir);
 			try {
 				if (entry == NULL && errno != 0)								// errno, see above
 					/*Server Err*/	throw HttpError(500, matching_directives, location_root);
+				else if (entry == NULL)
+					break ;
             	if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
 					continue;
 				COUT_DEBUG_INSERTION(CYAN 
@@ -622,13 +626,16 @@ std::string getDirectoryContentList(const std::string directoryPath)
     DIR* dir = opendir(directoryPath.c_str());
     if (dir){
         dirent* entry;
-		errno = 0;
 		contentList = "<ul>";
-        while ((entry = readdir(dir)) != NULL){
+        while (true){
 			
+			errno = 0;
+			entry = readdir(dir);
 			if (entry == NULL && errno != 0)		// errno, see above
 				throw SystemCallException("readdir() : ");//!*HttpError 500 server internal error
-
+			else if (entry == NULL)
+				break ;
+			
 			std::string fileType;
 			if (entry->d_type == DT_DIR)
 				fileType = "<span style=\"color:blue\"> | Directory </span>";
