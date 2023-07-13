@@ -71,3 +71,37 @@ env_type : char** env
 | 28 | SERVER_SOFTWARE | Provides information about the web server software being used, including its name and version |
 | 29 | WEBTOP_USER | The user name of the user who is logged in. |
 
+// HTTP STATUS CODES FOR POST
+// A successful response SHOULD be 
+// 200 (OK)|		request was successful -> response body contains result or representation of requested resource
+// 201 (Created)|	if the resource has been created on the origin server. response should a Location header with url of the created resource
+// 204 (No Content)|request was successful -> no additional content to send back in the response body
+
+// The action performed by the POST method might not result in a resource that can be 
+// identified by a URI. In this case, either 200 (OK) or 204 (No Content) 
+// is the appropriate response status, depending on whether or not the response 
+// includes an entity that describes the result.
+// If a resource has been created on the origin server, the response 
+// SHOULD be 201 (Created) and contain an entity which describes the status of 
+// the request and refers to the new resource, and a Location header (see section 14.30).
+
+// failed request
+// 400 Bad Request: The request could not be understood or was malformed. The server should include information in the response body or headers about the nature of the error.
+// 403 Forbidden: The server understood the request, but the client does not have permission to access the requested resource.
+// 404 Not Found: The requested resource could not be found on the server.
+// 409 Conflict: The request could not be completed due to a conflict with the current state of the resource. This is often used for data validation errors or when trying to create a resource that already exists.
+// 500 Internal Server Error: An unexpected error occurred on the server, indicating a problem with the server's configuration or processing of the request.
+
+// STAT ERROR
+// EACCES|	Search permission is denied for one of the directories in the path prefix of path. (See also path_resolution(7).)
+// EBADF|			fd is bad.
+// EFAULT|			Bad address.
+// ELOOP|			Too many symbolic links encountered while traversing the path.
+// ENAMETOOLONG|	path is too long.
+// ENOENT|			A component of path does not exist, or path is an empty string.
+// ENOMEM|			Out of memory (i.e., kernel memory).
+// ENOTDIR|			A component of the path prefix of path is not a directory.
+// EOVERFLOW|		path or fd refers to a file whose size, inode number, or number of blocks cannot be represented in,
+// 					respectively, the types off_t, ino_t, or blkcnt_t. 
+// 					This error can occur when, for example, an application compiled on a 32-bit platform without 
+// 					-D_FILE_OFFSET_BITS=64 calls stat() on a file whose size exceeds (1<<31)-1 bytes.

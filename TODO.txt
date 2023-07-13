@@ -1,18 +1,16 @@
 TO DO 
 
 	Matteo
-		1-	Finire Chunked Encoding cgi
-			1.2-	&& studiare body_size con chunked encoding
 		2-	Change req url name to "uri"
-		3-	Config : overwrite multi-valued directive if it comes from outer block
-		-check for every member that should be a reference
-		- (forse)togliere set buffer size del socket nel Worker (setsockopt)
-		4. SEND Server Internal Error on SockEof (pensare se fare cosí)
+		-	check for every member that should be a reference
+		- 	(forse)togliere set buffer size del socket nel Worker (setsockopt)
+		4. 	SEND Server Internal Error on SockEof (pensare se fare cosí)
 
+		- 	redirect post con file binary get stucks
+		- 	chunked encoding con postman encodando i files a mano
 
 	Arielle
 		-	cgi script for file Upload (pagina html con un immagine al centro, bottoni a destra sx, e pulsante per fare upload)
-		-	cgi script for chunked encoding (reading from input and printing to output)
 
 		Final cleaning : 
 			-	clean exceptions / error syntax to make it consistent throughout files
@@ -22,8 +20,6 @@ TO DO
 			
 			- 	update webserv.doc
 			-	create project flowchart
-
-
 
 	TESTING
 		-	Check against subject, correction sheet, tester, write tests with python, Postman 

@@ -121,6 +121,7 @@ void	Response::handle_next_chunk( void )
 	catch (const TaskFulfilled& e) {
 		dechunking = false;
 		this->response = cgi->getResponse();
+		this->print_resp();
 	}
 }
 
@@ -147,7 +148,6 @@ void	Response::POSTNextChunk( void )
 		if (incomingData.empty())//*last chunk
 		{
 			//*	closing newly created file
-			dechunking = false;
 			stream_newFile.close();
 			if (stream_newFile.fail()) {
 				unlink(newFileName.c_str());
@@ -171,8 +171,10 @@ void	Response::POSTNextChunk( void )
 			location_header	= std::string("Location: " + newResourceUrl);
 			headers			= getHeaders(201, "OK", newResourceRelPath, body.size(), location_header);
 
+			dechunking = false;
 			this->response.insert(this->response.begin(), headers.begin(), headers.end());
 			this->response.insert(this->response.end(), body.begin(), body.end());
+			this->print_resp();
 		}
 		else
 		{
@@ -188,6 +190,7 @@ void	Response::POSTNextChunk( void )
 	catch (const HttpError& e) {
 		this->dechunking = false;
 		this->response = e.getErrorPage();
+		this->print_resp();
 	}
 }
 
@@ -245,15 +248,17 @@ void	Response::generateResponse( void )
 			}
 			return (generatePOSTResponse());
 		}
-		if ("DELETE" == this->req.at("method"))
+		if ("DELETE" == this->req.at("method")) {
 			std::cout << BOLDMAGENTA << "METHOD : DELETE" << RESET << std::endl;
 			return (generateDELETEResponse());
-			
-		throw (/*Not Implemented*/	HttpError(501, this->matching_directives, location_root));
+		}
+		
+		/*Not Implemented*/	throw (HttpError(501, this->matching_directives, location_root));
 	}
 	catch (const HttpError& e) {
 		this->dechunking = false;
 		this->response = e.getErrorPage();
+		this->print_resp();
 	}
 }
 
@@ -358,7 +363,7 @@ void	Response::generatePOSTResponse( void )
 	}
 	else {// if no filename given
 		//! check behavior ? throw ?
-		newFileName = "POST_test";
+		newFileName = "test_POST";
 	}
 	newFileDir = reqPath.substr(0, pos);
 	
@@ -452,7 +457,7 @@ void	Response::generateChunkedPOSTResponse( void )
 	std::string						fullDirPath;
 	std::string						fileExtension;
 
-	std::cout << "POST uri_path : " << uri_path << std::endl;
+	COUT_DEBUG_INSERTION("POST uri_path : " << uri_path << std::endl);
 
 	path_remove_leading_slash(root);
 	path_remove_leading_slash(reqPath);
@@ -464,7 +469,7 @@ void	Response::generateChunkedPOSTResponse( void )
 	}
 	else {// if no filename given
 		//! check behavior ? throw ?
-		newFileName = "POST_test";
+		newFileName = "test_POST";
 	}
 	newFileDir = reqPath.substr(0, pos);
 	
@@ -472,12 +477,12 @@ void	Response::generateChunkedPOSTResponse( void )
 	fullDirPath		= root + "/" + newFileDir;
 	fullFilePath	= root + "/" + newFileDir + "/" + newFileName;
 
-	std::cout << "POST reqPath : "	 	<< reqPath << std::endl;
-	std::cout << "POST root : "	 		<< root << std::endl;
-	std::cout << "POST dir : "	 		<< newFileDir << std::endl;
-	std::cout << "POST newFileName : "	<< newFileName << std::endl;
-	std::cout << "POST fullDirPath : "	<< fullDirPath << std::endl;
-	std::cout << "POST fullFilePath : "	<< fullFilePath << std::endl;
+	COUT_DEBUG_INSERTION("POST reqPath : "	 	<< reqPath << std::endl);
+	COUT_DEBUG_INSERTION("POST root : "	 		<< root << std::endl);
+	COUT_DEBUG_INSERTION("POST dir : "	 		<< newFileDir << std::endl);
+	COUT_DEBUG_INSERTION("POST newFileName : "	<< newFileName << std::endl);
+	COUT_DEBUG_INSERTION("POST fullDirPath : "	<< fullDirPath << std::endl);
+	COUT_DEBUG_INSERTION("POST fullFilePath : "	<< fullFilePath << std::endl);
 
 // checks if fullDirPath is pointing to a valid location (directory)
     struct stat						fileStat;
@@ -487,7 +492,7 @@ void	Response::generateChunkedPOSTResponse( void )
 	if (isDirectory(root, newFileDir))
 	{
 			// create the new resource at the location
-			std::cout << MAGENTA << "Trying to add a resource to DIRECTORY : " << fullDirPath << RESET << std::endl;
+			COUT_DEBUG_INSERTION(MAGENTA << "Trying to add a resource to DIRECTORY : " << fullDirPath << RESET << std::endl);
 
 			// check if file exists at the given location and updating the name if it does
 			//TODO Replace with fileExists ?
@@ -555,17 +560,23 @@ void	Response::generateDELETEResponse( void )
 	std::vector<char>				body;
 	std::string						tmp;	
 
-	std::cout << "method: DELETE" << std::endl;
-	std::cout << "uri_path : " << uri_path << std::endl;
+	COUT_DEBUG_INSERTION("uri_path : " << uri_path << std::endl);
 	path_remove_leading_slash(reqPath);
 	filePath = root + reqPath;
-	std::cout << "filePath : " << filePath << std::endl;
+	COUT_DEBUG_INSERTION("filePath : " << filePath << std::endl);
 
 	errno = 0;
 	if (stat(filePath.c_str(), &fileStat) == 0) {
 		is_dir = S_ISDIR(fileStat.st_mode);
 		is_reg = S_ISREG(fileStat.st_mode);
-		std::cout << MAGENTA << filePath <<" : " << (is_dir? "is a directory" : "") << (is_reg? "is a regular file" : "") << ((!is_dir && !is_reg)? "is neither a file nor a directory" : "") << RESET << std::endl;
+		COUT_DEBUG_INSERTION(
+			<< MAGENTA 
+			<< filePath <<" : " 
+			<< (is_dir? "is a directory" : "") 
+			<< (is_reg? "is a regular file" : "") 
+			<< ((!is_dir && !is_reg)? "is neither a file nor a directory" : "") 
+			<< RESET 
+			<< std::endl);
 
 		if (is_dir)
 			deleteDirectory(filePath); 			// recursive call to delete content of directory (all files and subdirectories)
@@ -612,13 +623,17 @@ void	Response::generateCGIResponse(const std::string& cgi_extension)
 		cgi_extension, cgi_interpreter_path
 	);
 	this->cgi->launch();
-	this->response = this->cgi->getResponse();
+	if (false == dechunking)
+	{
+		this->response = this->cgi->getResponse();
+
+		std::string	debug(this->response.begin(), this->response.end());
+		COUT_DEBUG_INSERTION(
+			"CGI response : " << std::endl
+			<< "|" << debug << "|" << std::endl;
+		);
+	}
 	
-	std::string	debug(this->response.begin(), this->response.end());
-	COUT_DEBUG_INSERTION(
-		"CGI response : " << std::endl
-		<< "|" << debug << "|" << std::endl;
-	);
 	return ;
 }
 
@@ -1118,12 +1133,9 @@ void	Response::print_resp( void )
 				<< " | lenght: " << response.size() 
 				<< std::endl ;
 
-	std::cout << CYAN "| " RESET ;
-	for (std::vector<char>::iterator it = response.begin(); it != response.end(); it++){
-		std::cout << *it;
-		if (*it == '\n' && (it + 1) != response.end())
-			std::cout << CYAN "| " RESET ;
-	}
+	std::cout << CYAN "|" RESET;
+	std::cout.write(response.data(), response.size());
+	std::cout << CYAN "|" RESET;
 	std::cout << std::endl;
 	
 	std::cout << CYAN "END Response -----------------" RESET << std::endl;

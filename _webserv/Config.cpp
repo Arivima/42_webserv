@@ -410,7 +410,11 @@ void	Config::add_directive(t_conf_block& current, std::string& key, std::string&
 		str_compare_words(multiValued, key))
 	{
 		if (str_compare_words(current.directives.at(key), value))
-			throw (std::invalid_argument("Config::add_directive() : found directive with repeated values"));
+			throw (std::invalid_argument(
+				"Config::add_directive() : found directive with repeated values >>"
+				+ key + "; " + value
+				)
+			);
 		else
 			current.directives[key].append(" " + value);
 	}

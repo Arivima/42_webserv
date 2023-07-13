@@ -4,6 +4,18 @@
 Research :
 https://docs.google.com/document/d/1i5g1XgHDpUf_c7DF9Sp-EdEj2Bdzipvbjh13hLPty0w/edit?usp=sharing
 
+Flowchart :
+xxx
+
+
+# Features
+- IO multiplexing with epoll
+- 
+
+
+
+- timout 60 seconds
+
 # How to use it
 
 ..TBD

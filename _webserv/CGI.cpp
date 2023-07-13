@@ -87,7 +87,8 @@ void CGI::launch()
 			throw_HttpError_debug("CGI::launch()", "open CGI_OUTFILE", 500, this->matching_directives, get_env_value("ROOT"));
 		if (dup2(fd_out, STDOUT_FILENO) == -1)
 			throw_HttpError_debug("CGI::launch()", "dup2(fd_out, STDOUT_FILENO)", 500, this->matching_directives, get_env_value("ROOT"));
-		
+		close(fd_out);
+
 		//* creates arguments for execve
 		char* const cmd[3] = {
 			strdup(get_env_value("INTERPRETER_PATH").c_str()),
@@ -103,23 +104,20 @@ void CGI::launch()
 		close(sendPayload_pipe[0]);
 		if (false == chunked)
 		{
+			COUT_DEBUG_INSERTION("CGI NOT CHUNKED" << std::endl);
 			//*	printing body into the pipe
 			backupStdout = dup(STDOUT_FILENO);
 			dup2(sendPayload_pipe[1], STDOUT_FILENO);
-			for (
-				std::vector<char>::const_iterator it = request->getPayload().begin();
-				it != request->getPayload().end();
-				it++
-			)
-			{
-				std::cout << (*it);
-			}
+
+			std::cout.write(request->getPayload().data(), request->getPayload().size());
+			std::cout.flush();
 				//*	putting back STDOUT where it belongs
 			dup2(backupStdout, STDOUT_FILENO);
+			close(backupStdout);
 			close(sendPayload_pipe[1]);
 
 			//*	waiting for cgi to terminate
-			if (wait(0) == -1)
+			if (waitpid(pid, NULL, 0) == -1)
 				throw_HttpError_debug("CGI::launch()", "wait()", 500, this->matching_directives, get_env_value("ROOT"));
 
 			//* Update the response
@@ -141,8 +139,6 @@ void	CGI::CGINextChunk( void )
 {
 	std::vector<char>	incomingData;
 
-	try
-	{
 		try
 		{
 			incomingData = request->getIncomingData();
@@ -153,9 +149,10 @@ void	CGI::CGINextChunk( void )
 
 		if (incomingData.empty())
 		{
+			COUT_DEBUG_INSERTION("EOF CHUNK FOUND" << std::endl);
 			//*	sending EOF to the CGI and waiting the script to be done
 			close(sendPayload_pipe[1]);
-			if ( -1 == wait(0) )
+			if ( -1 == waitpid(pid, NULL, 0) )
 				throw_HttpError_debug(
 					"CGI::CGINextChunk()", "wait",
 					500,
@@ -179,23 +176,13 @@ void	CGI::CGINextChunk( void )
 		}
 		else
 		{
-			backupStdout = dup(STDOUT_FILENO);
-			dup2(sendPayload_pipe[1], STDOUT_FILENO);
-			for (
-				std::vector<char>::iterator it = incomingData.begin();
-				it != incomingData.end();
-				it++
-			)
-			{
-				std::cout << (*it);
-			}
-			dup2(backupStdout, STDOUT_FILENO);
+			backupStdout = dup(fileno(stdout));
+			dup2(sendPayload_pipe[1], fileno(stdout));
+			std::cout.write(incomingData.data(), incomingData.size());
+			std::cout.flush();
+			dup2(backupStdout, fileno(stdout));
+			close(backupStdout);
 		}
-	}
-	catch(const std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-	}
 	
 }
 

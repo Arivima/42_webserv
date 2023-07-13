@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 18:07:39 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/12 20:08:29 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/13 13:32:08 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,7 +52,8 @@ void	ConnectionSocket::status_switch( void )
 			edata
 		);
 		response->generateResponse();
-		response->print_resp();
+		if (false == response->isDechunking())
+			response->print_resp();
 		status = e_RESP_MODE;
 	}
 	else {
@@ -77,7 +78,7 @@ void	ConnectionSocket::serve_client( void ) {
 		}
 		else {
 			if (response->isDechunking())
-				response->handle_next_chunk(); //response->POSTNextChunk();
+				response->handle_next_chunk();
 			else
 				response->send_line();
 		}

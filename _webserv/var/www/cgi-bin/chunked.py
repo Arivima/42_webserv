@@ -6,8 +6,9 @@ import sys
 input_data = sys.stdin.read()
 
 # Set the response headers
-print("HTTP/1.1 200 OK\r\n")
-print("Content-Type: text/plain\r\n")
-print("\r\n")
+print("HTTP/1.1 200 OK")
+print("Content-Type: text/plain")
+print("Content-Length: " + str(len(input_data)))
+print("")
 # Send the response with the input content
-print(input_data)
+sys.stdout.write(input_data)
