@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 17:19:26 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/13 18:16:32 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/13 22:56:42 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -243,7 +243,7 @@ void	Request::parse_header( void )
 			{
 				parser_status = e_READING_BODY;
 				cur_body_size = std::atol(req["Content-Length"].c_str());
-				if (0 == cur_body_size)
+				if (0 == cur_body_size || chunked)
 					throw TaskFulfilled();
 			}
 			else {
@@ -307,7 +307,7 @@ void	Request::parse_body( void ) {
 		cur_line.end()
 	);
 	cur_line.clear();
-	if (false == chunked && 0 == cur_body_size)
+	if (false == chunked && 0 >= cur_body_size)
 	{
 		throw TaskFulfilled();
 	}
