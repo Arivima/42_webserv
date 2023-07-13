@@ -3,23 +3,28 @@
 /*                                                        :::      ::::::::   */
 /*   utils.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: avilla-m <avilla-m@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/18 10:41:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/12 16:10:02 by avilla-m         ###   ########.fr       */
+/*   Updated: 2023/07/13 18:16:32 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "include/Webserv.hpp"
+#include "Webserv.hpp"
+#include "Utils.hpp"
 
 #include <unistd.h>		//*access
 #include <sys/stat.h>	//*stat
-#include <dirent.h>		//*opendir
-
 #include <algorithm>	//*std::find
 #include <vector>		//*request utils
+#include <string>
 #include <cstring>
-#include <sstream>//*splitting : get_cgi_extension(), etc.
+#include <iostream>
+#include <sstream>		//*splitting : get_cgi_extension(), etc.
+#include <sys/stat.h> 	//*stat
+#include <sys/types.h>
+#include <dirent.h> 	//*readdir, opendir
+#include <cerrno> 		//*errno
 
 // BLOCK HPP
 //*		TYPES CONSTRUCTORS
@@ -103,7 +108,7 @@ std::string 				block_get_name(t_config_block_level level) {
 bool	mandatory_server_directives_present(const t_conf_block& current)
 {
 	static const char*							mandatory[] = {
-		"listen", NULL//"host", "server_name", NULL
+		"listen", NULL
 	};
 	const std::map<std::string, std::string>&	directives
 		= current.directives;
@@ -172,31 +177,6 @@ bool	same_host(
 		)
 	);
 }
-
-// /**
-//  * @brief this function takes the root for the current location block.
-//  * Directive 'upload_path' for file upload requests,
-//  * directive 'root' for all other requests.
-//  * 
-//  * @param matching_directives 
-//  * @return std::string 
-//  */
-// std::string		take_location_root( const t_conf_block& matching_directives, bool file_upload )
-// {
-// 	std::string											directive = file_upload ? "upload_path" : "root";
-// 	std::string											root;
-// 	std::map<std::string, std::string>::const_iterator	root_pos = matching_directives.directives.find(directive);
-
-// 	if (matching_directives.directives.end() != root_pos) {
-// 		root = matching_directives.directives.at(directive);
-// 		path_remove_leading_slash(root);
-// 		root += "/";
-// 	}
-// 	else
-// 		root = "./";
-	
-// 	return (root);
-// }
 
 //*		HTTP utilities
 bool	isCGI(
@@ -319,11 +299,7 @@ void			check_file_accessibility(
 	const std::string	fileFullPath = location_root + fileRelPath;
 	struct stat			fileStat;
 	int					statReturn;
-	
-	// errno = 0;
-    // if (access(fileFullPath.c_str(), F_OK) == -1) {
-    //     /*Not found*/	throw HttpError(404, matching_directives, location_root);
-	// }
+
 	statReturn = stat(fileFullPath.c_str(), &fileStat);
 	if (
 		0 == statReturn && 
@@ -433,11 +409,8 @@ HttpError	return_HttpError_errno_stat(
 {
 	const std::string root = location_root;
 
-	switch(errno)
+	switch(errno) // see list of errno errors below
 	{
-		// 400 Bad Request
-		//? case ELOOP:	throw HttpError(400, matching_directives, root, strerror(errno));  
-		
 		// 403 Forbidden
 		case EACCES:
 			throw HttpError(403, matching_directives, root, strerror(errno)); 
@@ -473,6 +446,7 @@ HttpError	return_HttpError_errno_stat(
 // 					respectively, the types off_t, ino_t, or blkcnt_t. 
 // 					This error can occur when, for example, an application compiled on a 32-bit platform without 
 // 					-D_FILE_OFFSET_BITS=64 calls stat() on a file whose size exceeds (1<<31)-1 bytes.
+
 
 void throw_HttpError_debug(
 		std::string function, std::string call,
@@ -542,7 +516,6 @@ void						strip_trailing_and_leading_spaces(std::string& str) {
 		else
 			break;
 	}
-	// COUT_DEBUG_INSERTION("trimmed line (no leading and trailing whitespace): |" << str << std::endl)
 }
 
 /*brief*/	// split a string into a vector using delimiter space, without keeping whitespace
@@ -550,8 +523,6 @@ std::vector<std::string> split_str_to_vector( std::string s, const std::string& 
 	std::vector<std::string>	new_vector;
 	std::string 				tmp;
 	size_t 						pos;
-	// COUT_DEBUG_INSERTION(MAGENTA "split_str_to_vector" RESET<< std::endl);
-	// COUT_DEBUG_INSERTION("inital s : |" << s << "|" << std::endl);
 	while ( s.size() > 0 ){
 		strip_trailing_and_leading_spaces(s);
 		if (s.empty())
@@ -563,11 +534,6 @@ std::vector<std::string> split_str_to_vector( std::string s, const std::string& 
 		s.erase(0, pos);
 		new_vector.push_back(tmp);
 	}
-	// COUT_DEBUG_INSERTION(YELLOW"final vector : " RESET << std::endl);
-	// if (new_vector.empty() == false){
-	// 	for (std::vector<std::string>::iterator it = new_vector.begin(); it != new_vector.end(); it++)
-	// 		COUT_DEBUG_INSERTION(YELLOW "|" << *it << "|" RESET << std::endl);
-	// }
 	return (new_vector);
 }
 
@@ -609,9 +575,6 @@ void	path_remove_leading_slash(std::string& pathname)
 		pathname = pathname.substr(1);
 }
 
-#include <cerrno>
-#include <sys/stat.h>
-#include <sys/types.h>
 
 bool	fileExists(
 	const std::string& root,
@@ -628,10 +591,7 @@ bool	fileExists(
 	return (0 == stat(fileFullPath.c_str(), &fileStat));
 }
 
-//TODO
-//TODO	check stat error with errno. Throw server internal error if it failed for something else than non-existent file.
-//TODO
-//TODO
+
 bool			isDirectory(const std::string root, std::string path)
 {COUT_DEBUG_INSERTION(YELLOW "isDirectory()" RESET << std::endl);
 
@@ -645,11 +605,6 @@ bool			isDirectory(const std::string root, std::string path)
 		S_ISDIR(fileStat.st_mode)
 	);
 }
-
-#include <iostream>
-#include <string>
-#include <dirent.h>
-#include <cerrno>
 
 // readdir()
 //		  RETURN VALUE 
@@ -671,8 +626,8 @@ std::string getDirectoryContentList(const std::string directoryPath)
 		contentList = "<ul>";
         while ((entry = readdir(dir)) != NULL){
 			
-			if (entry == NULL && errno != 0)								// errno, see above
-				throw SystemCallException("readdir() : ");//*HttpError 500 server internal error
+			if (entry == NULL && errno != 0)		// errno, see above
+				throw SystemCallException("readdir() : ");//!*HttpError 500 server internal error
 
 			std::string fileType;
 			if (entry->d_type == DT_DIR)
@@ -689,10 +644,10 @@ std::string getDirectoryContentList(const std::string directoryPath)
         }
 		contentList += "</ul>";
         if (closedir(dir) != 0)
-			throw SystemCallException("closedir()");//*HttpError 500 server internal error
+			throw SystemCallException("closedir()");//!*HttpError 500 server internal error
     }
     else
-		throw SystemCallException("opendir()");//*HttpError 500 server internal error
+		throw SystemCallException("opendir()");//!*HttpError 500 server internal error
 	COUT_DEBUG_INSERTION(
 		YELLOW << "contenList" << std::endl
 		<< contentList << RESET << std::endl
@@ -700,7 +655,6 @@ std::string getDirectoryContentList(const std::string directoryPath)
     return contentList;
 }
 
-//TODO	mettere pathname directory nel titolo
 std::string	createHtmlPage(const std::string& title, const std::string& body)
 {
 	std::stringstream	pageStream;
@@ -734,83 +688,3 @@ std::string	createHtmlPage(const std::string& title, const std::string& body)
 	);
 	return (pageStream.str());
 }
-
-//!	NON PIU UTILE
-// std::string	get_cgi_extension(
-// 	const std::string& path,
-// 	const std::map<std::string, std::string>& directives
-// )
-// {
-// 	std::stringstream	cgiExtensionsStream;
-// 	std::string			extension;
-// 	size_t				semicolon_pos;
-// 	bool				stop;
-
-// 	if (directives.end() == directives.find("cgi_enable"))
-// 		return ("");
-// 	cgiExtensionsStream.str(directives.at("cgi_enable"));
-// 	stop = false;
-// 	while (false == stop)
-// 	{
-// 		std::getline(cgiExtensionsStream, extension, ' ');
-// 		semicolon_pos = extension.find(";");
-// 		if (std::string::npos != semicolon_pos) {
-// 			stop = true;
-// 			extension.erase(semicolon_pos);
-// 		}
-		
-// 		if (std::string::npos != path.find(extension))
-// 			return (extension);
-// 	}
-// 	return "";
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

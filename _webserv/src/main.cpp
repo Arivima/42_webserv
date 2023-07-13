@@ -3,16 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: avilla-m <avilla-m@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/30 13:20:37 by avilla-m          #+#    #+#             */
-/*   Updated: 2023/07/12 18:44:07 by avilla-m         ###   ########.fr       */
+/*   Updated: 2023/07/13 18:16:32 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "include/Webserv.hpp"
-#include "include/Worker.hpp"
-#include "include/Config.hpp"
+#include "Webserv.hpp"
+#include "Worker.hpp"
+#include "Config.hpp"
 
 int main(int ac, char** av)
 {(void)ac;

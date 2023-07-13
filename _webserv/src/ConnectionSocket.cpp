@@ -6,12 +6,14 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 18:07:39 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/13 13:32:08 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/13 18:16:32 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "include/ConnectionSocket.hpp"
-#include <iostream>		//cout
+#include "ConnectionSocket.hpp"
+# include	"Utils.hpp"
+
+#include <iostream>	
 #include <unistd.h>
 
 //*		Main Constructor

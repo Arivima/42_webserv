@@ -3,14 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   Worker.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: avilla-m <avilla-m@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/06 21:15:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/12 18:52:59 by avilla-m         ###   ########.fr       */
+/*   Updated: 2023/07/13 18:16:32 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "include/Worker.hpp"
+#include "Worker.hpp"
 
 //*		main constructors and destructor
 
@@ -89,7 +89,6 @@ void Worker::workerLoop() {
 	
 	std::cout << BOLDGREEN << "\nStarting worker" << RESET << std::endl;
 	while (true) {
-		// COUT_DEBUG_INSERTION("workerloop\n");
 		try {
 			_io_multiplexing_using_epoll();
 		}
@@ -131,18 +130,6 @@ void	Worker::_handle_new_connectionS() {
 			cli_socket = _create_ConnectionSocket((*serv_it), client_IP, server_IP);
 			_epoll_register_ConnectionSocket(cli_socket);
 			
-			// //*		modifying rcv buffer
-			// int buffer_size = 512000;
-			// int snd_buffer_size = 512000;
-			// if (
-			// 	-1 == setsockopt(cli_socket, SOL_SOCKET, SO_RCVBUF, &buffer_size, sizeof(buffer_size)) ||
-			// 	-1 == setsockopt(cli_socket, SOL_SOCKET, SO_SNDBUF, &snd_buffer_size, sizeof(snd_buffer_size))
-			// )
-			// {
-				// /TODO throw exception
-			// 	return ;
-			// }
-			
 			//*		adding to list of open connections
 			(*serv_it).open_connections.push_back(
 				new ConnectionSocket(cli_socket, client_IP, server_IP, *serv_it, edata)
@@ -152,7 +139,6 @@ void	Worker::_handle_new_connectionS() {
 }
 
 void	Worker::_serve_clientS( void ) {
-	// COUT_DEBUG_INSERTION("Worker::serve_clientS" << std::endl);
 	ConnectionSocket*	connection;
 	
 	for (
@@ -169,7 +155,7 @@ void	Worker::_serve_clientS( void ) {
 		{
 			connection = (*cli_it);
 			try {
-				connection->serve_client();//_serve_client(*(*cli_it));
+				connection->serve_client();
 				cli_it++;
 			}
 			catch (const SockEof& e) {
@@ -338,7 +324,6 @@ void	Worker::_init_server_addr(
 
 void	Worker::_bind_server_socket_to_ip() {
 	std::cout << "----------------  bind()" << std::endl;
-	// COUT_DEBUG_INSERTION("socket fd: " << this->servers.back().server_fd << std::endl);
 	if (-1 == bind(
 		this->servers.back().server_fd,
 		(struct sockaddr *)&this->servers.back().server_addr, 
@@ -375,8 +360,6 @@ void	Worker::_print_server_ip_info() {
 	std::cout << "Local address\t: " << _getIP() << std::endl;
 	std::cout << "Local port\t: " << ntohs(this->servers.back().server_addr.sin_port) << std::endl;  
 	std::cout << "Server_fd\t: " << this->servers.back().server_fd << std::endl;  
-	
-	// std::cout << "Local fam\t: " << this->servers.back().server_addr.sin_family << std::endl;
 }
 
 

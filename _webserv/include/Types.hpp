@@ -6,14 +6,12 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/08 17:43:27 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/10 20:44:34 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/13 17:30:10 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef TYPES_HPP
 # define TYPES_HPP
-
-#include "Webserv.hpp"
 
 # include <string>
 # include <sstream>
@@ -33,6 +31,7 @@
 		e_location_block,
 	}	t_config_block_level;
 
+
 	typedef struct s_conf_block {
 		t_config_block_level				level;
 		std::map<std::string, std::string>	directives;
@@ -45,9 +44,11 @@
 		);
 	}	t_conf_block;
 
+
 	class ConnectionSocket;
 
 	typedef std::vector<ConnectionSocket* >		VectorCli;
+
 
 	typedef struct s_server {
 		const t_conf_block&			conf_server_block;
@@ -64,7 +65,7 @@
 	typedef std::vector<t_server>				VectorServ;
 
 
-//*		type utilities
+//*		type utilities -> utils.cpp
 	t_config_block_level	next_conf_block_level(t_config_block_level lvl);
 	int						block_get_level(std::string block_name);
 	std::string 			block_get_name(t_config_block_level level);

@@ -10,7 +10,8 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "include/Config.hpp"
+#include "Config.hpp"
+#include "Utils.hpp"
 #include <algorithm>	//remove_if, std::replace
 #include <cstring>		//strncmp
 #include <set>			//check_directive_validity()
@@ -18,7 +19,7 @@
 //*		non member helper functions Prototypes
 static bool					parenthesis_balanced(const std::string& content);
 static std::string			get_whole_line(std::string& line, size_t i);
-//*		/////////////////////////////
+
 
 //*		main Constructors and destructors
 Config::		Config( const char* config_file_path ) : conf() {

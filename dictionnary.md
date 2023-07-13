@@ -105,3 +105,48 @@ env_type : char** env
 // 					respectively, the types off_t, ino_t, or blkcnt_t. 
 // 					This error can occur when, for example, an application compiled on a 32-bit platform without 
 // 					-D_FILE_OFFSET_BITS=64 calls stat() on a file whose size exceeds (1<<31)-1 bytes.
+
+
+// HTTP Status codes
+	// 400 Bad Request 				- The server cannot or will not process the request due to something that is perceived to be a client error 
+	// 								(e.g., malformed request syntax, invalid request message framing, or deceptive request routing).
+	// 403 Forbidden 				- The client does not have access rights to the content; that is, it is unauthorized, so the server is refusing to give the requested resource. 
+	// 								Unlike 401 Unauthorized, the client's identity is known to the server.
+	// 404 Not Found 				- The server cannot find the requested resource. In the browser, this means the URL is not recognized. 
+// 405
+	// 409 Conflict					- The deletion could not be completed due to a conflict with the current state of the resource. 
+	// 413 Content Too Large		- The HTTP 413 Content Too Large response status code indicates that the request entity is larger than limits defined by server; the server might close the connection or return a Retry-After header field.
+	// 414 URI Too Long				- The URI requested by the client is longer than the server is willing to interpret.
+	// 500 Internal Server Error	- An unexpected error occurred on the server while processing the deletion request.
+// 501
+// 502
+// 504
+
+
+// opendir ERRORS : 
+    //    EACCES 	Permission denied.
+    //    EBADF  	fd is not a valid file descriptor opened for reading.
+    //    EMFILE 	The per-process limit on the number of open file descriptors has been reached.
+    //    ENFILE 	The system-wide limit on the total number of open files has been reached.
+    //    ENOENT 	Directory does not exist, or name is an empty string.
+    //    ENOMEM 	Insufficient memory to complete the operation.
+    //    ENOTDIR 	name is not a directory.
+// rmdir ERRORS : 
+    //    EACCES 	Write access to the directory containing pathname was not allowed, or one of the directories in the path prefix of
+    //           	pathname did not allow search permission.  (See also path_resolution(7).)
+    //    EBUSY  	pathname is currently in use by the system or some process that prevents its removal.  On Linux, this means pathname
+    //           	is currently used as a mount point or is the root directory of the calling process.
+    //    EFAULT 	pathname points outside your accessible address space.
+    //    EINVAL 	pathname has .  as last component.
+    //    ELOOP  	Too many symbolic links were encountered in resolving pathname.
+    //    ENAMETOOLONG pathname was too long.
+    //    ENOENT 	A directory component in pathname does not exist or is a dangling symbolic link.
+    //    ENOMEM 	Insufficient kernel memory was available.
+    //    ENOTDIR 	pathname, or a component used as a directory in pathname, is not, in fact, a directory.
+    //    ENOTEMPTY pathname contains entries other than . and .. ; or, pathname has ..  as its final component.
+	//    			POSIX.1 also allows EEXIST for this condition.
+    //    EPERM  	The directory containing pathname has the sticky bit (S_ISVTX) set and the process's effective user ID is
+    //           	neither the user ID of the file to be deleted nor that of the directory containing it, and the process is not
+    //           	privileged (Linux: does not have the CAP_FOWNER capability).
+    //    EPERM  	The filesystem containing pathname does not support the removal of directories.
+    //    EROFS  	pathname refers to a directory on a read-only filesystem.

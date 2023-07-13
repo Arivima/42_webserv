@@ -3,14 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: avilla-m <avilla-m@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 17:19:26 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/12 19:46:41 by avilla-m         ###   ########.fr       */
+/*   Updated: 2023/07/13 18:16:32 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "include/Request.hpp"
+#include "Request.hpp"
+# include "Utils.hpp"
+
 #include <sys/socket.h>	//recv
 #include <iostream>		//cout
 #include <sstream>		//string stream
@@ -155,7 +157,6 @@ void	Request::parse_line( void )
 		(NULL != eevent &&  eevent->events & EPOLLIN))
 	{
 		read_line();
-		//! printVectorChar(cur_line, "cur_line");
 		if (e_READING_HEADS == parser_status) {
 			parse_header();
 		}
@@ -223,7 +224,6 @@ void	Request::read_body( void ) {
 		sock_stream.end()
 	);
 	sock_stream.clear();
-	//! std::cout << "read " << bytes_read << " bytes of body" << std::endl;
 	if (false == chunked)
 		cur_body_size -= bytes_read;
 }
@@ -243,7 +243,6 @@ void	Request::parse_header( void )
 			{
 				parser_status = e_READING_BODY;
 				cur_body_size = std::atol(req["Content-Length"].c_str());
-				//! std::cout << "cur_body_size : " << cur_body_size << std::endl;
 				if (0 == cur_body_size)
 					throw TaskFulfilled();
 			}

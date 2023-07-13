@@ -10,7 +10,8 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "include/Response.hpp"
+#include "Response.hpp"
+# include "Utils.hpp"
 
 #include <iostream>
 #include <fstream>		//open requested files
@@ -87,13 +88,6 @@ void	Response::send_line( void )
 	else {
 		if (NULL != eevent && eevent->events & EPOLLOUT)
 		{
-			// std::string	debug(this->response.begin(), this->response.end());
-			// COUT_DEBUG_INSERTION(
-			// 	"sending chars : "
-			// 	<< "|" << debug << "|"
-			// 	<< std::endl
-			// );
-
 			bytes_sent = send(
 				this->sock_fd, response.data(), response.size(), 0
 			);
@@ -286,7 +280,7 @@ void	Response::generateGETResponse(  void  )
 			COUT_DEBUG_INSERTION("showing dir listing for " << root + path << std::endl)
 			std::string dir_listing_page = createHtmlPage(
 				"Directory Listing for /" + path,
-				getDirectoryContentList(root + path) //wip
+				getDirectoryContentList(root + path) //!wip
 			);
 			page.insert(
 				page.begin(),
@@ -294,8 +288,6 @@ void	Response::generateGETResponse(  void  )
 				dir_listing_page.end()
 			);
 			headers = getHeaders(200, "OK", filePath, page.size());
-			// throw (std::runtime_error("not yet implemented"));
-			// finire gestire ls
 		}
 		else {
 			COUT_DEBUG_INSERTION("autoindex not set" << std::endl);
@@ -333,14 +325,6 @@ void	Response::generateGETResponse(  void  )
 }
 
 //_______________________ METHOD : POST _______________________
-//TODO
-//TODO	1. line 49 : check if upload_path must be appended to the root
-//TODO	2. line 53 : move (and maybe correct) check in generateResponse
-//TODO	3. line 69 : check exact behavior
-//TODO	4. line 103 : check max path length
-//TODO	5. line 110 : check open_mode
-//TODO	6. line 139 : check if location points to an absolute or relative path
-//TODO
 void	Response::generatePOSTResponse( void )
 {
 	std::string						root = location_root;
@@ -362,12 +346,10 @@ void	Response::generatePOSTResponse( void )
 		newFileName = reqPath.substr(pos + 1);
 	}
 	else {// if no filename given
-		//! check behavior ? throw ?
 		newFileName = "test_POST";
 	}
 	newFileDir = reqPath.substr(0, pos);
 	
-	//! check upload_path is indeed correct
 	fullDirPath		= root + "/" + newFileDir;
 	fullFilePath	= root + "/" + newFileDir + "/" + newFileName;
 
@@ -389,7 +371,6 @@ void	Response::generatePOSTResponse( void )
 			COUT_DEBUG_INSERTION(MAGENTA << "Trying to add a resource to DIRECTORY : " << fullDirPath << RESET << std::endl);
 
 			// check if file exists at the given location and updating the name if it does
-			//TODO Replace with fileExists ?
 			extension_pos = newFileName.rfind(".");
 			if (std::string::npos != extension_pos)
 				fileExtension = newFileName.substr(extension_pos);
@@ -407,7 +388,7 @@ void	Response::generatePOSTResponse( void )
 				throw return_HttpError_errno_stat(root, matching_directives);
 			
 			// writes body to new file
-			std::ofstream	stream_newFile(fullFilePath/*, std::ios::out*/);
+			std::ofstream	stream_newFile(fullFilePath);
 			if (false == stream_newFile.is_open())
 				/*Server Err*/	throw HttpError(500, this->matching_directives, root);
 			
@@ -468,12 +449,10 @@ void	Response::generateChunkedPOSTResponse( void )
 		newFileName = reqPath.substr(pos + 1);
 	}
 	else {// if no filename given
-		//! check behavior ? throw ?
 		newFileName = "test_POST";
 	}
 	newFileDir = reqPath.substr(0, pos);
 	
-	//! check upload_path is indeed correct
 	fullDirPath		= root + "/" + newFileDir;
 	fullFilePath	= root + "/" + newFileDir + "/" + newFileName;
 
@@ -495,7 +474,6 @@ void	Response::generateChunkedPOSTResponse( void )
 			COUT_DEBUG_INSERTION(MAGENTA << "Trying to add a resource to DIRECTORY : " << fullDirPath << RESET << std::endl);
 
 			// check if file exists at the given location and updating the name if it does
-			//TODO Replace with fileExists ?
 			extension_pos = newFileName.rfind(".");
 			if (std::string::npos != extension_pos)
 				fileExtension = newFileName.substr(extension_pos);
@@ -570,7 +548,7 @@ void	Response::generateDELETEResponse( void )
 		is_dir = S_ISDIR(fileStat.st_mode);
 		is_reg = S_ISREG(fileStat.st_mode);
 		COUT_DEBUG_INSERTION(
-			<< MAGENTA 
+			MAGENTA 
 			<< filePath <<" : " 
 			<< (is_dir? "is a directory" : "") 
 			<< (is_reg? "is a regular file" : "") 
@@ -588,7 +566,6 @@ void	Response::generateDELETEResponse( void )
 	else {
 		COUT_DEBUG_INSERTION(YELLOW"Response::generateDELETEResponse()---stat failed" RESET << std::endl);
 		throw return_HttpError_errno_stat(location_root, matching_directives);
-		// throw_HttpError_errno_stat(); 			// throws accurate http status code according to errno
 	}
 
 // update the response
@@ -1028,26 +1005,6 @@ std::string		Response::getIndexPage( const std::string& root, std::string path )
 void			Response::deleteFile( const std::string filePath )
 {
 	COUT_DEBUG_INSERTION(YELLOW << "Trying to delete FILE : " << filePath << RESET << std::endl);
-// 	const std::string	dirPath = filePath.substr(0, filePath.rfind("/"));
-// // does the resource exists
-// 	errno = 0;
-//     if (access(filePath.c_str(), F_OK) == -1) {
-//         /*Not found*/	throw HttpError(404, matching_directives, location_root);
-// 	}
-
-// // do I have the right permission ? 
-// 	errno = 0;
-//     if (
-// 		-1 == access(dirPath.c_str(), W_OK | X_OK) ||
-// 		-1 == access(filePath.c_str(), W_OK)
-// 	)
-// 	{
-// 		COUT_DEBUG_INSERTION(RED "Response::deleteFile() : permissions error" RESET << std::endl);
-// 		if (errno == ETXTBSY) // ETXTBSY Write access was requested to an executable which is being executed.
-// 		/*Conflict*/	throw HttpError(409, matching_directives, location_root);
-// 		else
-// 		/*Forbidden*/	throw HttpError(403, matching_directives, location_root);
-// 	}
 
 	check_file_deletable(filePath, "", matching_directives);
 // delete the file

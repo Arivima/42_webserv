@@ -3,14 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   EpollData.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: earendil <earendil@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/01 18:15:06 by earendil          #+#    #+#             */
-/*   Updated: 2023/06/23 11:02:08 by earendil         ###   ########.fr       */
+/*   Updated: 2023/07/13 18:16:32 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "include/EpollData.hpp"
+#include "EpollData.hpp"
 
 const struct epoll_event* t_epoll_data::getEpollEvent(int sock_fd) const
 {

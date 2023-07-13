@@ -6,26 +6,31 @@
 #    By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/05/29 12:15:29 by mmarinel          #+#    #+#              #
-#    Updated: 2023/06/30 21:36:54 by mmarinel         ###   ########.fr        #
+#    Updated: 2023/07/13 18:15:41 by mmarinel         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 
-FILES	= 	main.cpp \
-			utils.cpp \
-			EpollData.cpp \
-			Worker.cpp \
-			ConnectionSocket.cpp \
-			Request.cpp \
-			Response.cpp \
-			CGI.cpp \
-			Config.cpp
+INCLUDE_DIR="include/"
+
+FLAGS=-Wall -Werror -Wextra -I $(INCLUDE_DIR)
+
+FILES	= 	src/main.cpp \
+			src/utils.cpp \
+			src/EpollData.cpp \
+			src/Worker.cpp \
+			src/ConnectionSocket.cpp \
+			src/Request.cpp \
+			src/Response.cpp \
+			src/CGI.cpp \
+			src/Exceptions.cpp \
+			src/Config.cpp
 
 all:
-	g++ -Wall -Werror -Wextra $(FILES) -o mini_serv
+	g++ $(FLAGS) $(FILES) -o mini_serv
 
 debug:
-	g++ -DDEBUG=1 -Wall -Werror -Wextra $(FILES) -o mini_serv
+	g++ -DDEBUG=1 $(FLAGS) $(FILES) -o mini_serv
 
 clean:
 	rm -rf mini_serv

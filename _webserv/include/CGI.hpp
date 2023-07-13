@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   CGI.hpp                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2023/07/13 17:23:26 by mmarinel          #+#    #+#             */
+/*   Updated: 2023/07/13 17:28:07 by mmarinel         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #ifndef CGI_HPP
 # define CGI_HPP
 
@@ -5,14 +17,13 @@
 # include	<vector>
 # include	<string>
 
-# include	<unistd.h>//pipe
+# include	<unistd.h>		//pipe
 # include	<sys/wait.h>	// wait
 
 # include	"Webserv.hpp"
 # include	"Request.hpp"
 
 # define	CGI_ENV_SIZE	30
-// # define	CGI_INFILE		".cgi_input"
 # define	CGI_OUTFILE		".cgi_output"
 
 class CGI {
@@ -25,7 +36,7 @@ private:
 	const std::map<std::string, std::string>&	req;
 	const t_conf_block&							matching_directives;
 	int											sendPayload_pipe[2];
-	int											fd_out;//response file descriptor
+	int											fd_out;	//response file descriptor
 	int											backupStdout;
 	pid_t										pid;
 	bool										chunked;

@@ -1,32 +1,31 @@
-TO DO 
+TODO 
 
 	Matteo
-		2-	Change req url name to "uri"
-		-	check for every member that should be a reference
-		- 	(forse)togliere set buffer size del socket nel Worker (setsockopt)
-		4. 	SEND Server Internal Error on SockEof (pensare se fare cosí)
 
-		- 	redirect post con file binary get stucks
-		- 	chunked encoding con postman encodando i files a mano
+		Prioritario
+			1. Tests + SIEGE + Leaks
+				-	fare correction sheet e scrivere una lista de tutte le cose da dimonstrare
+				-	Check against subject, correction sheet, tester, write tests with python, Postman
+			2. Timeout browser (creare la nuova request solo quando arriva qualcosa di nuovo)
+			3. add Makefile
+				-	includepath makefile
+			4. script for file Upload
+			5. file binary with POST redirect
+
+		meno importante
+		-	Change req url name to "uri"
+		-	check for every member that should be a reference
 
 	Arielle
-		-	cgi script for file Upload (pagina html con un immagine al centro, bottoni a destra sx, e pulsante per fare upload)
-
 		Final cleaning : 
 			-	clean exceptions / error syntax to make it consistent throughout files
+				- Response getDirectoryContentList wrap try catch in generateGETResponse, catch SystemCallException and rethrow as HttpError 500
 			-	clean all unuseful comments
-			-	put all implementations in .cpp
-			-	clean webserv.hpp and utils.cpp
 			
 			- 	update webserv.doc
 			-	create project flowchart
 
 	TESTING
-		-	Check against subject, correction sheet, tester, write tests with python, Postman 
-		-	fare correction sheet e scrivere una lista de tutte le cose da dimonstrare
-		- SIEGE
-		- leaks
-
 
 	check
 		• what happens if 10 clients try to upload 1G of data -> running out of memory cases

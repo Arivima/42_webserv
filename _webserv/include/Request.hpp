@@ -3,26 +3,26 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: avilla-m <avilla-m@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 15:41:58 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/12 15:12:38 by avilla-m         ###   ########.fr       */
+/*   Updated: 2023/07/13 17:28:46 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef REQUEST_HPP
 # define REQUEST_HPP
 
-# include <map>		//*	parsed request (body included)
+# include <map>						//*	parsed request (body included)
 # include <string>
-# include <sstream>	//*	socket stream
-# include <ctime>	//* clock_gettime
-# include <math.h>	//* pow
+# include <sstream>					//*	socket stream
+# include <ctime>					//* clock_gettime
+# include <math.h>					//* pow
 
 # include "Webserv.hpp"
 # include "EpollData.hpp"
 
-# define	DEFAULT_TIMEOUT		60				// 60.0 seconds
+# define	DEFAULT_TIMEOUT		60	// 60.0 seconds
 
 /**
  * @brief The purpose of this class is to parse a http request into a more convenient format.
@@ -44,8 +44,8 @@ private:
 	t_PARSER_STATUS							parser_status;
 	const int								sock_fd;
 	const t_epoll_data&						edata;
-	std::map<std::string, std::string>		req;	//*	map holding the request headers
-	std::vector<char>						payload;//*	request body
+	std::map<std::string, std::string>		req;						//*	map holding the request headers
+	std::vector<char>						payload;					//*	request body
 	struct timespec							timestamp_start;
 	bool									timed_out;
 

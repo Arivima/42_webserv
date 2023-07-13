@@ -1,4 +1,17 @@
-# include	"include/CGI.hpp"
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   CGI.cpp                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2023/07/13 17:23:17 by mmarinel          #+#    #+#             */
+/*   Updated: 2023/07/13 18:15:59 by mmarinel         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+# include	"CGI.hpp"
+# include	"Utils.hpp"
 
 # include	<sys/socket.h>
 # include	<arpa/inet.h>
@@ -9,6 +22,7 @@
 # include	<fstream>
 # include	<iostream>
 # include	<cstdio>
+# include	<cstring>
 
 //*		Public member functions
 CGI::CGI(
@@ -227,11 +241,6 @@ void CGI::init_env_paths(
 			query_str = url.substr(pos_query + 1);
 		else
 			query_str = "";
-
-		// if ((pos_query != std::string::npos) && (pos_query == path_info.size() - 1))
-		// 	query_str = path_info.substr(pos_query + 1);
-			
-		//!wrong path_info = path_info.substr(0, pos_query);
 	}
 	path_remove_leading_slash(script_name);
 	path_remove_leading_slash(path_info);
@@ -248,8 +257,6 @@ void CGI::init_env_paths(
 }
 
 void	CGI::init_env(const t_conf_block& matching_directives, const std::string& client_IP, const std::string& server_IP){
-	// const std::string&	client_IP;	//*	ip of remote client
-	// const std::string&	server_IP;	//*	the interface, among all the assigned_server utilized interfaces, where the connection got accepted.
 
 	// Path environment variables declared in init_env_paths();
 	cgi_env[7] = strdup((std::string("AUTH_TYPE=")               +	std::string("")).c_str());
