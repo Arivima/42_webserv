@@ -71,6 +71,7 @@ private:
 	const std::string							uri_path;
 	bool										dechunking;
 	size_t										chunk_bytes_sent;
+	size_t										max_body_size;
 	std::string									newFileName;
 	std::ofstream								stream_newFile;
 	std::string									newFileDir;

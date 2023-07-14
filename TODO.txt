@@ -1,6 +1,5 @@
 TODO 
-
-		urgent questions
+		MA urgent questions
 			-	redirection : file to add to path
 			-   utils.cpp 635 throw SystemCallException("readdir() : ");//!*HttpError 500 server internal error
 			-   utils.cpp 654 throw SystemCallException("closedir()");//!*HttpError 500 server internal error
@@ -8,64 +7,40 @@ TODO
 			-	check //! //TODO
 
 		Prioritario
-			1. Tests + SIEGE + Leaks
-				-	fare correction sheet e scrivere una lista de tutte le cose da dimonstrare -> add to config and postman
+			1. Testing
+				-	Throughout testing, record tests -> add to config and postman
 				-	Subject
 				-	Correction sheet
-				-	Tester, write tests with python
 				-	Postman
+				-	Leaks
+				-	SIEGE
+				-	Tester, write tests with python
 			
-			2. Timeout browser (creare la nuova request solo quando arriva qualcosa di nuovo)
-			
-			3. Body size for chunked
-			
-			3. add Makefile
-				-	includepath makefile
-				-	make : set-up all test folders for postman :
-					-	cp "back-up_postman_folders/*" to "var/www"
-						-	add chmod a-rwx 	"var/www/test_delete/1_subdir_nok/2/3_not_authorized"
-						-	add chmod a-rwx 	"var/www/test_delete/1_subfile_nok/2/not-authorized-file.txt"
-						-	execute nyan cats 	"var/www/test_delete/1_subfile_busy/2/nyancat"
-						
-						-	add chmod a-rwx 	"var/www/test_delete_redirection/1_subdir_nok/2/3_not_authorized"
-						-	add chmod a-rwx 	"var/www/test_delete_redirection/1_subfile_nok/2/not-authorized-file.txt"
-						-	execute nyan cats 	"var/www/test_delete_redirection/1_subfile_busy/2/nyancat"
-				- 	make fclean
-						- 	add chmod a+rwx to those files
-						- 	kill nyancats
-						-	delete all files test_* 
-			
-			4.	script for file Upload
-			
-			5. - Response getDirectoryContentList wrap try catch in generateGETResponse, catch SystemCallException and rethrow as HttpError 500
-			
-			6. file binary with POST redirect
-
+			2. M Timeout browser (creare la nuova request solo quando arriva qualcosa di nuovo)
+			3. M Body size for chunked
+			3. M debug Makefile
+			4. script for file Upload
+			5. M Response getDirectoryContentList wrap try catch in generateGETResponse, catch SystemCallException and rethrow as HttpError 500
+			6. M file binary with POST redirect
 
 	Matteo
+		1.	chunked.py risolvere caso ContentTooLarge
+		2.	Controllare se fare (max_body_size -= (std::cout.tellp() - prev_chars);) anche in POSTNextChunk() (lo faccio giá in CGINextChunk())
 		meno importante
 		-	Change req url name to "uri"
 		-	check for every member that should be a reference
-
 	Arielle
-		-	OK clean exceptions / error syntax to make it consistent throughout files
 		-	GET redirect postman
 		-	finish testing postman
-		-	write makefile
 		-	Landing Page carina
-
 	check
 		• what happens if 10 clients try to upload 1G of data -> running out of memory cases
 		• Your server must be compatible with the web browser of your choice.
 		• Stress tests your server. It must stay available at all cost.
-		- Checkt that ANY fd read goes through epoll
-		- Check UNKNOWN request
 
 	Additional tasks if there is time:
 		- 	fare un log
 		- 	cookie ?
-		-	update Webserv.doc
-
 	Before pushing : 
 		-	take out correction sheet
 		-	clean todo
@@ -75,7 +50,17 @@ TODO
 		-	create project flowchart
 		-	update documentation, dictionnary etc
 
-
+# **************************************************************************** #
+#                                                                              #
+#    header                                               :::      ::::::::    #
+#    By: team_PiouPiou                                  :+:      :+:    :+:    #
+#        avilla-m <avilla-m@student.42.fr>            +:+ +:+         +:+      #
+#        mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2023/05/29 12:15:29 by mmarinel          #+#    #+#              #
+#    Updated: 2023/07/14 14:20:20 by mmarinel         ###   ########.fr        #
+#                                                                              #
+# **************************************************************************** #
 
 
 

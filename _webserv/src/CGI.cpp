@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 17:23:17 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/14 14:50:30 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/14 17:04:05 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,6 +44,7 @@ CGI::CGI(
 	init_env(matching_directives, client_IP, server_IP);
 
 	this->chunked = chunked;
+	max_body_size = std::atol(matching_directives.directives.at("body_size").c_str());
 
 	print_arr(this->cgi_env, std::string("CGI Environment"));
 }
@@ -183,12 +184,16 @@ void	CGI::CGINextChunk( void )
 		}
 		else
 		{
+			long	prev_chars = std::cout.tellp();
+
 			backupStdout = dup(fileno(stdout));
 			dup2(sendPayload_pipe[1], fileno(stdout));
 			std::cout.write(incomingData.data(), incomingData.size());
 			std::cout.flush();
+			max_body_size -= (std::cout.tellp() - prev_chars);
 			if (
-				std::cout.tellp() > std::atol(matching_directives.directives.at("body_size").c_str())
+				max_body_size < 0
+				// std::cout.tellp() > std::atol(matching_directives.directives.at("body_size").c_str())
 			) {
 				waitpid(pid, NULL, 0);
 				chunked = false;

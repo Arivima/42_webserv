@@ -185,7 +185,7 @@ void	Response::POSTNextChunk( void )
 				stream_newFile.tellp() > std::atol(matching_directives.directives.at("body_size").c_str())
 			) {
 				stream_newFile.close();
-				unlink(newFileName.c_str());
+				unlink((root + "/" + newFileDir + "/" + newFileName).c_str());
 				/*Content Too Large*/	throw HttpError(413, matching_directives, location_root);
 			}
 			if (stream_newFile.fail()) {

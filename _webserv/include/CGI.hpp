@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 17:23:26 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/14 12:38:24 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/14 17:03:45 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,6 +40,7 @@ private:
 	int											backupStdout;
 	pid_t										pid;
 	bool										chunked;
+	long										max_body_size;
 
 //*		Public member functions _____________________________________
 public:
