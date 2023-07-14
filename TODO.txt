@@ -1,38 +1,45 @@
 TODO 
-		MA urgent questions
-			-	redirection : file to add to path
-			-   utils.cpp 635 throw SystemCallException("readdir() : ");//!*HttpError 500 server internal error
-			-   utils.cpp 654 throw SystemCallException("closedir()");//!*HttpError 500 server internal error
-			-   utils.cpp 657 throw SystemCallException("opendir()");//!*HttpError 500 server internal error
-			-	check //! //TODO
-
-		Prioritario
-			1. Testing
-				-	Throughout testing, record tests -> add to config and postman
-				-	Subject
-				-	Correction sheet
-				-	Postman
-				-	Leaks
-				-	SIEGE
-				-	Tester, write tests with python
-			
-			2. M Timeout browser (creare la nuova request solo quando arriva qualcosa di nuovo)
-			3. M Body size for chunked
-			3. M debug Makefile
-			4. script for file Upload
-			5. M Response getDirectoryContentList wrap try catch in generateGETResponse, catch SystemCallException and rethrow as HttpError 500
-			6. M file binary with POST redirect
-
+	Prioritario
+		1. Testing
+			-	Throughout testing, record tests -> add to config and postman
+			-	Subject
+			-	Correction sheet
+			-	Postman
+			-	Leaks
+			-	SIEGE
+			-	Tester, write tests with python
+		
 	Matteo
 		1.	chunked.py risolvere caso ContentTooLarge
 		2.	Controllare se fare (max_body_size -= (std::cout.tellp() - prev_chars);) anche in POSTNextChunk() (lo faccio giá in CGINextChunk())
+
+		-   utils.cpp 635 throw SystemCallException("readdir() : ");//!*HttpError 500 server internal error
+		-   utils.cpp 654 throw SystemCallException("closedir()");//!*HttpError 500 server internal error
+		-   utils.cpp 657 throw SystemCallException("opendir()");//!*HttpError 500 server internal error
+		-	check //! 
+		-	check //TODO
+
+		- 	reread the correction sheet and implement everything and test
+		-	controllare i ritorni di ogni read/write/send/recv (removere il client)
+		-	redirection : file to add to path (/old-path/ substitution)
+
+		2. M Timeout browser (creare la nuova request solo quando arriva qualcosa di nuovo)
+		3. M Body size for chunked
+		3. M debug Makefile
+		4. script for file Upload
+		5. M Response getDirectoryContentList wrap try catch in generateGETResponse, catch SystemCallException and rethrow as HttpError 500
+		6. M file binary with POST redirect
+
 		meno importante
 		-	Change req url name to "uri"
 		-	check for every member that should be a reference
+
 	Arielle
 		-	GET redirect postman
 		-	finish testing postman
 		-	Landing Page carina
+https://www.one-tab.com/page/UKcL00UVSK-7TQgaizuOaw
+
 	check
 		• what happens if 10 clients try to upload 1G of data -> running out of memory cases
 		• Your server must be compatible with the web browser of your choice.
