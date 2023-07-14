@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 17:23:26 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/13 17:28:07 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/14 12:38:24 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@
 # include	"Webserv.hpp"
 # include	"Request.hpp"
 
-# define	CGI_ENV_SIZE	30
+# define	CGI_ENV_SIZE	31
 # define	CGI_OUTFILE		".cgi_output"
 
 class CGI {

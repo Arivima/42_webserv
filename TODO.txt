@@ -1,33 +1,58 @@
 TODO 
 
-	Matteo
+		urgent questions
+			-	redirection : file to add to path
+			-   utils.cpp 635 throw SystemCallException("readdir() : ");//!*HttpError 500 server internal error
+			-   utils.cpp 654 throw SystemCallException("closedir()");//!*HttpError 500 server internal error
+			-   utils.cpp 657 throw SystemCallException("opendir()");//!*HttpError 500 server internal error
+			-	check //! //TODO
 
 		Prioritario
 			1. Tests + SIEGE + Leaks
-				-	fare correction sheet e scrivere una lista de tutte le cose da dimonstrare
-				-	Check against subject, correction sheet, tester, write tests with python, Postman
+				-	fare correction sheet e scrivere una lista de tutte le cose da dimonstrare -> add to config and postman
+				-	Subject
+				-	Correction sheet
+				-	Tester, write tests with python
+				-	Postman
+			
 			2. Timeout browser (creare la nuova request solo quando arriva qualcosa di nuovo)
+			
 			3. Body size for chunked
+			
 			3. add Makefile
 				-	includepath makefile
-				-	add chmod a-rwx notauthorized in program build
+				-	make : set-up all test folders for postman :
+					-	cp "back-up_postman_folders/*" to "var/www"
+						-	add chmod a-rwx 	"var/www/test_delete/1_subdir_nok/2/3_not_authorized"
+						-	add chmod a-rwx 	"var/www/test_delete/1_subfile_nok/2/not-authorized-file.txt"
+						-	execute nyan cats 	"var/www/test_delete/1_subfile_busy/2/nyancat"
+						
+						-	add chmod a-rwx 	"var/www/test_delete_redirection/1_subdir_nok/2/3_not_authorized"
+						-	add chmod a-rwx 	"var/www/test_delete_redirection/1_subfile_nok/2/not-authorized-file.txt"
+						-	execute nyan cats 	"var/www/test_delete_redirection/1_subfile_busy/2/nyancat"
+				- 	make fclean
+						- 	add chmod a+rwx to those files
+						- 	kill nyancats
+						-	delete all files test_* 
+			
 			4.	script for file Upload
+			
 			5. - Response getDirectoryContentList wrap try catch in generateGETResponse, catch SystemCallException and rethrow as HttpError 500
+			
 			6. file binary with POST redirect
 
+
+	Matteo
 		meno importante
 		-	Change req url name to "uri"
 		-	check for every member that should be a reference
 
 	Arielle
+		-	OK clean exceptions / error syntax to make it consistent throughout files
+		-	GET redirect postman
+		-	finish testing postman
+		-	write makefile
 		-	Landing Page carina
-		Final cleaning : 
-			-	clean exceptions / error syntax to make it consistent throughout files
-			
-			- 	update webserv.doc
-			-	create project flowchart
-
-	TESTING
 
 	check
 		• what happens if 10 clients try to upload 1G of data -> running out of memory cases
@@ -37,11 +62,18 @@ TODO
 		- Check UNKNOWN request
 
 	Additional tasks if there is time:
-		- fare un log
-		- cookie ?
+		- 	fare un log
+		- 	cookie ?
 		-	update Webserv.doc
 
-
+	Before pushing : 
+		-	take out correction sheet
+		-	clean todo
+		-	update headers
+	after pushing :
+		- 	update webserv.doc
+		-	create project flowchart
+		-	update documentation, dictionnary etc
 
 
 

@@ -70,6 +70,7 @@ private:
 	//*	POST data
 	const std::string							uri_path;
 	bool										dechunking;
+	size_t										chunk_bytes_sent;
 	std::string									newFileName;
 	std::ofstream								stream_newFile;
 	std::string									newFileDir;

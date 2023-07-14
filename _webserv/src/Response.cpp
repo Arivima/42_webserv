@@ -56,6 +56,7 @@ Response::Response(
 		uri_path(uri_remove_queryString(req.at("url")))
 {
 	dechunking = false;
+	chunk_bytes_sent = 0;
 	redirect = (
 		matching_directives.directives.end() !=
 		matching_directives.directives.find("return")
@@ -117,6 +118,12 @@ void	Response::handle_next_chunk( void )
 		this->response = cgi->getResponse();
 		this->print_resp();
 	}
+	catch (const HttpError& e) {
+		dechunking = false;
+		std::cout << RED << e.what() << RESET << std::endl;
+		this->response = e.getErrorPage();
+		this->print_resp();
+	}
 }
 
 void	Response::POSTNextChunk( void )
@@ -136,7 +143,7 @@ void	Response::POSTNextChunk( void )
 		catch (const std::invalid_argument& e) {//*invalid chunk
 			stream_newFile.close();
 			unlink(newFileName.c_str());
-			throw (HttpError(400, matching_directives, location_root));
+			/*Bad req*/	throw (HttpError(400, matching_directives, location_root));
 		}
 
 		if (incomingData.empty())//*last chunk
@@ -174,6 +181,13 @@ void	Response::POSTNextChunk( void )
 		{
 			//*	printing next chunk bytes into body
 			stream_newFile.write(incomingData.data(), incomingData.size());
+			if (
+				stream_newFile.tellp() > std::atol(matching_directives.directives.at("body_size").c_str())
+			) {
+				stream_newFile.close();
+				unlink(newFileName.c_str());
+				/*Content Too Large*/	throw HttpError(413, matching_directives, location_root);
+			}
 			if (stream_newFile.fail()) {
 				stream_newFile.close();
 				unlink(newFileName.c_str());

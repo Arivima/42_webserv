@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/18 10:41:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/13 19:20:36 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/14 13:55:29 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -310,7 +310,7 @@ void			check_file_accessibility(
 		)
 	)
 	{
-		throw HttpError(403, matching_directives, location_root);
+		/*Forbidden*/	throw HttpError(403, matching_directives, location_root);
 	}
 	if (statReturn < 0)
 		throw return_HttpError_errno_stat(location_root, matching_directives);

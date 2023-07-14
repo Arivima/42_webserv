@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 17:23:17 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/13 20:14:19 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/14 14:50:30 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -100,8 +100,11 @@ void CGI::launch()
 			nullptr
 		};
 		//* executing cgi
-		if (execve(cmd[0], cmd, this->cgi_env) == -1)
+		if (execve(cmd[0], cmd, this->cgi_env) == -1) {
+			//! take care of leaks
+			exit(EXIT_FAILURE);
 			throw_HttpError_debug("CGI::launch()", "execve()", 500, this->matching_directives, get_env_value("ROOT"));
+		}
 	}
 	else 	// back to parent
 	{
@@ -122,7 +125,7 @@ void CGI::launch()
 
 			//*	waiting for cgi to terminate
 			if (waitpid(pid, NULL, 0) == -1)
-				throw_HttpError_debug("CGI::launch()", "wait()", 500, this->matching_directives, get_env_value("ROOT"));
+				throw_HttpError_debug("CGI::launch()", "waitpid()", 500, this->matching_directives, get_env_value("ROOT"));
 
 			//* Update the response
 			std::ifstream	stream_cgi_outfile(CGI_OUTFILE, std::ios::in);
@@ -158,7 +161,7 @@ void	CGI::CGINextChunk( void )
 			close(sendPayload_pipe[1]);
 			if ( -1 == waitpid(pid, NULL, 0) )
 				throw_HttpError_debug(
-					"CGI::CGINextChunk()", "wait",
+					"CGI::CGINextChunk()", "waitpid",
 					500,
 					matching_directives, get_env_value("ROOT")
 				);
@@ -184,6 +187,15 @@ void	CGI::CGINextChunk( void )
 			dup2(sendPayload_pipe[1], fileno(stdout));
 			std::cout.write(incomingData.data(), incomingData.size());
 			std::cout.flush();
+			if (
+				std::cout.tellp() > std::atol(matching_directives.directives.at("body_size").c_str())
+			) {
+				waitpid(pid, NULL, 0);
+				chunked = false;
+				dup2(backupStdout, fileno(stdout));
+				close(backupStdout);
+				throw HttpError(413, matching_directives, get_env_value("ROOT"));
+			}
 			dup2(backupStdout, fileno(stdout));
 			close(backupStdout);
 		}
@@ -272,6 +284,7 @@ void	CGI::init_env(const t_conf_block& matching_directives, const std::string& c
 	cgi_env[27] = strdup((std::string("SERVER_PROTOCOL=")           			+ 	std::string("HTTP/1.1")).c_str());
 	cgi_env[28] = strdup((std::string("SERVER_SOFTWARE=")           			+ 	std::string("WebServ_PiouPiou/1.0.0 (Ubuntu)")).c_str());
 	cgi_env[29] = strdup((std::string("WEBTOP_USER=")               			+ 	std::string("")).c_str());
+	cgi_env[30] = strdup((std::string("MAX_BODY_SIZE=")							+	matching_directives.directives.at("body_size")).c_str());
 	cgi_env[CGI_ENV_SIZE] = NULL;
 }
 
