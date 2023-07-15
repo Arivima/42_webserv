@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Image Gallery</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    #image {
+      max-width: 400px;
+      max-height: 400px;
+    }
+
+    #navigation {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+<h1>My Gallery</h1>
+  <img id="image" src="" alt="Image">
+  <div id="navigation">
+    <button onclick="showPreviousImage()">Previous</button>
+    <button onclick="showNextImage()">Next</button>
+  </div>
+  <button onclick="uploadFile()">Upload File</button>
+
+  <script>
+    var images = [];
+    var currentIndex = -1;
+    var imageElement = document.getElementById('image');
+
+    // Function to fetch all image files from the "gallery" directory
+    // Function to fetch all image files from the "gallery" directory
+	function fetchImages() {
+		// Replace 'path/to/gallery' with the actual path to your image directory
+		fetch('http://localhost:8080/cgi-bin/navigator.pl?//gallery')
+		.then(response => response.text())
+		.then(data => {
+			var parser = new DOMParser();
+			var doc = parser.parseFromString(data, 'text/html');
+			var links = doc.getElementsByTagName('a');
+			images = [];
+			
+			for (var i = 0; i < links.length; i++) {
+				 var link = links[i].getAttribute('href');
+				 if (link.endsWith('.jpg') || link.endsWith('.jpeg') || link.endsWith('.png')) {
+					images.push( "http://localhost:8080" + link.split("?")[1].slice(1) );
+				}
+			}
+			currentIndex = getRandomIndex();
+			imageElement.src = images[currentIndex];
+		})
+		.catch(error => console.error(error));
+	}
+
+    // Function to display the next image
+    function showNextImage() {
+      currentIndex = (currentIndex + 1) % images.length;
+      imageElement.src = images[currentIndex];
+    }
+
+    // Function to display the previous image
+    function showPreviousImage() {
+      currentIndex = (currentIndex - 1 + images.length) % images.length;
+      imageElement.src = images[currentIndex];
+    }
+
+	// Function to handle file upload
+	// Function to handle file upload
+	function uploadFile() {
+		var fileInput = document.createElement('input');
+		fileInput.type = 'file';
+		fileInput.style.display = 'none';
+		document.body.appendChild(fileInput);
+
+		fileInput.addEventListener('change', function() {
+			var file = fileInput.files[0];
+			var url = '/cgi-bin/chunked.py?NAME=' + encodeURIComponent(file.name);
+
+			var xhr = new XMLHttpRequest();
+			xhr.open('POST', url, true);
+
+			xhr.onreadystatechange = function() {
+				if (xhr.readyState === 4) {
+					// Handle the response here
+					console.log(xhr.responseText);
+						
+					fetchImages();
+				}
+			};
+
+			xhr.send(file);
+
+			document.body.removeChild(fileInput);
+		});
+
+		fileInput.click();
+	}
+    // Function to download the current image
+    imageElement.addEventListener('click', function() {
+      var link = document.createElement('a');
+      link.href = imageElement.src;
+      link.download = 'image.jpg';
+      link.click();
+    });
+
+	function getRandomIndex() {
+ 		 return Math.floor(Math.random() * images.length);
+	}
+
+    // Fetch images when the page loads
+    window.onload = fetchImages;
+  </script>
+</body>
+</html>
