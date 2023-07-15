@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 18:07:39 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/13 18:16:32 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/15 16:44:18 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,18 +67,29 @@ void	ConnectionSocket::status_switch( void )
 		response = NULL;
 		if (close_connection)
 			throw (SockEof());
-		request = new Request(sock_fd, edata);
+		// request = new Request(sock_fd, edata);
 		status = e_REQ_MODE;
 	}
 }
 
-void	ConnectionSocket::serve_client( void ) {
+void	ConnectionSocket::serve_client( void )
+{
+	const struct epoll_event*	eevent = edata.getEpollEvent(this->sock_fd);
 
 	try {
-		if (e_REQ_MODE == status) {
+		if (e_REQ_MODE == status)
+		{
+			if (NULL == request)
+			{
+				if (NULL != eevent &&  eevent->events & EPOLLIN)
+					request = new Request(sock_fd, edata);
+				else
+					return ;
+			}
 			request->parse_line();
 		}
-		else {
+		else
+		{
 			if (response->isDechunking())
 				response->handle_next_chunk();
 			else
