@@ -168,7 +168,7 @@ void	Response::POSTNextChunk( void )
 			newResourceUrl	= "http://" + domainName + "/" + newFileDir + "/" + newFileName;
 			newResourceRelPath = newFileDir + "/" + newFileName;
 
-			body				= "Resource " +  newResourceUrl  + " at directory\"" +  reqPath  + "\" was successfully created\n";
+			body				= "Resource " +  newResourceUrl  + " at directory\"" +  newFileDir  + "\" was successfully created\n";
 			location_header	= std::string("Location: " + newResourceUrl);
 			headers			= getHeaders(201, "OK", newResourceRelPath, body.size(), location_header);
 
@@ -437,7 +437,7 @@ void	Response::generatePOSTResponse( void )
 	newResourceUrl	= "http://" + domainName + "/" + newFileDir + "/" + newFileName;
 	newResourceRelPath = newFileDir + "/" + newFileName;
 
-	body				= "Resource " +  newResourceUrl  + " at directory\"" +  reqPath  + "\" was successfully created\n";
+	body				= "Resource " +  newResourceUrl  + " at directory\"" +  newFileDir  + "\" was successfully created\n";
 	location_header	= std::string("Location: " + newResourceUrl);
 	headers			= getHeaders(201, "OK", newResourceRelPath, body.size(), location_header);
 	

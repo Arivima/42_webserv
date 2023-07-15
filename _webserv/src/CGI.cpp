@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 17:23:17 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/14 17:04:05 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/15 14:17:01 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -184,21 +184,19 @@ void	CGI::CGINextChunk( void )
 		}
 		else
 		{
-			long	prev_chars = std::cout.tellp();
-
 			backupStdout = dup(fileno(stdout));
 			dup2(sendPayload_pipe[1], fileno(stdout));
 			std::cout.write(incomingData.data(), incomingData.size());
 			std::cout.flush();
-			max_body_size -= (std::cout.tellp() - prev_chars);
-			if (
-				max_body_size < 0
-				// std::cout.tellp() > std::atol(matching_directives.directives.at("body_size").c_str())
-			) {
-				waitpid(pid, NULL, 0);
+			max_body_size -= incomingData.size();
+			if (max_body_size < 0)
+			{
 				chunked = false;
 				dup2(backupStdout, fileno(stdout));
 				close(backupStdout);
+				//*	sending EOF to the CGI and waiting the script to be done
+				close(sendPayload_pipe[1]);
+				waitpid(pid, NULL, 0);
 				throw HttpError(413, matching_directives, get_env_value("ROOT"));
 			}
 			dup2(backupStdout, fileno(stdout));
