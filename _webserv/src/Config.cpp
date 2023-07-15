@@ -366,7 +366,7 @@ void	Config::check_directive_validity(const std::string& directive, t_config_blo
 	};
 	static const char*					virtual_server_directives[] = {
 		"listen", "location", "server_name", "host", "index",
-		"body_size", "error_page", "method", "root", "upload_path", "return",
+		"body_size", "error_page", "method", "root", "upload_path",
 		"autoindex",  "cgi_enable"
 	};
 	static const char*					location_directives[] = {

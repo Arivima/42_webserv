@@ -67,11 +67,13 @@
 						"method": "POST",
 						"header": [],
 						"body": {
-							"mode": "raw",
-							"raw": "jcshjjshjs"
+							"mode": "file",
+							"file": {
+								"src": "/nfs/homes/mmarinel/Pictures/image.jpg"
+							}
 						},
 						"url": {
-							"raw": "http://localhost:8080/test_notauthorized/pipo",
+							"raw": "http://localhost:8080/test_notauthorized/Doggie.jpg",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -79,7 +81,7 @@
 							"port": "8080",
 							"path": [
 								"test_notauthorized",
-								"pipo"
+								"Doggie.jpg"
 							]
 						}
 					},
@@ -366,7 +368,7 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8080/cgi-bin/chunked.py?name=pippolinoooooooos2.jpg",
+							"raw": "http://localhost:8080/cgi-bin/chunked.py?name=pippolinooouooooos2.jpg",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -379,7 +381,7 @@
 							"query": [
 								{
 									"key": "name",
-									"value": "pippolinoooooooos2.jpg"
+									"value": "pippolinooouooooos2.jpg"
 								}
 							]
 						}
@@ -410,7 +412,7 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8080/cgi-bin/chunked.py?name=Sannitiiiiii.jpeg",
+							"raw": "http://localhost:8080/cgi-bin/chunked.py?name=Sannitiikkkkkkiiii.jpeg",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -423,7 +425,7 @@
 							"query": [
 								{
 									"key": "name",
-									"value": "Sannitiiiiii.jpeg"
+									"value": "Sannitiikkkkkkiiii.jpeg"
 								}
 							]
 						}
@@ -546,7 +548,7 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8080/test_post/new-file.jpg",
+							"raw": "http://localhost:8080/test_post/new-fileEEEEEeeee.jpg",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -554,7 +556,7 @@
 							"port": "8080",
 							"path": [
 								"test_post",
-								"new-file.jpg"
+								"new-fileEEEEEeeee.jpg"
 							]
 						}
 					},
@@ -869,7 +871,48 @@
 					"response": []
 				},
 				{
+					"name": "with filename, raw body, Chunked",
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"content-type": true,
+							"content-length": true
+						}
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Transfer-Encoding",
+								"value": "chunked",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "CHUNKED"
+						},
+						"url": {
+							"raw": "http://localhost:8080/old-page/filetto",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"old-page",
+								"filetto"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "! no filename, binary body, content-length",
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"content-type": true
+						}
+					},
 					"request": {
 						"method": "POST",
 						"header": [],
@@ -914,18 +957,18 @@
 						"body": {
 							"mode": "file",
 							"file": {
-								"src": "/nfs/homes/mmarinel/Pictures/Sanniti.jpg"
+								"src": "/nfs/homes/mmarinel/Pictures/facebook_small.png"
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8080/test_post/",
+							"raw": "http://localhost:8080/old-page/",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
 							"port": "8080",
 							"path": [
-								"test_post",
+								"old-page",
 								""
 							]
 						}

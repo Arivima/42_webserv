@@ -933,9 +933,16 @@ void	Response::handle_redirection(const std::string & value)
     std::istringstream	iss(value);
 	std::string			http_status_code;
 	std::string			redirection_url;
+	const std::string	location = matching_directives.directives.at("location");
+	std::string			file_name;
 
+	if (location.length() + 1 < uri_path.length())
+		file_name = uri_path.substr(location.length());
+	else
+		file_name = "";
     iss >> http_status_code;
     iss >> redirection_url;
+	redirection_url += file_name;
 
 	strip_trailing_and_leading_spaces(redirection_url);
 	strip_trailing_and_leading_spaces(http_status_code);
