@@ -93,7 +93,7 @@ void	Response::send_line( void )
 				this->sock_fd, response.data(), response.size(), 0
 			);
 			if (bytes_sent < 0)
-				/*Server Err*/	throw HttpError(500, matching_directives, location_root);
+				throw SockEof();
 			else
 			if (0 == bytes_sent)
 				throw TaskFulfilled();
@@ -997,6 +997,8 @@ std::string		Response::http_req_complete_url_path(
 	//*	check if requested resource is a directory
 	errno = 0;
 	if ( true == isDirectory( root, path) ) {
+		if ( 0 != access((root + path).c_str(), R_OK) )
+			throw HttpError(403, matching_directives, location_root);
 		path = getIndexPage(root, path);
 	}
 	else if (errno) {
