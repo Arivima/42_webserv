@@ -4,15 +4,15 @@ import threading
 import requests
 import time
 
-url = "http://localhost:8080/test_post/Doggie.jpg"
-file_path = "/nfs/homes/mmarinel/Desktop/42Projects/42_webserv/_webserv/var/www/img/Doggie.jpg"
+url = "http://localhost:8080/test_post/Huge_file"
+file_path = "/nfs/homes/mmarinel/Desktop/42Projects/42_webserv/_webserv/testing/python/output.txt"
 
 file_content=b''
 def make_post_request():
 
 	session = requests.Session()
 	headers = {
-		"Content-Type": "image/jpg"
+		"Content-Type": "text/plain"
 	}
 	for _ in range(num_requests):
 		response = session.post(url, data=file_content, headers=headers)
