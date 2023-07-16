@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/18 10:41:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/14 13:55:29 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/16 16:39:58 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -619,7 +619,11 @@ bool			isDirectory(const std::string root, std::string path)
 //        stream from an error, set errno to zero before calling readdir()
 //        and then check the value of errno if NULL is returned.
 
-std::string getDirectoryContentList(const std::string directoryPath)
+std::string getDirectoryContentList(
+				const std::string directoryPath,
+				const t_conf_block& matching_directives,
+				const std::string& location_root
+			)
 {
 	COUT_DEBUG_INSERTION(MAGENTA << "getDirectoryContentList : path ->"<< directoryPath << RESET << std::endl);
 	std::string contentList;
@@ -632,7 +636,7 @@ std::string getDirectoryContentList(const std::string directoryPath)
 			errno = 0;
 			entry = readdir(dir);
 			if (entry == NULL && errno != 0)		// errno, see above
-				throw SystemCallException("readdir() : ");//!*HttpError 500 server internal error
+				throw HttpError(500, matching_directives, location_root);
 			else if (entry == NULL)
 				break ;
 			
@@ -651,10 +655,10 @@ std::string getDirectoryContentList(const std::string directoryPath)
         }
 		contentList += "</ul>";
         if (closedir(dir) != 0)
-			throw SystemCallException("closedir()");//!*HttpError 500 server internal error
+			throw HttpError(500, matching_directives, location_root);
     }
     else
-		throw SystemCallException("opendir()");//!*HttpError 500 server internal error
+		throw HttpError(500, matching_directives, location_root);
 	COUT_DEBUG_INSERTION(
 		YELLOW << "contenList" << std::endl
 		<< contentList << RESET << std::endl

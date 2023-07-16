@@ -72,7 +72,7 @@ void	Config::read_config_file(std::string conf_pathname) {
 	
 	int fd = open(conf_pathname.c_str(), O_RDONLY);
 	if (fd == -1) {
-		throw std::runtime_error("error open"); //!
+		throw std::runtime_error("error open");
 	}
 	memset(buf, '\0', buffer_size + 1);
 	while ((bytes_read = read(fd, buf, buffer_size)) > 0) {
@@ -81,8 +81,8 @@ void	Config::read_config_file(std::string conf_pathname) {
 	}
 	if (-1 == bytes_read) {
 		if (-1 == close(fd))
-			throw std::runtime_error("error read && close"); //!
-		throw std::runtime_error("error read"); //!
+			throw std::runtime_error("error read && close");
+		throw std::runtime_error("error read");
 	}
 	else if (0 == bytes_read) {
 		COUT_DEBUG_INSERTION(MAGENTA << "EOF Finished reading configuration file" << RESET << std::endl);

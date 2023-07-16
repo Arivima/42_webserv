@@ -1,13 +1,6 @@
 
-	-	cazzatine
-	-	controllare tutti i ritorni di chiamate a sistema (syscall)
-	-	script stress test con POST
-	-	Leaks
-	-	Makefile
-	-	Subject + correction sheet
 
 TODO 
-	Prioritario
 		1. Testing
 			-	Throughout testing, record tests -> add to config and postman
 			-	Subject
@@ -18,30 +11,24 @@ TODO
 			-	Tester, write tests with python
 		
 	Matteo
-		1.	chunked.py risolvere caso ContentTooLarge
-		-	cambiare nome a chunked.py
-		2.	Controllare se fare (max_body_size -= (std::cout.tellp() - prev_chars);) anche in POSTNextChunk() (lo faccio giá in CGINextChunk())
+		Prioritario
+			-	script stress test con POST
+			-	Makefile
+			-	Leaks
+			-	Subject + correction sheet
+				- 	reread the correction sheet and implement everything and test
+				-	controllare i ritorni di ogni read/write/send/recv (removere il client)
 
-		-   utils.cpp 635 throw SystemCallException("readdir() : ");//!*HttpError 500 server internal error
-		-   utils.cpp 654 throw SystemCallException("closedir()");//!*HttpError 500 server internal error
-		-   utils.cpp 657 throw SystemCallException("opendir()");//!*HttpError 500 server internal error
-		-	check //! 
-		-	check //TODO
-
-		- 	reread the correction sheet and implement everything and test
-		-	controllare i ritorni di ogni read/write/send/recv (removere il client)
-		-	redirection : file to add to path (/old-path/ substitution)
-
-		2. M Timeout browser (creare la nuova request solo quando arriva qualcosa di nuovo)
-		3. M Body size for chunked
-		3. M debug Makefile
-		4. script for file Upload
-		5. M Response getDirectoryContentList wrap try catch in generateGETResponse, catch SystemCallException and rethrow as HttpError 500
-		6. M file binary with POST redirect
 
 		meno importante
-		-	Change req url name to "uri"
-		-	check for every member that should be a reference
+			-	cazzatine (prettify, make it more coherent style-wise and also functionalities-wise) && refactoring && clean
+			-	check for every member that should be a reference
+			-	Change req url name to "uri"
+
+		pending
+			-	debug Makefile
+			-	DONE???M file binary with POST redirect
+			-	DONE??redirection : file to add to path (/old-path/ substitution)
 
 	Arielle
 		-	GET redirect postman

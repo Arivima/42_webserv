@@ -85,7 +85,7 @@
 
 		fileInput.addEventListener('change', function() {
 			var file = fileInput.files[0];
-			var url = '/cgi-bin/chunked.py?NAME=' + encodeURIComponent(file.name);
+			var url = '/cgi-bin/uploader.py?NAME=' + encodeURIComponent(file.name);
 
 			var xhr = new XMLHttpRequest();
 			xhr.open('POST', url, true);

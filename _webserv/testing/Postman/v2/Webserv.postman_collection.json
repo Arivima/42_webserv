@@ -231,7 +231,7 @@
 								"src": "/nfs/homes/mmarinel/Desktop/42Projects/42_webserv/_webserv/var/www/img/adv.jpeg"
 							}
 						},
-						"url": "http://localhost:8080/cgi-bin/chunked.py"
+						"url": "http://localhost:8080/cgi-bin/uploader.py"
 					},
 					"response": []
 				},
@@ -259,7 +259,7 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8080/cgi-bin/chunked.py?name=pippolinooouooooos2.jpg",
+							"raw": "http://localhost:8080/cgi-bin/uploader.py?name=pippolinooouooooos2.jpg",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -267,7 +267,7 @@
 							"port": "8080",
 							"path": [
 								"cgi-bin",
-								"chunked.py"
+								"uploader.py"
 							],
 							"query": [
 								{
@@ -303,7 +303,7 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8080/cgi-bin/chunked.py?name=Sannitiikkkkkkiiii.jpeg",
+							"raw": "http://localhost:8080/cgi-bin/uploader.py?name=Sannitiikkkkkkiiii.jpeg",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -311,7 +311,7 @@
 							"port": "8080",
 							"path": [
 								"cgi-bin",
-								"chunked.py"
+								"uploader.py"
 							],
 							"query": [
 								{
@@ -347,7 +347,7 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8080/cgi-bin/chunked.py?name=pippiniii.jpg",
+							"raw": "http://localhost:8080/cgi-bin/uploader.py?name=pippiniii.jpg",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -355,7 +355,7 @@
 							"port": "8080",
 							"path": [
 								"cgi-bin",
-								"chunked.py"
+								"uploader.py"
 							],
 							"query": [
 								{

@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   utils.hpp                                          :+:      :+:    :+:   */
+/*   Utils.hpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 17:08:49 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/13 17:11:28 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/16 16:39:24 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -103,7 +103,11 @@ bool						fileExists(
 								std::string path
 							);
 bool						isDirectory(const std::string root, std::string path);
-std::string					getDirectoryContentList(const std::string directoryPath);
+std::string					getDirectoryContentList(
+								const std::string directoryPath,
+								const t_conf_block& matching_directives,
+								const std::string& location_root
+							);
 std::string					createHtmlPage(const std::string& title, const std::string& body);
 
 

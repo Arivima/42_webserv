@@ -288,7 +288,7 @@ void	Response::generateGETResponse(  void  )
 			COUT_DEBUG_INSERTION("showing dir listing for " << root + path << std::endl)
 			std::string dir_listing_page = createHtmlPage(
 				"Directory Listing for /" + path,
-				getDirectoryContentList(root + path) //!wip
+				getDirectoryContentList(root + path, matching_directives, location_root)
 			);
 			page.insert(
 				page.begin(),
