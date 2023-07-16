@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/06 21:15:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/16 14:28:50 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/16 18:09:13 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -124,22 +124,27 @@ void	Worker::_handle_new_connectionS() {
 	std::string					server_IP;
 	const struct epoll_event*	eevent;
 	
-	for (
-		VectorServ::iterator serv_it = servers.begin();
-		serv_it != servers.end();
-		serv_it++)
-	{
-		eevent = this->edata.getEpollEvent((*serv_it).server_fd);
-		if ( eevent && eevent->events & EPOLLIN)
+	try {
+		for (
+			VectorServ::iterator serv_it = servers.begin();
+			serv_it != servers.end();
+			serv_it++)
 		{
-			cli_socket = _create_ConnectionSocket((*serv_it), client_IP, server_IP);
-			_epoll_register_ConnectionSocket(cli_socket);
-			
-			//*		adding to list of open connections
-			(*serv_it).open_connections.push_back(
-				new ConnectionSocket(cli_socket, client_IP, server_IP, *serv_it, edata)
-			);
+			eevent = this->edata.getEpollEvent((*serv_it).server_fd);
+			if ( eevent && eevent->events & EPOLLIN)
+			{
+				cli_socket = _create_ConnectionSocket((*serv_it), client_IP, server_IP);
+				_epoll_register_ConnectionSocket(cli_socket);
+
+				//*		adding to list of open connections
+				(*serv_it).open_connections.push_back(
+					new ConnectionSocket(cli_socket, client_IP, server_IP, *serv_it, edata)
+				);
+			}
 		}
+	}
+	catch (const std::exception& e) {
+		return ;
 	}
 }
 
