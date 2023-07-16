@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/30 12:37:05 by avilla-m          #+#    #+#             */
-/*   Updated: 2023/07/13 18:16:32 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/16 16:17:28 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -127,6 +127,9 @@ std::string			HttpError::errPage_getPath( void )
 	err_page_pos = directive.find("/", cur_error_pos);
 	if (std::string::npos == err_page_pos)
 		return ("");
+	while (' ' != directive[err_page_pos])
+		err_page_pos -= 1;
+	err_page_pos += 1;
 	//*		extract the page (path is at least "/")
 	directiveStream.str(directive.substr(err_page_pos));
 	std::getline(directiveStream, path, ' ');
