@@ -1,3 +1,11 @@
+
+	-	cazzatine
+	-	controllare tutti i ritorni di chiamate a sistema (syscall)
+	-	script stress test con POST
+	-	Leaks
+	-	Makefile
+	-	Subject + correction sheet
+
 TODO 
 	Prioritario
 		1. Testing
@@ -11,6 +19,7 @@ TODO
 		
 	Matteo
 		1.	chunked.py risolvere caso ContentTooLarge
+		-	cambiare nome a chunked.py
 		2.	Controllare se fare (max_body_size -= (std::cout.tellp() - prev_chars);) anche in POSTNextChunk() (lo faccio giá in CGINextChunk())
 
 		-   utils.cpp 635 throw SystemCallException("readdir() : ");//!*HttpError 500 server internal error

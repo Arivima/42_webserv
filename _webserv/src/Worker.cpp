@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/06 21:15:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/13 18:16:32 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/16 14:28:50 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,18 +66,23 @@ Worker::~Worker() {
 		serv_it++
 	)
 	{
+		ConnectionSocket*	connection;
+		
 		for (
 			VectorCli::iterator conn_it = (*serv_it).open_connections.begin();
 			conn_it != (*serv_it).open_connections.end();
 			/*...no increment*/
 		)
 		{
+			connection = (*conn_it);
 			conn_it = (*serv_it).open_connections.erase(conn_it);
+			delete (connection) ;
 		}
 		(*serv_it).open_connections.clear();
 		std::cout << BOLDRED<< "Closing server: " << (*serv_it).server_fd << RESET << std::endl;
 		close((*serv_it).server_fd);
 	}
+	this->servers.clear();
 }
 
 

@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 17:23:17 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/15 14:17:01 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/16 14:42:14 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -102,9 +102,9 @@ void CGI::launch()
 		};
 		//* executing cgi
 		if (execve(cmd[0], cmd, this->cgi_env) == -1) {
-			//! take care of leaks
+			free(const_cast<char*>(cmd[0]));
+			free(const_cast<char*>(cmd[1]));
 			exit(EXIT_FAILURE);
-			throw_HttpError_debug("CGI::launch()", "execve()", 500, this->matching_directives, get_env_value("ROOT"));
 		}
 	}
 	else 	// back to parent

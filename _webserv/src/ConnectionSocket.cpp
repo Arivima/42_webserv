@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 18:07:39 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/15 16:44:18 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/16 14:35:52 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,7 +67,6 @@ void	ConnectionSocket::status_switch( void )
 		response = NULL;
 		if (close_connection)
 			throw (SockEof());
-		// request = new Request(sock_fd, edata);
 		status = e_REQ_MODE;
 	}
 }
