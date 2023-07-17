@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 17:19:26 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/17 14:18:33 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/17 16:54:00 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,6 +60,7 @@ std::vector<char>		Request::getIncomingData( void )
 	std::vector<char>				incomingData;
 	std::vector<char>::iterator		cr_pos;
 	std::vector<char>				line;
+	std::stringstream				s_hex_s;
 
 	COUT_DEBUG_INSERTION(FULL_DEBUG, "BEFORE\n");
 	printVectorChar(payload, "payload");
@@ -82,7 +83,9 @@ std::vector<char>		Request::getIncomingData( void )
 			payload.erase(payload.begin(), cr_pos + 2);//*taking line off the payload
 
 			line.push_back('\0');
-			cur_chunk_size = std::stoi(line.data(), nullptr, 16);
+			s_hex_s << std::hex << line.data();
+			s_hex_s >> cur_chunk_size;
+			s_hex_s.str("");
 			COUT_DEBUG_INSERTION(FULL_DEBUG, "current chunk size : " << cur_chunk_size << std::endl);
 			next_chunk_arrived = true;
 		}

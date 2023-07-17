@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/06 21:15:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/17 14:28:29 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/17 16:19:05 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -97,7 +97,7 @@ void Worker::workerLoop() {
 		try {
 			_io_multiplexing_using_epoll();
 		}
-		catch (const SystemCallException& e) {
+		catch (const std::runtime_error& e) {
 			std::cout << std::endl << BOLDRED "Exception >>" << e.what() << RESET << std::endl;
 			continue ;
 		}
@@ -113,7 +113,7 @@ void	Worker::_io_multiplexing_using_epoll(){
 	memset(this->edata.eeventS, 0, sizeof(struct epoll_event) * MAX_EVENTS);
 	this->edata.n_events = epoll_wait(this->edata.epoll_fd, this->edata.eeventS, MAX_EVENTS, -1);
 	if (-1 == this->edata.n_events) {
-		throw SystemCallException("epoll_wait()");
+		throw std::runtime_error("epoll_wait()");
 	}
 }
 
@@ -201,7 +201,7 @@ int	Worker::_create_ConnectionSocket(
 
 	cli_socket = accept(server.server_fd, (struct sockaddr *)&cli_addr, &cli_addr_len);
 	if (-1 == cli_socket){
-		throw (SystemCallException("accept()"));
+		throw (std::runtime_error("accept()"));
 	}
 	COUT_DEBUG_INSERTION(DEBUG, BOLDGREEN << "\nAccepting new connection" << RESET << std::endl);
 	COUT_DEBUG_INSERTION(DEBUG, 
@@ -220,7 +220,7 @@ int	Worker::_create_ConnectionSocket(
 	
 	//*		Setting Server selected interface IP
 	if (-1 == getsockname(cli_socket, (struct sockaddr*)&server_addr, &server_addr_len))
-		throw (SystemCallException("getsockname()"));
+		throw (std::runtime_error("getsockname()"));
 	server_IP = inet_ntoa(server_addr.sin_addr);
 
 	return (cli_socket);
@@ -234,7 +234,7 @@ void	Worker::_epoll_register_ConnectionSocket(int cli_socket) {
 	cli_epoll_evt_opt.data.fd = cli_socket;
 	if (-1 == epoll_ctl(this->edata.epoll_fd, EPOLL_CTL_ADD, cli_socket, &cli_epoll_evt_opt)) {
 		close(cli_socket);
-		throw (SystemCallException("epoll_ctl()"));
+		throw (std::runtime_error("epoll_ctl()"));
 	}
 }
 
@@ -246,7 +246,7 @@ void	Worker::_init_io_multiplexing() {
 	
 	this->edata.epoll_fd = epoll_create(1);
 	if (-1 == this->edata.epoll_fd) {
-		throw SystemCallException("epoll_create()");
+		throw std::runtime_error("epoll_create()");
 	}
 	eevent.events = EPOLLIN;
 	for (VectorServ::iterator it = servers.begin(); it != servers.end(); it++)
@@ -258,7 +258,7 @@ void	Worker::_init_io_multiplexing() {
 			(*it).server_fd,
 			&eevent))
 		{
-			throw SystemCallException("epoll_ctl()");
+			throw std::runtime_error("epoll_ctl()");
 		}
 	}
 }
@@ -292,13 +292,13 @@ void	Worker::_create_server_socket() {
 	std::cout << "----------------  socket()" << std::endl;
 	this->servers.back().server_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (-1 == this->servers.back().server_fd)
-		throw SystemCallException("socket()");
+		throw std::runtime_error("socket()");
 }
 
 void	Worker::_set_socket_as_reusable() {
 	int reuse = 1;
 	if (-1 == setsockopt(this->servers.back().server_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse))){
-		throw SystemCallException("setsockopt()");
+		throw std::runtime_error("setsockopt()");
 	}
 }
 
@@ -340,22 +340,22 @@ void	Worker::_bind_server_socket_to_ip() {
 		(struct sockaddr *)&this->servers.back().server_addr, 
 		this->servers.back().server_addr_len
 		))
-		throw SystemCallException("bind()");
+		throw std::runtime_error("bind()");
 }
 
 void	Worker::_make_server_listening() {
 	std::cout << "----------------  listen()" << std::endl;
 	if (-1 == listen(this->servers.back().server_fd, INT_MAX))
-		throw SystemCallException("listen()");
+		throw std::runtime_error("listen()");
 }
 
 void	Worker::_make_socket_non_blocking(int sock_fd) {
 	int flags = fcntl(sock_fd, F_GETFL, 0);
 	if (-1 == flags)
-		throw SystemCallException("fcntl()");
+		throw std::runtime_error("fcntl()");
 	flags |= O_NONBLOCK;
 	if (-1 == fcntl(sock_fd, F_SETFL, flags))
-		throw SystemCallException("fcntl()");
+		throw std::runtime_error("fcntl()");
 }
 
 std::string		Worker::_getIP(){

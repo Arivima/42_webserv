@@ -404,7 +404,7 @@ void	Response::generatePOSTResponse( void )
 				throw return_HttpError_errno_stat(root, matching_directives);
 			
 			// writes body to new file
-			std::ofstream	stream_newFile(fullFilePath);
+			std::ofstream	stream_newFile(fullFilePath.c_str());
 			if (false == stream_newFile.is_open())
 				/*Server Err*/	throw HttpError(500, this->matching_directives, root);
 			
@@ -512,7 +512,7 @@ void	Response::generateChunkedPOSTResponse( void )
 				throw return_HttpError_errno_stat(root, matching_directives);
 			
 			// writes body to new file
-			stream_newFile.open(fullFilePath);
+			stream_newFile.open(fullFilePath.c_str());
 			if (false == stream_newFile.is_open())
 				/*Server Err*/	throw HttpError(500, this->matching_directives, root);
 	}
@@ -1032,7 +1032,7 @@ std::string		Response::getIndexPage( const std::string& root, std::string path )
 			COUT_DEBUG_INSERTION(FULL_DEBUG, "trying index file : "\
 				 << root + path + cur_index \
 				 << std::endl);
-			std::ifstream	file(root + path + cur_index);
+			std::ifstream	file((root + path + cur_index).c_str());
 			if (file.is_open())
 			{
 				file.close();

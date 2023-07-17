@@ -175,7 +175,7 @@ void	Config::parse( t_conf_block& current ) {
 void	Config::set_up_default_values(t_conf_block& current)
 {
 	if (current.directives.find("body_size") == current.directives.end())
-		current.directives["body_size"] = std::to_string(DEFAULT_CLIENT_MAX_BODY_SIZE);	
+		current.directives["body_size"] = DEFAULT_CLIENT_MAX_BODY_SIZE;	
 }
 
 
@@ -511,7 +511,7 @@ void	Config::check_value_validity_body_size(std::string & value)
 	if (size > LIMIT_CLIENT_MAX_BODY_SIZE)
 		throw (std::invalid_argument("Config::check_value_validity() : invalid value for body size directive (max 1G)."));
 	if (size == 0)
-		value = std::to_string(DEFAULT_CLIENT_MAX_BODY_SIZE);
+		value = DEFAULT_CLIENT_MAX_BODY_SIZE;
 
 	COUT_DEBUG_INSERTION(FULL_DEBUG, BOLDGREEN "body_size: " RESET << value << std::endl);
 }

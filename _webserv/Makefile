@@ -6,31 +6,117 @@
 #    By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/05/29 12:15:29 by mmarinel          #+#    #+#              #
-#    Updated: 2023/07/13 18:15:41 by mmarinel         ###   ########.fr        #
+#    Updated: 2023/07/17 16:48:18 by mmarinel         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
+# Makefile
+# 	create executable "Webserv"
+# 	create testing folder in "/var/www", will all necessary material for Postman tests
+#	debug rule -> output all debug info
 
-INCLUDE_DIR="include/"
+NAME 					:= webserv
+# Sources
+SRCS_DIR				:= ./src
+SRCS					:= $(shell find $(SRCS_DIR) -name "*.cpp" -print)
+# Objects 
+OBJS_DIR				:= ./obj
+OBJS					:= $(patsubst $(SRCS_DIR)%,$(OBJS_DIR)%,$(SRCS:.cpp=.o))
+# Headers 
+INCLUDE_DIR				:= ./include
+INCLUDES				:= $(shell find $(INCLUDE_DIR) -name "*.hpp" -print)
+# Compilation & Flags
+CC						:= c++
+FLAGS_DEFAULT			:= -Wall -Wextra -Werror -std=c++98
+FLAG_DEBUG				:= -DDEBUG=1
+FLAG_FULLDEBUG			:= -DFULL_DEBUG=1
+# Testing material
+TESTING_ROOT			:= ./var/www/test
+TESTING_BACKUP			:= ../back-up_postman_folders
 
-FLAGS=-Wall -Werror -Wextra -I $(INCLUDE_DIR)
+# Rules
+all:					$(NAME) #$(SET_UP_TESTING)
 
-FILES	= 	src/main.cpp \
-			src/utils.cpp \
-			src/EpollData.cpp \
-			src/Worker.cpp \
-			src/ConnectionSocket.cpp \
-			src/Request.cpp \
-			src/Response.cpp \
-			src/CGI.cpp \
-			src/Exceptions.cpp \
-			src/Config.cpp
+debug:					#$(SET_UP_TESTING)
+						@$(MAKE) $(NAME) ADDITIONAL_FLAGS=$(FLAG_DEBUG)
+						
+$(NAME):				$(OBJS)
+						@$(CC) $(FLAGS_DEFAULT) $(OBJS) -o $(NAME)
+						@echo $(GREEN)$(NAME)"\tSuccessfully compiled" $(RESET)
 
-all:
-	g++ $(FLAGS) $(FILES) -o mini_serv
+$(OBJS_DIR)/%.o: 		$(SRCS_DIR)/%.cpp $(INCLUDES)
+						@mkdir -p $(@D)
+						@$(CC) -c $(FLAGS_DEFAULT) $(ADDITIONAL_FLAGS) -I $(INCLUDE_DIR) $< -o $@
 
-debug:
-	g++ -DDEBUG=1 $(FLAGS) $(FILES) -o mini_serv
+# $(OBJS): 				| $(OBJS_DIR)
+
+# $(OBJS_DIR):
+# 						@mkdir $(OBJS_DIR)
+
+$(SET_UP_TESTING):			
+						@cp -r $(TESTING_BACKUP) $(TESTING_ROOT)
+
+						@chmod a-rwx	"$(TESTING_ROOT)/test_delete/1_subdir_nok/2/3_not_authorized"
+						@chmod a-rwx 	"$(TESTING_ROOT)/test_delete/1_subfile_nok/2/not-authorized-file.txt"
+						./$(TESTING_ROOT)/test_delete/1_subfile_busy/2/nyancat & PID_NYANCAT_1=$$!
+
+						@chmod a-rwx 	"$(TESTING_ROOT)/test_delete_redirection/1_subdir_nok/2/3_not_authorized"
+						@chmod a-rwx 	"$(TESTING_ROOT)/test_delete_redirection/1_subfile_nok/2/not-authorized-file.txt"
+						./$(TESTING_ROOT)/test_delete_redirection/1_subfile_busy/2/nyancat & PID_NYANCAT_2=$$!
+
+						@chmod a-rwx	"$(TESTING_ROOT)/test_get/not-authorized-file.txt"
+						./$(TESTING_ROOT)/test_get/nyancat & PID_NYANCAT_3=$$!
+						
+						@chmod a-rwx 	"$(TESTING_ROOT)/test_not_authorized"
+
+						@echo $(GREEN)$(NAME)"\tSuccessfully set-up the testing material" $(RESET)
+
+$(CLEAN_UP_TESTING):
+						@chmod a+rwx	"$(TESTING_ROOT)/test_delete/1_subdir_nok/2/3_not_authorized"
+						@chmod a+rwx 	"$(TESTING_ROOT)/test_delete/1_subfile_nok/2/not-authorized-file.txt"
+						@kill $$PID_NYANCAT_1
+
+						@chmod a+rwx 	"$(TESTING_ROOT)/test_delete_redirection/1_subdir_nok/2/3_not_authorized"
+						@chmod a+rwx 	"$(TESTING_ROOT)/test_delete_redirection/1_subfile_nok/2/not-authorized-file.txt"
+						@kill $$PID_NYANCAT_2
+
+						@chmod a+rwx	"$(TESTING_ROOT)/test_get/not-authorized-file.txt"
+						@kill $$PID_NYANCAT_3
+						
+						@chmod a+rwx 	"$(TESTING_ROOT)/test_not_authorized"					
+
+						@rm -rf $(TESTING_ROOT)
+						@echo $(GREEN)$(NAME)"\tSuccessfully cleaned up the testing material" $(RESET)
 
 clean:
-	rm -rf mini_serv
+						@rm -rf $(OBJS_DIR)
+						@echo $(GREEN)"\t\tSuccessfully removed objects" $(RESET)
+
+fclean: 				clean #$(CLEAN_UP_TESTING)
+						@rm -rf $(NAME)
+						@echo $(GREEN)"\t\tSuccessfully removed executable and testing folder" $(RESET)
+
+re: 					fclean all
+
+.PHONY: 				all clean fclean re
+
+# Colors
+RESET					:= "\033[0m"
+BLACK					:= "\033[30m"
+RED						:= "\033[31m"
+GREEN					:= "\033[32m"
+YELLOW					:= "\033[33m"
+BLUE					:= "\033[34m"
+MAGENTA					:= "\033[35m"
+CYAN					:= "\033[36m"
+WHITE					:= "\033[37m"
+BOLDBLACK				:= "\033[1m\033[30m"
+BOLDRED					:= "\033[1m\033[31m"
+BOLDGREEN				:= "\033[1m\033[32m"
+BOLDYELLOW				:= "\033[1m\033[33m"
+BOLDBLUE				:= "\033[1m\033[34m"
+BOLDMAGENTA				:= "\033[1m\033[35m"
+BOLDCYAN				:= "\033[1m\033[36m"
+BOLDWHITE				:= "\033[1m\033[37m"
+
+# END Makefile

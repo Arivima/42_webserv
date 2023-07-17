@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/16 14:09:56 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/11 15:37:30 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/17 16:44:27 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,7 @@
 # include "Webserv.hpp"
 
 # define 	DEFAULT_PATHNAME   				"../_webserv/configuration_files/default.conf"
-# define	DEFAULT_CLIENT_MAX_BODY_SIZE	1000000			// 1M 1e+6 bytes
+# define	DEFAULT_CLIENT_MAX_BODY_SIZE	"1000000"			// 1M 1e+6 bytes
 # define	LIMIT_CLIENT_MAX_BODY_SIZE		1000000000		// 1G 1e+9 bytes
 
 class Config {

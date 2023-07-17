@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/30 12:37:05 by avilla-m          #+#    #+#             */
-/*   Updated: 2023/07/17 13:49:56 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/17 17:00:34 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,13 +38,12 @@ HttpError::HttpError(
 	);
 }
 
+HttpError::~HttpError() throw()
+{
+}
 
 const char*			HttpError::what( void ) const throw() {
-	char buf[5];
-
-	memset(buf, '\0', 5);
-	sprintf(buf, "%03hu ", err_code);
-	return ((buf + std::string(" ") + msg + errno_str).c_str());
+	return ("HttpError: ");
 }
 
 
@@ -69,7 +68,7 @@ std::string			HttpError::buildErrorPage( void )
 
 		if (false == err_page_path.empty())
 		{
-			std::ifstream		pageContentStream(this->location_root + err_page_path);
+			std::ifstream		pageContentStream((this->location_root + err_page_path).c_str());
 
 			page_content = "";
 			if (pageContentStream.is_open())

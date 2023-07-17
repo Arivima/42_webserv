@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 17:23:17 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/17 14:27:14 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/17 16:19:42 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -98,7 +98,7 @@ void CGI::launch()
 		char* const cmd[3] = {
 			strdup(get_env_value("INTERPRETER_PATH").c_str()),
 			strdup((get_env_value("ROOT") + get_env_value("SCRIPT_NAME")).c_str()),
-			nullptr
+			NULL
 		};
 		//* executing cgi
 		if (execve(cmd[0], cmd, this->cgi_env) == -1) {

@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/30 12:37:05 by avilla-m          #+#    #+#             */
-/*   Updated: 2023/07/17 12:52:22 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/17 16:59:53 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,30 +21,6 @@
 # include "Webserv.hpp"
 # include "Types.hpp"
 
-
-class SystemCallException: public std::exception
-{
-    private:
-        SystemCallException();
-    public:
-        const std::string _sysCall;
-        SystemCallException(const std::string & s) : _sysCall(s){}
-        virtual const char * what () const throw(){
-			return (("system call " + _sysCall + " failed.").c_str());
-		}
-};
-
-class ConfigFileException: public std::exception
-{
-    private:
-        ConfigFileException();
-    public:
-        const std::string _message;
-        ConfigFileException(const std::string & s) : _message(s){}
-        virtual const char * what () const throw(){
-			return (("Configuration file error: " + _message + ".").c_str());
-		}
-};
 
 class TaskFulfilled : public std::exception
 {
@@ -91,12 +67,13 @@ private:
 
 // Public member functions
 public:
-	HttpError(
+	explicit HttpError(
 		unsigned short		err_code,
 		const t_conf_block&	matching_directives,
 		const std::string&	location_root,
 		const char *		errno_str = NULL
 	);
+	virtual ~HttpError() throw() ;
 
 	virtual const char*		what( void ) const throw();
 	std::vector<char>		getErrorPage( void ) const;
