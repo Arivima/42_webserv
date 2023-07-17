@@ -6,7 +6,7 @@
 #    By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/05/29 12:15:29 by mmarinel          #+#    #+#              #
-#    Updated: 2023/07/17 16:48:18 by mmarinel         ###   ########.fr        #
+#    Updated: 2023/07/17 17:43:52 by mmarinel         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -31,13 +31,13 @@ FLAGS_DEFAULT			:= -Wall -Wextra -Werror -std=c++98
 FLAG_DEBUG				:= -DDEBUG=1
 FLAG_FULLDEBUG			:= -DFULL_DEBUG=1
 # Testing material
-TESTING_ROOT			:= ./var/www/test
-TESTING_BACKUP			:= ../back-up_postman_folders
+TESTING_ROOT			:= ./var/www/
+TESTING_BACKUP			:= ./back-up_postman_folders
 
 # Rules
-all:					$(NAME) #$(SET_UP_TESTING)
+all:					$(NAME) $(SET_UP_TESTING)
 
-debug:					#$(SET_UP_TESTING)
+debug:					$(SET_UP_TESTING)
 						@$(MAKE) $(NAME) ADDITIONAL_FLAGS=$(FLAG_DEBUG)
 						
 $(NAME):				$(OBJS)
@@ -48,51 +48,33 @@ $(OBJS_DIR)/%.o: 		$(SRCS_DIR)/%.cpp $(INCLUDES)
 						@mkdir -p $(@D)
 						@$(CC) -c $(FLAGS_DEFAULT) $(ADDITIONAL_FLAGS) -I $(INCLUDE_DIR) $< -o $@
 
-# $(OBJS): 				| $(OBJS_DIR)
-
-# $(OBJS_DIR):
-# 						@mkdir $(OBJS_DIR)
-
 $(SET_UP_TESTING):			
-						@cp -r $(TESTING_BACKUP) $(TESTING_ROOT)
-
-						@chmod a-rwx	"$(TESTING_ROOT)/test_delete/1_subdir_nok/2/3_not_authorized"
-						@chmod a-rwx 	"$(TESTING_ROOT)/test_delete/1_subfile_nok/2/not-authorized-file.txt"
-						./$(TESTING_ROOT)/test_delete/1_subfile_busy/2/nyancat & PID_NYANCAT_1=$$!
-
-						@chmod a-rwx 	"$(TESTING_ROOT)/test_delete_redirection/1_subdir_nok/2/3_not_authorized"
-						@chmod a-rwx 	"$(TESTING_ROOT)/test_delete_redirection/1_subfile_nok/2/not-authorized-file.txt"
-						./$(TESTING_ROOT)/test_delete_redirection/1_subfile_busy/2/nyancat & PID_NYANCAT_2=$$!
-
-						@chmod a-rwx	"$(TESTING_ROOT)/test_get/not-authorized-file.txt"
-						./$(TESTING_ROOT)/test_get/nyancat & PID_NYANCAT_3=$$!
-						
-						@chmod a-rwx 	"$(TESTING_ROOT)/test_not_authorized"
-
+						cp -r $(TESTING_BACKUP)/* $(TESTING_ROOT)
+						chmod a-rwx	"$(TESTING_ROOT)/test_delete/1_subdir_nok/2/3_not_authorized"
+						chmod a-rwx	"$(TESTING_ROOT)/test_delete/1_subfile_nok/2/not-authorized-file.txt"
+						chmod a-rwx	"$(TESTING_ROOT)/test_delete_redirection/1_subdir_nok/2/3_not_authorized"
+						chmod a-rwx	"$(TESTING_ROOT)/test_delete_redirection/1_subfile_nok/2/not-authorized-file.txt"
+						chmod a-rwx	"$(TESTING_ROOT)/test_get/not-authorized-file.txt"
+						chmod a-rwx	"$(TESTING_ROOT)/test_post/notauthorized"
+						chmod a-rwx	"$(TESTING_ROOT)/test_not_authorized"
 						@echo $(GREEN)$(NAME)"\tSuccessfully set-up the testing material" $(RESET)
 
 $(CLEAN_UP_TESTING):
-						@chmod a+rwx	"$(TESTING_ROOT)/test_delete/1_subdir_nok/2/3_not_authorized"
-						@chmod a+rwx 	"$(TESTING_ROOT)/test_delete/1_subfile_nok/2/not-authorized-file.txt"
-						@kill $$PID_NYANCAT_1
-
-						@chmod a+rwx 	"$(TESTING_ROOT)/test_delete_redirection/1_subdir_nok/2/3_not_authorized"
-						@chmod a+rwx 	"$(TESTING_ROOT)/test_delete_redirection/1_subfile_nok/2/not-authorized-file.txt"
-						@kill $$PID_NYANCAT_2
-
-						@chmod a+rwx	"$(TESTING_ROOT)/test_get/not-authorized-file.txt"
-						@kill $$PID_NYANCAT_3
-						
-						@chmod a+rwx 	"$(TESTING_ROOT)/test_not_authorized"					
-
-						@rm -rf $(TESTING_ROOT)
+						chmod a+rwx	"$(TESTING_ROOT)/test_delete/1_subdir_nok/2/3_not_authorized"
+						chmod a+rwx	"$(TESTING_ROOT)/test_delete/1_subfile_nok/2/not-authorized-file.txt"
+						chmod a+rwx	"$(TESTING_ROOT)/test_delete_redirection/1_subdir_nok/2/3_not_authorized"
+						chmod a+rwx	"$(TESTING_ROOT)/test_delete_redirection/1_subfile_nok/2/not-authorized-file.txt"
+						chmod a+rwx	"$(TESTING_ROOT)/test_get/not-authorized-file.txt"
+						chmod a+rwx	"$(TESTING_ROOT)/test_post/notauthorized"
+						chmod a+rwx	"$(TESTING_ROOT)/test_not_authorized"				
+						rm -rf $(TESTING_ROOT)/test_*
 						@echo $(GREEN)$(NAME)"\tSuccessfully cleaned up the testing material" $(RESET)
 
 clean:
 						@rm -rf $(OBJS_DIR)
 						@echo $(GREEN)"\t\tSuccessfully removed objects" $(RESET)
 
-fclean: 				clean #$(CLEAN_UP_TESTING)
+fclean: 				clean $(CLEAN_UP_TESTING)
 						@rm -rf $(NAME)
 						@echo $(GREEN)"\t\tSuccessfully removed executable and testing folder" $(RESET)
 
