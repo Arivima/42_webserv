@@ -8,30 +8,20 @@ TODO
 			-	Postman
 			-	Leaks
 			-	SIEGE
-			-	Tester, write tests with python
-		
+			-	Subject + correction sheet
+				- 	reread the correction sheet and implement everything and test
+				-	controllare i ritorni di ogni read/write/send/recv (removere il client)		
 	Matteo
 		Prioritario
 			-	script stress test con POST
-			-	Makefile
-			-	Leaks
-			-	Subject + correction sheet
-				- 	reread the correction sheet and implement everything and test
-				-	controllare i ritorni di ogni read/write/send/recv (removere il client)
-
-
+			- massimo numero di bytes
 		meno importante
 			-	cazzatine (prettify, make it more coherent style-wise and also functionalities-wise) && refactoring && clean
 			-	check for every member that should be a reference
 			-	Change req url name to "uri"
-		-	Landing Page carina https://www.one-tab.com/page/UKcL00UVSK-7TQgaizuOaw
-
-		pending
-			-	debug Makefile
-			-	DONE???M file binary with POST redirect
 
 	Arielle
-
+			-	Landing Page carina https://www.one-tab.com/page/UKcL00UVSK-7TQgaizuOaw
 
 	Additional tasks if there is time:
 		- 	fare un log
