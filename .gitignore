@@ -1,4 +1,5 @@
 vscode.json
 .*
 !.gitignore
+*.o
 webserv
