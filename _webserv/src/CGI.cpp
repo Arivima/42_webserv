@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 17:23:17 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/16 14:42:14 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/17 14:27:14 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,7 +71,7 @@ std::string CGI::get_env_value(const std::string & key){
 }
 
 void CGI::launch()
-{COUT_DEBUG_INSERTION(YELLOW "CGI::launch()" RESET << std::endl);
+{COUT_DEBUG_INSERTION(FULL_DEBUG, YELLOW "CGI::launch()" RESET << std::endl);
 
 	if (-1 == pipe(sendPayload_pipe))
 		throw_HttpError_debug("CGI::launch()", "pipe()", 500, this->matching_directives, get_env_value("ROOT"));
@@ -112,7 +112,7 @@ void CGI::launch()
 		close(sendPayload_pipe[0]);
 		if (false == chunked)
 		{
-			COUT_DEBUG_INSERTION("CGI NOT CHUNKED" << std::endl);
+			COUT_DEBUG_INSERTION(FULL_DEBUG, "CGI NOT CHUNKED" << std::endl);
 			//*	printing body into the pipe
 			backupStdout = dup(STDOUT_FILENO);
 			dup2(sendPayload_pipe[1], STDOUT_FILENO);
@@ -157,7 +157,7 @@ void	CGI::CGINextChunk( void )
 
 		if (incomingData.empty())
 		{
-			COUT_DEBUG_INSERTION("EOF CHUNK FOUND" << std::endl);
+			COUT_DEBUG_INSERTION(FULL_DEBUG, "EOF CHUNK FOUND" << std::endl);
 			//*	sending EOF to the CGI and waiting the script to be done
 			close(sendPayload_pipe[1]);
 			if ( -1 == waitpid(pid, NULL, 0) )
@@ -261,6 +261,7 @@ void CGI::init_env_paths(
 
 }
 
+// Full var definition in ../dictionnary.md
 void	CGI::init_env(const t_conf_block& matching_directives, const std::string& client_IP, const std::string& server_IP){
 
 	// Path environment variables declared in init_env_paths();
@@ -294,7 +295,7 @@ void	CGI::init_env(const t_conf_block& matching_directives, const std::string& c
 //* Debug
 void CGI::print_arr(char ** arr, const std::string& title)
 {
-	if (DEBUG){
+	if (FULL_DEBUG){
 		std::cout << YELLOW "CGI::print_arr()" RESET << std::endl;
 
 		if (!arr)

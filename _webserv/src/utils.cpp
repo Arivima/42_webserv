@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/18 10:41:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/16 16:39:58 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/17 14:26:12 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ t_conf_block::	s_conf_block(
 	)
 	: level(lvl), directives(dir), sub_blocks(), invalidated(false)
 {
-	COUT_DEBUG_INSERTION("Build a new : " << this->level << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, "Build a new : " << this->level << std::endl);
 }
 
 //*		TYPE UTILITIES
@@ -43,17 +43,17 @@ t_conf_block::	s_conf_block(
 void						print_directives(std::map<std::string, std::string>& directives, size_t level) {
 	std::string	tabs(level, '\t');
 	
-	COUT_DEBUG_INSERTION(tabs << "| Directives :" << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, tabs << "| Directives :" << std::endl);
     for (std::map<std::string, std::string>::iterator it = directives.begin(); it != directives.end(); it++)
-        COUT_DEBUG_INSERTION(tabs << "|  Key/Value |" << (*it).first << "|" << (*it).second << "|" << std::endl);
-    COUT_DEBUG_INSERTION(tabs << "--------------------------------------" << std::endl);
+        COUT_DEBUG_INSERTION(FULL_DEBUG, tabs << "|  Key/Value |" << (*it).first << "|" << (*it).second << "|" << std::endl);
+    COUT_DEBUG_INSERTION(FULL_DEBUG, tabs << "--------------------------------------" << std::endl);
 }
 /*brief*/   // recursive call
 void						print_block(t_conf_block& block, size_t level) {
 	std::string	tabs(level, '\t');
 	
-    COUT_DEBUG_INSERTION(tabs << "--------------------------------------" << std::endl)
-    COUT_DEBUG_INSERTION(tabs << "| Printing print_level #" << block.level << std::endl)
+    COUT_DEBUG_INSERTION(FULL_DEBUG, tabs << "--------------------------------------" << std::endl);
+    COUT_DEBUG_INSERTION(FULL_DEBUG, tabs << "| Printing print_level #" << block.level << std::endl);
     print_directives(block.directives, level);
     for (std::vector<t_conf_block>::iterator it = block.sub_blocks.begin(); it != block.sub_blocks.end(); it++)
         print_block(*it, level + 1);
@@ -212,7 +212,7 @@ std::string	take_cgi_extension(
 	size_t				ext_found_at_pos;
 	std::string			cgi_enable_directive;
 	std::stringstream	cgiDirectiveStream;
-	COUT_DEBUG_INSERTION("take_cgi_extension - uri-path : " << uri_path << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, "take_cgi_extension - uri-path : " << uri_path << std::endl);
 
 	if (directives.end() == directives.find("cgi_enable"))
 		return ("");
@@ -226,7 +226,7 @@ std::string	take_cgi_extension(
 		
 		cgiDirectiveStream.str(cgi_enable_directive.substr(cur_dot_pos));
 		std::getline(cgiDirectiveStream, cur_extension, ' ');
-		COUT_DEBUG_INSERTION("trying extension : |" << cur_extension << "| " << std::endl);
+		COUT_DEBUG_INSERTION(FULL_DEBUG, "trying extension : |" << cur_extension << "| " << std::endl);
 		ext_found_at_pos = uri_path.find(cur_extension);
 		if (
 			std::string::npos != ext_found_at_pos &&
@@ -237,7 +237,7 @@ std::string	take_cgi_extension(
 				'/' == uri_path[ext_found_at_pos + cur_extension.length()]
 			)
 		) {
-			COUT_DEBUG_INSERTION("returning extension : |" << cur_extension << "| " << std::endl);
+			COUT_DEBUG_INSERTION(FULL_DEBUG, "returning extension : |" << cur_extension << "| " << std::endl);
 			return (cur_extension);
 		}
 			
@@ -344,7 +344,7 @@ void	check_file_deletable(
 		-1 == access(filePath.c_str(), W_OK)
 	)
 	{
-		COUT_DEBUG_INSERTION(RED "Response::deleteFile() : permissions error" RESET << std::endl);
+		COUT_DEBUG_INSERTION(FULL_DEBUG, RED "Response::deleteFile() : permissions error" RESET << std::endl);
 		if (errno == ETXTBSY) // ETXTBSY Write access was requested to an executable which is being executed.
 		/*Conflict*/	throw HttpError(409, matching_directives, location_root);
 		else
@@ -357,7 +357,7 @@ void	check_directory_deletable(
 			const std::string&	location_root,
 			const t_conf_block&	matching_directives
 		)
-{COUT_DEBUG_INSERTION(YELLOW "check_directory_deletable()" RESET << std::endl);
+{COUT_DEBUG_INSERTION(FULL_DEBUG, YELLOW "check_directory_deletable()" RESET << std::endl);
 	const std::string	dirFullPath = location_root + dirRelPath;
 
 	check_file_deletable(dirRelPath, location_root, matching_directives);
@@ -376,7 +376,7 @@ void	check_directory_deletable(
 					break ;
             	if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
 					continue;
-				COUT_DEBUG_INSERTION(CYAN 
+				COUT_DEBUG_INSERTION(FULL_DEBUG, CYAN 
 					<< "| dir: " << dirFullPath 
 					<< "| entry : " << entry->d_name 
 					<< ((entry->d_type == DT_DIR)? "is a directory" : "") 
@@ -401,7 +401,7 @@ void	check_directory_deletable(
 			/*Server Err*/	throw HttpError(500, matching_directives, location_root);
     }
     else {
-		COUT_DEBUG_INSERTION(RED "Response::deleteDirectory() : could not open dir error" RESET << std::endl);
+		COUT_DEBUG_INSERTION(FULL_DEBUG, RED "Response::deleteDirectory() : could not open dir error" RESET << std::endl);
 		/*Server Err*/	throw HttpError(500, matching_directives, location_root, strerror(errno));
 	}
 }
@@ -546,9 +546,9 @@ bool	str_compare_words(const std::string& str_haystack, const std::string& str_n
 {
 	std::vector<std::string> vector_haystack = split_str_to_vector(str_haystack, " ");
 	std::vector<std::string> vector_needle = split_str_to_vector(str_needle, " ");
-	COUT_DEBUG_INSERTION(MAGENTA"str_compare_words" RESET << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, MAGENTA"str_compare_words" RESET << std::endl);
 	if ((vector_haystack.empty() == true) || (vector_needle.empty() == true)){
-		COUT_DEBUG_INSERTION(MAGENTA"str_compare_words RETURN : negative match VOID VECTOR" RESET << std::endl);
+		COUT_DEBUG_INSERTION(FULL_DEBUG, MAGENTA"str_compare_words RETURN : negative match VOID VECTOR" RESET << std::endl);
 		return (false);
 	}
 
@@ -562,14 +562,14 @@ bool	str_compare_words(const std::string& str_haystack, const std::string& str_n
 			it_haystack != vector_haystack.end();
 			it_haystack++
 		){
-			COUT_DEBUG_INSERTION("comparing |" << *it_needle << "| and |" << *it_haystack << "|" << std::endl);
+			COUT_DEBUG_INSERTION(FULL_DEBUG, "comparing |" << *it_needle << "| and |" << *it_haystack << "|" << std::endl);
 			if ((*it_haystack).compare(*it_needle) == 0){
-				COUT_DEBUG_INSERTION(MAGENTA"str_compare_words RETURN : positive match" RESET << std::endl);
+				COUT_DEBUG_INSERTION(FULL_DEBUG, MAGENTA"str_compare_words RETURN : positive match" RESET << std::endl);
 				return (true);
 			}
 		}
 	}
-	COUT_DEBUG_INSERTION(MAGENTA"str_compare_words RETURN : negative match" RESET << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, MAGENTA"str_compare_words RETURN : negative match" RESET << std::endl);
 	return (false);
 }
 
@@ -584,7 +584,7 @@ bool	fileExists(
 	const std::string& root,
 	std::string path
 	)
-{COUT_DEBUG_INSERTION(YELLOW "checking existence of file : " << root + path << RESET << std::endl);
+{COUT_DEBUG_INSERTION(FULL_DEBUG, YELLOW "checking existence of file : " << root + path << RESET << std::endl);
 	struct stat	fileStat;
 	std::string	fileFullPath;
 
@@ -597,7 +597,7 @@ bool	fileExists(
 
 
 bool			isDirectory(const std::string root, std::string path)
-{COUT_DEBUG_INSERTION(YELLOW "isDirectory()" RESET << std::endl);
+{COUT_DEBUG_INSERTION(FULL_DEBUG, YELLOW "isDirectory()" RESET << std::endl);
 
 	struct stat	fileStat;
 	
@@ -625,7 +625,7 @@ std::string getDirectoryContentList(
 				const std::string& location_root
 			)
 {
-	COUT_DEBUG_INSERTION(MAGENTA << "getDirectoryContentList : path ->"<< directoryPath << RESET << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, MAGENTA << "getDirectoryContentList : path ->"<< directoryPath << RESET << std::endl);
 	std::string contentList;
     DIR* dir = opendir(directoryPath.c_str());
     if (dir){
@@ -659,7 +659,7 @@ std::string getDirectoryContentList(
     }
     else
 		throw HttpError(500, matching_directives, location_root);
-	COUT_DEBUG_INSERTION(
+	COUT_DEBUG_INSERTION(FULL_DEBUG, 
 		YELLOW << "contenList" << std::endl
 		<< contentList << RESET << std::endl
 	);
@@ -670,13 +670,13 @@ std::string	createHtmlPage(const std::string& title, const std::string& body)
 {
 	std::stringstream	pageStream;
 
-	COUT_DEBUG_INSERTION(
+	COUT_DEBUG_INSERTION(FULL_DEBUG, 
 		YELLOW
 		<< "std::string	createHtmlPage() : " << body
 		<< RESET << std::endl
 	);
 
-	COUT_DEBUG_INSERTION(
+	COUT_DEBUG_INSERTION(FULL_DEBUG, 
 		"body : " << body << std::endl
 	);
 	pageStream
@@ -694,7 +694,7 @@ std::string	createHtmlPage(const std::string& title, const std::string& body)
 </html>\
 ";
 
-	COUT_DEBUG_INSERTION(
+	COUT_DEBUG_INSERTION(FULL_DEBUG, 
 		"pageStream.str() : " << pageStream.str() << std::endl
 	);
 	return (pageStream.str());

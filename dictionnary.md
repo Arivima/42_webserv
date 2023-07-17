@@ -1,42 +1,22 @@
-# Project dictionnary
-
-## Formatting Rules:
-
-- opening block brackets must be at the same line as the block level (i.e.: "server \{")
-
-If one of those rules is not respected, config file is considered non-valid.
-
-# List of implemented directives, within their relevant scope
-
-## List of implemented directives, single/multi values
-
-### Directives Specification
-
-void	Config::check_directive_validity(const std::string& directive, t_config_block_level level){
-	static const char*					allowed_directives[] = {
-		"listen", "location", "server_name", "host", "index", "body_size",
-		"error_page", "method", "root", "upload_path", "return", "autoindex",
-		"cgi_enable", "timeout"
-	};
-	static const char*					virtual_server_directives[] = {
-		"listen", "location", "server_name", "host", "index",
-		"body_size", "error_page", "method", "root", "upload_path", "return",
-		"autoindex",  "cgi_enable", "timeout"
-	};
-	static const char*					location_directives[] = {
-		"location", "index", "body_size", "error_page", "method", "root",
-		"upload_path", "return", "autoindex", "cgi_enable", "timeout"
-	};
-}
+# PROJECT DICTIONNARY
+Content:
+1. Directives implemented  
+2. CGI protocol's Environment variables  
+3. HTTP Status codes  
+3.1. Overall codes used in this project  
+3.2. specific to method GET  
+3.3.specific to method DELETE  
+3.4.specific to method POST  
+4. Sys call Error codes  
+4.1. stat()  
+4.2. opendir()  
+4.3. rmdir()  
 
 
-void	Config::add_directive(t_conf_block& current, std::string& key, std::string& value)
-{
-	const std::string	singleValued = "listen body_size root upload_path return autoindex location timeout";
-	const std::string	multiValued = "server_name error_page method index cgi_enable";
-}
+# Directives implemented
+-> refer to README.md in ./configuration_files
 
-## DICTIONNARY OF ALL CGI PROTOCOL ENVIRONMENT VARIABLES
+# CGI protocol's Environment variables
 env_type : char** env
 
 | i | field | description | 
@@ -71,82 +51,122 @@ env_type : char** env
 | 28 | SERVER_SOFTWARE | Provides information about the web server software being used, including its name and version |
 | 29 | WEBTOP_USER | The user name of the user who is logged in. |
 
-// HTTP STATUS CODES FOR POST
-// A successful response SHOULD be 
-// 200 (OK)|		request was successful -> response body contains result or representation of requested resource
-// 201 (Created)|	if the resource has been created on the origin server. response should a Location header with url of the created resource
-// 204 (No Content)|request was successful -> no additional content to send back in the response body
 
-// The action performed by the POST method might not result in a resource that can be 
-// identified by a URI. In this case, either 200 (OK) or 204 (No Content) 
-// is the appropriate response status, depending on whether or not the response 
-// includes an entity that describes the result.
-// If a resource has been created on the origin server, the response 
-// SHOULD be 201 (Created) and contain an entity which describes the status of 
-// the request and refers to the new resource, and a Location header (see section 14.30).
+# HTTP Status codes
+https://developer.mozilla.org/en-US/docs/Web/HTTP/Status#client_error_responses  
+## Overall codes used in this project
+### 2** Successful responses
+| code | field | description | 
+| - | :-----| :-----------|
+| 200 | OK |		request was successful |
+| 201 | Created |	 |
+| 204 | No Content |request was successful -> no additional content to send back in the response body |
+### 3** Redirection messages 
+| code | field | description | 
+| - | :-----| :-----------|
+| 307 | Temporary Redirect | The server sends this response to direct the client to get the requested resource at another URI with the same method that was used in the prior request. This has the same semantics as the 302 Found HTTP response code, with the exception that the user agent must not change the HTTP method used: if a POST was used in the first request, a POST must be used in the second request.|
+| 308 | Permanent Redirect | This means that the resource is now permanently located at another URI, specified by the Location: HTTP Response header. This has the same semantics as the 301 Moved Permanently HTTP response code, with the exception that the user agent must not change the HTTP method used: if a POST was used in the first request, a POST must be used in the second request. |
 
-// failed request
-// 400 Bad Request: The request could not be understood or was malformed. The server should include information in the response body or headers about the nature of the error.
-// 403 Forbidden: The server understood the request, but the client does not have permission to access the requested resource.
-// 404 Not Found: The requested resource could not be found on the server.
-// 409 Conflict: The request could not be completed due to a conflict with the current state of the resource. This is often used for data validation errors or when trying to create a resource that already exists.
-// 500 Internal Server Error: An unexpected error occurred on the server, indicating a problem with the server's configuration or processing of the request.
+### 4** Client error responses 
+| code | field | description | 
+| - | :-----| :-----------|
+| 400 | Bad Request | - The server cannot or will not process the request due to something that is perceived to be a client error (e.g., malformed request syntax, invalid request message framing, or deceptive request routing). |
+| 403 | Forbidden | - The client does not have access rights to the content; that is, it is unauthorized, so the server is refusing to give the requested resource. Unlike 401 Unauthorized, the client's identity is known to the server. |
+| 404 | Not Found | - The server cannot find the requested resource. In the browser, this means the URL is not recognized.  |
+| 405 | Method Not Allowed | - The HyperText Transfer Protocol (HTTP) 405 Method Not Allowed response status code indicates that the server knows the request method, but the target resource doesn't support this method. |
+| 409 | Conflict | - The deletion could not be completed due to a conflict with the current state of the resource.  |
+| 413 | Content Too Large | - The HTTP 413 Content Too Large response status code indicates that the request entity is larger than limits defined by server; the server might close the connection or return a Retry-After header field. |
+| 414 | URI Too Long | - The URI requested by the client is longer than the server is willing to interpret. |
+### 5** Server error responses
+| code | field | description | 
+| - | :-----| :-----------|
+| 500 | Internal Server Error | - An unexpected error occurred on the server while processing the deletion request. |
+| 501 | Not Implemented | - The HyperText Transfer Protocol (HTTP) 501 Not Implemented server error response code means that the server does not support the functionality required to fulfill the request. |
+| 502 | Bad Gateway | - The HyperText Transfer Protocol (HTTP) 502 Bad Gateway server error response code indicates that the server, while acting as a gateway or proxy, received an invalid response from the upstream server. |
+| 504 | Gateway Timeout | - The HyperText Transfer Protocol (HTTP) 504 Gateway Timeout server error response code indicates that the server, while acting as a gateway or proxy  |
+	
+## specific to method GET
+### Successful request
+### Failed request
+## specific to method DELETE
+### Successful request
+| code | field | description | 
+| - | :-----| :-----------|
+| 200 | OK | if the response includes an entity describing the status |
+| 202 | Accepted | if the action has not yet been enacted |
+| 204 | No Content | if the action has been enacted but the response does not include an entity. |
+### Failed request
+| code | field | description | 
+| - | :-----| :-----------|
+| 400 | Bad Request | The request could not be understood or was malformed. The server should include information in the response body or headers about the nature of the error.
+| 403 | Forbidden | The server understood the request, but the client does not have permission to access the requested resource.
+| 404 | Not Found | The requested resource could not be found on the server.
+| 414 | URI Too Long  | The URI requested by the client is longer than the server is willing to interpret.
+| 409 | Conflict | The request could not be completed due to a conflict with the current state of the resource. This is often used for data validation errors or when trying to create a resource that already exists.
+| 500 | Internal Server Error | An unexpected error occurred on the server, indicating a problem with the server's configuration or processing of the request.
+## specific to method POST
+The action performed by the POST method might not result in a resource that can be 
+identified by a URI. In this case, either 200 (OK) or 204 (No Content) 
+is the appropriate response status, depending on whether or not the response 
+includes an entity that describes the result.
+If a resource has been created on the origin server, the response 
+SHOULD be 201 (Created) and contain an entity which describes the status of 
+the request and refers to the new resource, and a Location header (see section 14.30).
+### Successful request
+| code | field | description | 
+| - | :-----| :-----------|
+| 200 | OK |		request was successful -> response body contains result or representation of requested resource |
+| 201 | Created |	if the resource has been created on the origin server. response should include a Location header with url of the created resource |
+| 204 | No Content |request was successful -> no additional content to send back in the response body |
+### Failed request
+| code | field | description | 
+| - | :-----| :-----------|
+| 400 | Bad Request | The request could not be understood or was malformed. The server should include information in the response body or headers about the nature of the error. |
+| 403 | Forbidden | The server understood the request, but the client does not have permission to access the requested resource. |
+| 404 | Not Found | The requested resource could not be found on the server. |
+| 409 | Conflict | The request could not be completed due to a conflict with the current state of the resource. This is often used for data validation errors or when trying to create a resource that already exists. |
+| 500 | Internal Server Error | An unexpected error occurred on the server, indicating a problem with the server's configuration or processing of the request. |
 
-// STAT ERROR
-// EACCES|	Search permission is denied for one of the directories in the path prefix of path. (See also path_resolution(7).)
-// EBADF|			fd is bad.
-// EFAULT|			Bad address.
-// ELOOP|			Too many symbolic links encountered while traversing the path.
-// ENAMETOOLONG|	path is too long.
-// ENOENT|			A component of path does not exist, or path is an empty string.
-// ENOMEM|			Out of memory (i.e., kernel memory).
-// ENOTDIR|			A component of the path prefix of path is not a directory.
-// EOVERFLOW|		path or fd refers to a file whose size, inode number, or number of blocks cannot be represented in,
-// 					respectively, the types off_t, ino_t, or blkcnt_t. 
-// 					This error can occur when, for example, an application compiled on a 32-bit platform without 
-// 					-D_FILE_OFFSET_BITS=64 calls stat() on a file whose size exceeds (1<<31)-1 bytes.
+# Sys call Error codes
 
+### stat()
+| code | description | 
+| - | :-----------|
+| EACCES| Search permission is denied for one of the directories in the path prefix of path. (See also path_resolution(7).)
+| EBADF| fd is bad.
+| EFAULT| Bad address.
+| ELOOP| Too many symbolic links encountered while traversing the path.
+| ENAMETOOLONG|	path is too long.
+| ENOENT| A component of path does not exist, or path is an empty string.
+| ENOMEM| Out of memory (i.e., kernel memory).
+| ENOTDIR| A component of the path prefix of path is not a directory.
+| EOVERFLOW| path or fd refers to a file whose size, inode number, or number of blocks cannot be represented in,respectively, the types off_t, ino_t, or blkcnt_t. This error can occur when, for example, an application compiled on a 32-bit platform without -D_FILE_OFFSET_BITS=64 calls stat() on a file whose size exceeds (1<<31)-1 bytes.
 
-// HTTP Status codes
-	// 400 Bad Request 				- The server cannot or will not process the request due to something that is perceived to be a client error 
-	// 								(e.g., malformed request syntax, invalid request message framing, or deceptive request routing).
-	// 403 Forbidden 				- The client does not have access rights to the content; that is, it is unauthorized, so the server is refusing to give the requested resource. 
-	// 								Unlike 401 Unauthorized, the client's identity is known to the server.
-	// 404 Not Found 				- The server cannot find the requested resource. In the browser, this means the URL is not recognized. 
-// 405
-	// 409 Conflict					- The deletion could not be completed due to a conflict with the current state of the resource. 
-	// 413 Content Too Large		- The HTTP 413 Content Too Large response status code indicates that the request entity is larger than limits defined by server; the server might close the connection or return a Retry-After header field.
-	// 414 URI Too Long				- The URI requested by the client is longer than the server is willing to interpret.
-	// 500 Internal Server Error	- An unexpected error occurred on the server while processing the deletion request.
-// 501
-// 502
-// 504
+### opendir()
+| code | description | 
+| - | :-----------|
+| EACCES | Permission denied. |
+| EBADF  | fd is not a valid file descriptor opened for reading. |
+| EMFILE | The per-process limit on the number of open file descriptors has been reached. |
+| ENFILE | The system-wide limit on the total number of open files has been reached. |
+| ENOENT | Directory does not exist, or name is an empty string. |
+| ENOMEM | Insufficient memory to complete the operation. |
+| ENOTDIR | name is not a directory. |
 
+### rmdir()
+| code | description | 
+| - | :-----------|
+| EACCES| Write access to the directory containing pathname was not allowed, or one of the directories in the path prefix of pathname did not allow search permission.  (See also path_resolution(7).) |
+| EBUSY | pathname is currently in use by the system or some process that prevents its removal.  On Linux, this means pathname is currently used as a mount point or is the root directory of the calling process. |
+| EFAULT| pathname points outside your accessible address space. |
+| EINVAL| pathname has .  as last component. |
+| ELOOP | Too many symbolic links were encountered in resolving pathname. |
+| ENAMETOOLONG | pathname was too long. |
+| ENOENT| A directory component in pathname does not exist or is a dangling symbolic link. |
+| ENOMEM| Insufficient kernel memory was available. |
+| ENOTDIR| pathname, or a component used as a directory in pathname, is not, in fact, a directory. |
+| ENOTEMPTY | pathname contains entries other than . and .. ; or, pathname has ..  as its final component. POSIX.1 also allows EEXIST for this condition. |
+| EPERM | The directory containing pathname has the sticky bit (S_ISVTX) set and the process's effective user ID is neither the user ID of the file to be deleted nor that of the directory containing it, and the process is not privileged (Linux: does not have the CAP_FOWNER capability).
+| EPERM | The filesystem containing pathname does not support the removal of directories. |
+| EROFS | pathname refers to a directory on a read-only filesystem. |
 
-// opendir ERRORS : 
-    //    EACCES 	Permission denied.
-    //    EBADF  	fd is not a valid file descriptor opened for reading.
-    //    EMFILE 	The per-process limit on the number of open file descriptors has been reached.
-    //    ENFILE 	The system-wide limit on the total number of open files has been reached.
-    //    ENOENT 	Directory does not exist, or name is an empty string.
-    //    ENOMEM 	Insufficient memory to complete the operation.
-    //    ENOTDIR 	name is not a directory.
-// rmdir ERRORS : 
-    //    EACCES 	Write access to the directory containing pathname was not allowed, or one of the directories in the path prefix of
-    //           	pathname did not allow search permission.  (See also path_resolution(7).)
-    //    EBUSY  	pathname is currently in use by the system or some process that prevents its removal.  On Linux, this means pathname
-    //           	is currently used as a mount point or is the root directory of the calling process.
-    //    EFAULT 	pathname points outside your accessible address space.
-    //    EINVAL 	pathname has .  as last component.
-    //    ELOOP  	Too many symbolic links were encountered in resolving pathname.
-    //    ENAMETOOLONG pathname was too long.
-    //    ENOENT 	A directory component in pathname does not exist or is a dangling symbolic link.
-    //    ENOMEM 	Insufficient kernel memory was available.
-    //    ENOTDIR 	pathname, or a component used as a directory in pathname, is not, in fact, a directory.
-    //    ENOTEMPTY pathname contains entries other than . and .. ; or, pathname has ..  as its final component.
-	//    			POSIX.1 also allows EEXIST for this condition.
-    //    EPERM  	The directory containing pathname has the sticky bit (S_ISVTX) set and the process's effective user ID is
-    //           	neither the user ID of the file to be deleted nor that of the directory containing it, and the process is not
-    //           	privileged (Linux: does not have the CAP_FOWNER capability).
-    //    EPERM  	The filesystem containing pathname does not support the removal of directories.
-    //    EROFS  	pathname refers to a directory on a read-only filesystem.

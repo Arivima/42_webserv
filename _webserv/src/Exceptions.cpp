@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/30 12:37:05 by avilla-m          #+#    #+#             */
-/*   Updated: 2023/07/16 16:17:28 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/17 13:49:56 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -108,7 +108,7 @@ std::string			HttpError::buildErrorPage( void )
 
 std::string			HttpError::errPage_getPath( void ) 
 {
-	COUT_DEBUG_INSERTION("errPage_getPath()" << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, "errPage_getPath()" << std::endl);
 
 	std::string									directive
 		= this->matching_directives.directives.at("error_page");
@@ -135,7 +135,7 @@ std::string			HttpError::errPage_getPath( void )
 	std::getline(directiveStream, path, ' ');
 
 	//*		return empty string in case of missing pathname
-	COUT_DEBUG_INSERTION("trying error page " << path << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, "trying error page " << path << std::endl);
 	if ("/" == path)
 		return ("");
 	return (path);

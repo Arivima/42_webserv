@@ -24,22 +24,14 @@ TODO
 			-	cazzatine (prettify, make it more coherent style-wise and also functionalities-wise) && refactoring && clean
 			-	check for every member that should be a reference
 			-	Change req url name to "uri"
+		-	Landing Page carina https://www.one-tab.com/page/UKcL00UVSK-7TQgaizuOaw
 
 		pending
 			-	debug Makefile
 			-	DONE???M file binary with POST redirect
-			-	DONE??redirection : file to add to path (/old-path/ substitution)
 
 	Arielle
-		-	GET redirect postman
-		-	finish testing postman
-		-	Landing Page carina
-https://www.one-tab.com/page/UKcL00UVSK-7TQgaizuOaw
 
-	check
-		• what happens if 10 clients try to upload 1G of data -> running out of memory cases
-		• Your server must be compatible with the web browser of your choice.
-		• Stress tests your server. It must stay available at all cost.
 
 	Additional tasks if there is time:
 		- 	fare un log

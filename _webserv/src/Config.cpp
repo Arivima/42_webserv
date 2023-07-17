@@ -28,7 +28,7 @@ Config::		Config( const char* config_file_path ) : conf() {
 		NULL == config_file_path ? DEFAULT_PATHNAME : config_file_path
 	);
 	content_stream.str(this->raw_content);
-	COUT_DEBUG_INSERTION("conf file: |" << this->raw_content << "|" << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, "conf file: |" << this->raw_content << "|" << std::endl);
 }
 
 Config::		~Config( void ) {
@@ -64,7 +64,7 @@ const t_conf_block&		Config::getConf( void ) {
 
 //*		private helper functions
 void	Config::read_config_file(std::string conf_pathname) {
-	COUT_DEBUG_INSERTION(YELLOW << "read_config_file()" << RESET << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, YELLOW << "read_config_file()" << RESET << std::endl);
 
 	const size_t	buffer_size = 4096;
 	char			buf[buffer_size + 1];
@@ -85,7 +85,7 @@ void	Config::read_config_file(std::string conf_pathname) {
 		throw std::runtime_error("error read");
 	}
 	else if (0 == bytes_read) {
-		COUT_DEBUG_INSERTION(MAGENTA << "EOF Finished reading configuration file" << RESET << std::endl);
+		COUT_DEBUG_INSERTION(FULL_DEBUG, MAGENTA << "EOF Finished reading configuration file" << RESET << std::endl);
 	}
 	remove_comments();
 	remove_empty_lines();
@@ -93,12 +93,12 @@ void	Config::read_config_file(std::string conf_pathname) {
 
 /*brief*/   // removes comment all comments = characters after a # and up until a \n
 void	Config::remove_comments( void ) {
-	COUT_DEBUG_INSERTION(YELLOW << "remove_comments()" << RESET << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, YELLOW << "remove_comments()" << RESET << std::endl);
 	
 	size_t	nl_pos;
 	
 	for (size_t i = 0; (i = this->raw_content.find("#", i)) != std::string::npos;) {
-		COUT_DEBUG_INSERTION(
+		COUT_DEBUG_INSERTION(FULL_DEBUG, 
 			"Found string to delete at pos : " << i << std::endl
 			<<  RED << get_whole_line(this->raw_content, i) << RESET << std::endl
 		);
@@ -140,17 +140,17 @@ void	Config::remove_empty_lines(void) {
 }
 
 void	Config::parse( t_conf_block& current ) {
-	COUT_DEBUG_INSERTION(BOLDYELLOW "Config::parse()" RESET << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, BOLDYELLOW "Config::parse()" RESET << std::endl);
 
 	std::string				cur_line;
 	
 	while (content_stream.good()) {
-		COUT_DEBUG_INSERTION(
+		COUT_DEBUG_INSERTION(FULL_DEBUG, 
 			YELLOW "Parsing a " << current.level << " content" RESET << std::endl
 		);
 		std::getline(content_stream, cur_line);
 		strip_trailing_and_leading_spaces(cur_line);
-		COUT_DEBUG_INSERTION(
+		COUT_DEBUG_INSERTION(FULL_DEBUG, 
 			"line read: |" << cur_line << "|" << std::endl
 		);
 		
@@ -184,8 +184,8 @@ void	Config::parse_sub_block( t_conf_block& current, std::string& cur_line )
 	t_config_block_level	next_level;
 
 	next_level = next_conf_block_level(current.level);
-	COUT_DEBUG_INSERTION("sub block found" << std::endl)
-	COUT_DEBUG_INSERTION("next level: " << next_level << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, "sub block found" << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, "next level: " << next_level << std::endl);
 	try {
 		if (static_cast<int>(next_level) != block_get_level(cur_line))
 			throw (std::invalid_argument("Config::parse_sub_block() : block found at wrong level"));
@@ -207,24 +207,24 @@ void	Config::parse_sub_block( t_conf_block& current, std::string& cur_line )
 			<< "reason : " << e.what() << std::endl
 			<< RESET;
 		if (e_http_block != current.level) {
-			COUT_DEBUG_INSERTION("block invalidated" << std::endl)
+			COUT_DEBUG_INSERTION(FULL_DEBUG, "block invalidated" << std::endl);
 			current.invalidated = true;
 		}
 		else {
-			COUT_DEBUG_INSERTION("block NOT invalidated" << std::endl);
+			COUT_DEBUG_INSERTION(FULL_DEBUG, "block NOT invalidated" << std::endl);
 		}
 	}
 }
 
 void	Config::parse_http_block( t_conf_block& current ) {
 	
-	COUT_DEBUG_INSERTION(MAGENTA "parse_http_block()" RESET << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, MAGENTA "parse_http_block()" RESET << std::endl);
 	t_conf_block	http(
 		e_http_block,
 		current.directives
 	);
 	parse(http);
-	COUT_DEBUG_INSERTION(
+	COUT_DEBUG_INSERTION(FULL_DEBUG, 
 		GREEN "pushing a new http block into root sub-blocks" RESET << std::endl
 	);
 	current.sub_blocks.push_back(http);
@@ -232,7 +232,7 @@ void	Config::parse_http_block( t_conf_block& current ) {
 
 void	Config::parse_location_block( t_conf_block& current, std::string& cur_line  ) {
 	
-	COUT_DEBUG_INSERTION(MAGENTA "parse_location_block()" RESET << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, MAGENTA "parse_location_block()" RESET << std::endl);
 	
 	std::stringstream	linestream(cur_line);
 	std::string			location_keyword;
@@ -263,14 +263,14 @@ void	Config::parse_location_block( t_conf_block& current, std::string& cur_line 
 		current.directives[location_keyword + location_path] = location_path;
 	//**	////////////////////////////////////////////////////
 
-	COUT_DEBUG_INSERTION(
+	COUT_DEBUG_INSERTION(FULL_DEBUG, 
 		GREEN "pushing a new location block into virtual server sub-blocks" RESET << std::endl
 	);
 	current.sub_blocks.push_back(location);
 }
 
 void	Config::parse_server_block( t_conf_block& current ) {
-	COUT_DEBUG_INSERTION(MAGENTA "parse_server_block()" RESET << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, MAGENTA "parse_server_block()" RESET << std::endl);
 	
 	t_conf_block&							http = current;
 	std::vector<t_conf_block>::iterator		server;
@@ -300,7 +300,7 @@ void	Config::parse_server_block( t_conf_block& current ) {
 					throw (std::invalid_argument("Config::parse_server_block() : \
 							 found two servers with conflicting server_names")
 					);
-			COUT_DEBUG_INSERTION(
+			COUT_DEBUG_INSERTION(FULL_DEBUG, 
 				GREEN "pushing a new virtual server block into existing server sub-blocks" RESET << std::endl
 			);
 			(*server).sub_blocks.push_back(new_virtual_serv);
@@ -314,16 +314,16 @@ void	Config::parse_server_block( t_conf_block& current ) {
 			e_server_block,
 			http.directives
 		);
-		COUT_DEBUG_INSERTION(
+		COUT_DEBUG_INSERTION(FULL_DEBUG, 
 			GREEN "pushing a new virtual server block into new server sub-blocks" RESET << std::endl
 		);
 		server.sub_blocks.push_back(new_virtual_serv);
-		COUT_DEBUG_INSERTION(
+		COUT_DEBUG_INSERTION(FULL_DEBUG, 
 			GREEN "pushing new server block into http sub-blocks" RESET << std::endl
 		);
 		http.sub_blocks.push_back(server);
 	}
-	COUT_DEBUG_INSERTION(MAGENTA "parse_server_block() ----END" RESET << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, MAGENTA "parse_server_block() ----END" RESET << std::endl);
 }
 
 void	Config::parse_directive( t_conf_block& current, std::string& cur_line )
@@ -342,7 +342,7 @@ void	Config::parse_directive( t_conf_block& current, std::string& cur_line )
 			throw (std::invalid_argument("Config::parse_directive() : ';' missing"));
 		//*		//////////////////////////////////////////////////
 
-		COUT_DEBUG_INSERTION("Parsing directive : " << cur_line << std::endl);
+		COUT_DEBUG_INSERTION(FULL_DEBUG, "Parsing directive : " << cur_line << std::endl);
 		linestream.str(cur_line);
 		std::getline(linestream, key, ' ');
 		std::getline(linestream, value);
@@ -357,7 +357,7 @@ void	Config::parse_directive( t_conf_block& current, std::string& cur_line )
 }
 
 void	Config::check_directive_validity(const std::string& directive, t_config_block_level level){
-	COUT_DEBUG_INSERTION(" check_directive_validity | directive : " << directive << " | level : " << level << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, " check_directive_validity | directive : " << directive << " | level : " << level << std::endl);
 
 	static const char*					allowed_directives[] = {
 		"listen", "location", "server_name", "host", "index", "body_size",
@@ -445,7 +445,7 @@ void	Config::check_value_validity(std::string& key, std::string & value)
 							//	- Method and body not changed.
 							//	- Reorganization of a website, with non-GET links/operations.
 void	Config::check_value_validity_return(std::string & value)
-{ COUT_DEBUG_INSERTION(YELLOW "check_value_validity_return()" RESET << std::endl);
+{ COUT_DEBUG_INSERTION(FULL_DEBUG, YELLOW "check_value_validity_return()" RESET << std::endl);
     std::istringstream					iss(value);
     std::pair<std::string, std::string> val;
     std::string							word;
@@ -513,7 +513,7 @@ void	Config::check_value_validity_body_size(std::string & value)
 	if (size == 0)
 		value = std::to_string(DEFAULT_CLIENT_MAX_BODY_SIZE);
 
-	COUT_DEBUG_INSERTION(BOLDGREEN "body_size: " RESET << value << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, BOLDGREEN "body_size: " RESET << value << std::endl);
 }
 
 //*		non member helper functions

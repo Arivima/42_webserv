@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/30 13:20:37 by avilla-m          #+#    #+#             */
-/*   Updated: 2023/07/13 18:16:32 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/17 14:18:16 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,15 +24,15 @@ int main(int ac, char** av)
 		
 		//* parsing configuration file
 		config.parse_config();
-		COUT_DEBUG_INSERTION("Configuration parsed\n")
+		COUT_DEBUG_INSERTION(FULL_DEBUG, "Configuration parsed\n");
 		
 		//* initializing worker
 		Worker worker(config.getConf());
-		COUT_DEBUG_INSERTION("Worker initialized\n")
+		COUT_DEBUG_INSERTION(FULL_DEBUG, "Worker initialized\n");
 		
 		//* starting worker
 		worker.workerLoop();
-		COUT_DEBUG_INSERTION("Worker died without exceptions being thrown\n")
+		COUT_DEBUG_INSERTION(FULL_DEBUG, "Worker died without exceptions being thrown\n");
 	}
 	catch (std::exception& e)
 	{

@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/06 21:15:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/16 18:09:13 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/17 14:28:29 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,7 +50,7 @@ Worker::Worker(const t_conf_block& root_block) : servers(), edata()
 	if (0 == this->servers.size())
 		throw (std::runtime_error("Worker::Worker() : no server could be started"));
 	else {
-		COUT_DEBUG_INSERTION(
+		COUT_DEBUG_INSERTION(FULL_DEBUG, 
 			this->servers.size() << " servers started" << std::endl;
 		);
 		_init_io_multiplexing();
@@ -92,7 +92,7 @@ Worker::~Worker() {
 void Worker::workerLoop() {
 	std::vector<ConnectionSocket *>::iterator	it;
 	
-	std::cout << BOLDGREEN << "\nStarting worker" << RESET << std::endl;
+	COUT_DEBUG_INSERTION(DEBUG, "\nStarting worker" << RESET << std::endl);
 	while (true) {
 		try {
 			_io_multiplexing_using_epoll();
@@ -197,19 +197,20 @@ int	Worker::_create_ConnectionSocket(
 	socklen_t				server_addr_len		= sizeof(server_addr);
 
 	//*		Accepting
-	COUT_DEBUG_INSERTION(std::endl << YELLOW << "_create_ConnectionSocket() called()" << RESET << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, std::endl << YELLOW << "_create_ConnectionSocket() called()" << RESET << std::endl);
 
 	cli_socket = accept(server.server_fd, (struct sockaddr *)&cli_addr, &cli_addr_len);
 	if (-1 == cli_socket){
 		throw (SystemCallException("accept()"));
 	}
-	std::cout << BOLDGREEN << "\nAccepting new connection" << RESET << std::endl;
-	std::cout	<< "----------------  accept()" 
-				<< " | ip: " << _getIP()
-				<< " | port: " << server.server_port 
-				<< " | server_fd: " << server.server_fd 
-				<< " | cli_socket: " << cli_socket
-				<< std::endl;
+	COUT_DEBUG_INSERTION(DEBUG, BOLDGREEN << "\nAccepting new connection" << RESET << std::endl);
+	COUT_DEBUG_INSERTION(DEBUG, 
+					"----------------  accept()" 
+				<< 	" | ip: " << _getIP()
+				<< 	" | port: " << server.server_port 
+				<< 	" | server_fd: " << server.server_fd 
+				<< 	" | cli_socket: " << cli_socket
+				<< 	std::endl);
 	
 	//*		Making non-blocking
 	_make_socket_non_blocking(cli_socket);
@@ -321,10 +322,10 @@ void	Worker::_init_server_addr(
 			host = server_directives.at("host");
 		ip = inet_addr(host.c_str());
 	}
-	COUT_DEBUG_INSERTION(\
+	COUT_DEBUG_INSERTION(FULL_DEBUG, \
 		GREEN"new server with ip ===>\tas string : |" << host \
 		<< "|; as number : " << ip << RESET << std::endl\
-	)
+	);
 	if ((in_addr_t)(-1) == ip)
 		throw (
 			std::runtime_error(

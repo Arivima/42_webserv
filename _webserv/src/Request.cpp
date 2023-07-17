@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 17:19:26 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/13 22:56:42 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/17 14:18:33 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,17 +56,17 @@ Request::~Request( void ) {
 //*		Main Functions
 
 std::vector<char>		Request::getIncomingData( void )
-{ COUT_DEBUG_INSERTION(YELLOW "Request::getIncomingData()" RESET << std::endl);
+{ COUT_DEBUG_INSERTION(FULL_DEBUG, YELLOW "Request::getIncomingData()" RESET << std::endl);
 	std::vector<char>				incomingData;
 	std::vector<char>::iterator		cr_pos;
 	std::vector<char>				line;
 
-	COUT_DEBUG_INSERTION("BEFORE\n")
+	COUT_DEBUG_INSERTION(FULL_DEBUG, "BEFORE\n");
 	printVectorChar(payload, "payload");
 	parse_line();
 	if(payload.empty())
 		throw (ChunkNotComplete());
-	COUT_DEBUG_INSERTION("AFTER\n")
+	COUT_DEBUG_INSERTION(FULL_DEBUG, "AFTER\n");
 	printVectorChar(payload, "payload");
 	if (false == next_chunk_arrived)
 	{
@@ -83,7 +83,7 @@ std::vector<char>		Request::getIncomingData( void )
 
 			line.push_back('\0');
 			cur_chunk_size = std::stoi(line.data(), nullptr, 16);
-			COUT_DEBUG_INSERTION("current chunk size : " << cur_chunk_size << std::endl);
+			COUT_DEBUG_INSERTION(FULL_DEBUG, "current chunk size : " << cur_chunk_size << std::endl);
 			next_chunk_arrived = true;
 		}
 		throw (ChunkNotComplete());
@@ -318,29 +318,32 @@ void	Request::parse_body( void ) {
 //*		helper functions
 
 void	Request::print_req( void ) {
-	std::cout	<< BOLDCYAN "\n\nNew Request ----------------- " << RESET 
-				<< CYAN " | cli_socket: " << this->sock_fd << RESET
-				<< " | body_lenght: " << payload.size()
-				<< std::endl ;
-	
-	std::cout << BOLDCYAN "| HEADERS _________________________" RESET << std::endl ;
-	for (std::map<std::string, std::string>::iterator it = req.begin(); it != req.end(); it++) {
-		std::cout << CYAN "| " RESET << it->first << " : " << it->second << CYAN " |" RESET << std::endl ;
-	}
-	std::cout << CYAN "| END HEADERS _____________________" RESET << std::endl ;
+	if (DEBUG){
+		std::cout	<< BOLDCYAN "\n\nNew Request ----------------- " << RESET 
+					<< CYAN " | cli_socket: " << this->sock_fd << RESET
+					<< " | body_lenght: " << payload.size()
+					<< std::endl ;
+		
+		std::cout << BOLDCYAN "| HEADERS _________________________" RESET << std::endl ;
+		for (std::map<std::string, std::string>::iterator it = req.begin(); it != req.end(); it++) {
+			std::cout << CYAN "| " RESET << it->first << " : " << it->second << CYAN " |" RESET << std::endl ;
+		}
+		std::cout << CYAN "| END HEADERS _____________________" RESET << std::endl ;
 
-	std::cout << BOLDCYAN "\n| BODY ____________________________ " << RESET << std::endl ;
-	for (std::vector<char>::iterator it = payload.begin(); it != payload.end(); it++)
-		std::cout <<  CYAN "| " RESET << *it ;
-	if (payload.size())
-		std::cout << std::endl ;
-	std::cout << CYAN "| END BODY ________________________" RESET << std::endl ;
-	std::cout << CYAN "END REQUEST -----------------\n" RESET << std::endl ;
+		std::cout << BOLDCYAN "\n| BODY ____________________________ " << RESET << std::endl ;
+		for (std::vector<char>::iterator it = payload.begin(); it != payload.end(); it++)
+			std::cout <<  *it ;
+		if (payload.size())
+			std::cout << std::endl ;
+		std::cout << CYAN "| END BODY ________________________" RESET << std::endl ;
+		std::cout << CYAN "END REQUEST -----------------\n" RESET << std::endl ;		
+	}
+
 }
 
 void	Request::printVectorChar(std::vector<char>& v, std::string name)
 {
-	if (DEBUG){
+	if (FULL_DEBUG){
 		if (v.empty())
 			std::cout << name << " is empty !" << std::endl;
 		else

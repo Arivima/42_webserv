@@ -78,9 +78,9 @@ void	Response::send_line( void )
 	const struct epoll_event*	eevent = edata.getEpollEvent(this->sock_fd);
 	int							bytes_sent;
 
-	COUT_DEBUG_INSERTION("send_line()\n")
+	COUT_DEBUG_INSERTION(DEBUG, "send_line()\n");
 	if (response.empty()) {
-		COUT_DEBUG_INSERTION(
+		COUT_DEBUG_INSERTION(DEBUG, 
 			"Response::send_line() ---TaskFulfilled"
 			<< std::endl
 		);
@@ -127,7 +127,7 @@ void	Response::handle_next_chunk( void )
 }
 
 void	Response::POSTNextChunk( void )
-{ COUT_DEBUG_INSERTION(YELLOW "Response::POSTNextChunk()" RESET << std::endl);
+{ COUT_DEBUG_INSERTION(FULL_DEBUG, YELLOW "Response::POSTNextChunk()" RESET << std::endl);
 	std::vector<char>	incomingData;
 	std::string			root = location_root;
 	std::string			reqPath(uri_path);
@@ -221,7 +221,7 @@ void	Response::generateResponse( void )
 
 	try
 	{
-		COUT_DEBUG_INSERTION( BOLDGREEN "generateResponse() for : " RESET << url_no_query_str << std::endl);
+		COUT_DEBUG_INSERTION(FULL_DEBUG,  BOLDGREEN "generateResponse() for : " RESET << url_no_query_str << std::endl);
 		if (request->timedOut()) {
 			/*Gateway Timeout*/	throw (HttpError(504, matching_directives, location_root));
 		}
@@ -238,12 +238,12 @@ void	Response::generateResponse( void )
 			return (generateCGIResponse(cgi_extension));
 		}
 		if ("GET" == this->req.at("method")){
-			std::cout << BOLDMAGENTA << "METHOD : GET" << RESET << std::endl;
+			COUT_DEBUG_INSERTION(DEBUG, BOLDMAGENTA << "METHOD : GET" << RESET << std::endl);
 			return (generateGETResponse());
 		}
 		if ("POST" == this->req.at("method"))
 		{
-			std::cout << BOLDMAGENTA << "METHOD : POST" << RESET << std::endl;
+			COUT_DEBUG_INSERTION(DEBUG, BOLDMAGENTA << "METHOD : POST" << RESET << std::endl);
 			if (this->request->isChunked()) {
 				this->dechunking = true;
 				return (generateChunkedPOSTResponse());
@@ -251,7 +251,7 @@ void	Response::generateResponse( void )
 			return (generatePOSTResponse());
 		}
 		if ("DELETE" == this->req.at("method")) {
-			std::cout << BOLDMAGENTA << "METHOD : DELETE" << RESET << std::endl;
+			COUT_DEBUG_INSERTION(DEBUG, BOLDMAGENTA << "METHOD : DELETE" << RESET << std::endl);
 			return (generateDELETEResponse());
 		}
 		
@@ -269,7 +269,7 @@ void	Response::generateResponse( void )
 //_______________________ METHOD : GET _______________________
 // refactor to clean + test and make sure all cases are covered
 void	Response::generateGETResponse(  void  )
-{COUT_DEBUG_INSERTION(YELLOW "Response::generateGETResponse()" RESET << std::endl);
+{COUT_DEBUG_INSERTION(FULL_DEBUG, YELLOW "Response::generateGETResponse()" RESET << std::endl);
 
 	const std::string				root = location_root;
 	const std::string				reqPath(http_req_complete_url_path(uri_path, root));
@@ -277,7 +277,7 @@ void	Response::generateGETResponse(  void  )
 	std::vector<char>				page;
 	std::string						filePath = "";
 
-	COUT_DEBUG_INSERTION("Path of the request : " << (reqPath.empty()? "EMPTY" : reqPath ) << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, "Path of the request : " << (reqPath.empty()? "EMPTY" : reqPath ) << std::endl);
 	if (reqPath.empty()) {
 		if (
 			(this->matching_directives.directives.find("autoindex") != this->matching_directives.directives.end())
@@ -285,7 +285,7 @@ void	Response::generateGETResponse(  void  )
 		{
 			std::string	path = req.at("url");
 			path_remove_leading_slash(path);
-			COUT_DEBUG_INSERTION("showing dir listing for " << root + path << std::endl)
+			COUT_DEBUG_INSERTION(FULL_DEBUG, "showing dir listing for " << root + path << std::endl);
 			std::string dir_listing_page = createHtmlPage(
 				"Directory Listing for /" + path,
 				getDirectoryContentList(root + path, matching_directives, location_root)
@@ -298,12 +298,12 @@ void	Response::generateGETResponse(  void  )
 			headers = getHeaders(200, "OK", filePath, page.size());
 		}
 		else {
-			COUT_DEBUG_INSERTION("autoindex not set" << std::endl);
+			COUT_DEBUG_INSERTION(FULL_DEBUG, "autoindex not set" << std::endl);
 			/*Forbidden*/	throw HttpError(403, this->matching_directives, root);
 		}
 	}
 	else {
-		COUT_DEBUG_INSERTION("serving page : " << root + reqPath << std::endl)
+		COUT_DEBUG_INSERTION(FULL_DEBUG, "serving page : " << root + reqPath << std::endl);
 										filePath = root + reqPath;
 		std::ifstream					docstream(filePath.c_str(), std::ios::binary);
 
@@ -313,7 +313,7 @@ void	Response::generateGETResponse(  void  )
 			matching_directives
 		);
 		if (false == docstream.is_open()) {
-			COUT_DEBUG_INSERTION("could not open file (server error)\n");
+			COUT_DEBUG_INSERTION(FULL_DEBUG, "could not open file (server error)\n");
 			/*Server Err*/	throw HttpError(500, matching_directives, location_root);
 		}
 		try {
@@ -323,7 +323,7 @@ void	Response::generateGETResponse(  void  )
 				std::istreambuf_iterator<char>());
 		}
 		catch (const std::exception& e) {
-			COUT_DEBUG_INSERTION("IO file corruption\n");
+			COUT_DEBUG_INSERTION(FULL_DEBUG, "IO file corruption\n");
 			/*Server Err*/	throw HttpError(500, matching_directives, location_root);
 		}
 		headers = getHeaders(200, "OK", filePath, page.size());
@@ -343,7 +343,7 @@ void	Response::generatePOSTResponse( void )
 	std::string						fullDirPath;
 	std::string						fullFilePath;
 
-	COUT_DEBUG_INSERTION("POST uri_path : " << uri_path << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, "POST uri_path : " << uri_path << std::endl);
 
 
 	// check if existing filename and splits reqPath into dir and newFileName
@@ -362,12 +362,12 @@ void	Response::generatePOSTResponse( void )
 	fullDirPath		= root + (newFileDir.empty() ? "" : "/" + newFileDir);
 	fullFilePath	= root + (newFileDir.empty() ? "" : "/" + newFileDir) + (newFileName.empty() ? "" : "/" + newFileName);
 
-	COUT_DEBUG_INSERTION("POST reqPath : "	 	<< reqPath << std::endl);
-	COUT_DEBUG_INSERTION("POST root : "	 		<< root << std::endl);
-	COUT_DEBUG_INSERTION("POST dir : "	 		<< newFileDir << std::endl);
-	COUT_DEBUG_INSERTION("POST newFileName : "	<< newFileName << std::endl);
-	COUT_DEBUG_INSERTION("POST fullDirPath : "	<< fullDirPath << std::endl);
-	COUT_DEBUG_INSERTION("POST fullFilePath : "	<< fullFilePath << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, "POST reqPath : "	 	<< reqPath << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, "POST root : "	 		<< root << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, "POST dir : "	 		<< newFileDir << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, "POST newFileName : "	<< newFileName << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, "POST fullDirPath : "	<< fullDirPath << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, "POST fullFilePath : "	<< fullFilePath << std::endl);
 
 // checks if fullDirPath is pointing to a valid location (directory)
     struct stat						fileStat;
@@ -383,7 +383,7 @@ void	Response::generatePOSTResponse( void )
 				/*Content Too Large*/	throw HttpError(413, this->matching_directives, location_root);
 			}
 			// create the new resource at the location
-			COUT_DEBUG_INSERTION(MAGENTA << "Trying to add a resource to DIRECTORY : " << fullDirPath << RESET << std::endl);
+			COUT_DEBUG_INSERTION(FULL_DEBUG, MAGENTA << "Trying to add a resource to DIRECTORY : " << fullDirPath << RESET << std::endl);
 
 			// check if file exists at the given location and updating the name if it does
 			extension_pos = newFileName.rfind(".");
@@ -454,7 +454,7 @@ void	Response::generateChunkedPOSTResponse( void )
 	std::string						fullDirPath;
 	std::string						fileExtension;
 
-	COUT_DEBUG_INSERTION("POST uri_path : " << uri_path << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, "POST uri_path : " << uri_path << std::endl);
 
 	path_remove_leading_slash(root);
 	path_remove_leading_slash(reqPath);
@@ -472,12 +472,12 @@ void	Response::generateChunkedPOSTResponse( void )
 	fullDirPath		= root + "/" + newFileDir;
 	fullFilePath	= root + "/" + newFileDir + "/" + newFileName;
 
-	COUT_DEBUG_INSERTION("POST reqPath : "	 	<< reqPath << std::endl);
-	COUT_DEBUG_INSERTION("POST root : "	 		<< root << std::endl);
-	COUT_DEBUG_INSERTION("POST dir : "	 		<< newFileDir << std::endl);
-	COUT_DEBUG_INSERTION("POST newFileName : "	<< newFileName << std::endl);
-	COUT_DEBUG_INSERTION("POST fullDirPath : "	<< fullDirPath << std::endl);
-	COUT_DEBUG_INSERTION("POST fullFilePath : "	<< fullFilePath << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, "POST reqPath : "	 	<< reqPath << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, "POST root : "	 		<< root << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, "POST dir : "	 		<< newFileDir << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, "POST newFileName : "	<< newFileName << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, "POST fullDirPath : "	<< fullDirPath << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, "POST fullFilePath : "	<< fullFilePath << std::endl);
 
 // checks if fullDirPath is pointing to a valid location (directory)
     struct stat						fileStat;
@@ -490,7 +490,7 @@ void	Response::generateChunkedPOSTResponse( void )
 				/*Not Allowed*/	throw (HttpError(405, matching_directives, location_root));
 			}
 			// create the new resource at the location
-			COUT_DEBUG_INSERTION(MAGENTA << "Trying to add a resource to DIRECTORY : " << fullDirPath << RESET << std::endl);
+			COUT_DEBUG_INSERTION(FULL_DEBUG, MAGENTA << "Trying to add a resource to DIRECTORY : " << fullDirPath << RESET << std::endl);
 
 			// check if file exists at the given location and updating the name if it does
 			extension_pos = newFileName.rfind(".");
@@ -559,10 +559,10 @@ void	Response::generateDELETEResponse( void )
 	std::vector<char>				body;
 	std::string						tmp;	
 
-	COUT_DEBUG_INSERTION("uri_path : " << uri_path << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, "uri_path : " << uri_path << std::endl);
 	path_remove_leading_slash(reqPath);
 	filePath = root + reqPath;
-	COUT_DEBUG_INSERTION("filePath : " << filePath << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, "filePath : " << filePath << std::endl);
 
 	errno = 0;
 	if (stat(filePath.c_str(), &fileStat) == 0) {
@@ -571,7 +571,7 @@ void	Response::generateDELETEResponse( void )
 		}
 		is_dir = S_ISDIR(fileStat.st_mode);
 		is_reg = S_ISREG(fileStat.st_mode);
-		COUT_DEBUG_INSERTION(
+		COUT_DEBUG_INSERTION(FULL_DEBUG, 
 			MAGENTA 
 			<< filePath <<" : " 
 			<< (is_dir? "is a directory" : "") 
@@ -588,7 +588,7 @@ void	Response::generateDELETEResponse( void )
 			/*Not allowed*/	throw HttpError(405, matching_directives, root, "url should point to a directory (POST)");
     }
 	else {
-		COUT_DEBUG_INSERTION(YELLOW"Response::generateDELETEResponse()---stat failed" RESET << std::endl);
+		COUT_DEBUG_INSERTION(FULL_DEBUG, YELLOW"Response::generateDELETEResponse()---stat failed" RESET << std::endl);
 		throw return_HttpError_errno_stat(location_root, matching_directives);
 	}
 
@@ -605,13 +605,13 @@ void	Response::generateCGIResponse(const std::string& cgi_extension)
 {
 	std::string		cgi_interpreter_path;
 
-	COUT_DEBUG_INSERTION(GREEN << "Response::generateResponse there is a CGI extension" << RESET << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, GREEN << "Response::generateResponse there is a CGI extension" << RESET << std::endl);
 	
 	cgi_interpreter_path = take_cgi_interpreter_path(
 								cgi_extension,
 								matching_directives.directives.at("cgi_enable")//* safe to call in this branch
 							);
-	COUT_DEBUG_INSERTION(
+	COUT_DEBUG_INSERTION(FULL_DEBUG, 
 		"cgi interpreter full path : |"
 		<< cgi_interpreter_path
 		<< "|"
@@ -646,7 +646,7 @@ void	Response::generateCGIResponse(const std::string& cgi_extension)
 		this->response = this->cgi->getResponse();
 
 		std::string	debug(this->response.begin(), this->response.end());
-		COUT_DEBUG_INSERTION(
+		COUT_DEBUG_INSERTION(FULL_DEBUG, 
 			"CGI response : " << std::endl
 			<< "|" << debug << "|" << std::endl;
 		);
@@ -689,18 +689,18 @@ const t_conf_block&	Response::takeMatchingDirectives(
 	}
 
 	if (matches.empty()) {
-		COUT_DEBUG_INSERTION(
+		COUT_DEBUG_INSERTION(FULL_DEBUG, 
 			RED "no location for requested url" RESET
 			 << std::endl
-		)
+		);
 		return (virtual_server);
 	}
 	else {
 		matches.sort();
-		COUT_DEBUG_INSERTION(
+		COUT_DEBUG_INSERTION(FULL_DEBUG, 
 			BOLDGREEN "taking location : " << matches.back().location.directives.at("root") << RESET
 			<< std::endl
-		)
+		);
 		return (matches.back().location);
 	}
 }
@@ -766,11 +766,11 @@ size_t	Response::locationMatch(
 		//*		exact match
 		location_path = location.directives.at("location").substr(1);
 		strip_trailing_and_leading_spaces(location_path);
-		COUT_DEBUG_INSERTION(
+		COUT_DEBUG_INSERTION(FULL_DEBUG, 
 			"trying exact match on location |" << location_path << "|"
 			<< " with uri : |" << reqUrl << "|"
 			<< std::endl
-		)
+		);
 		if (0 == reqUrl.compare(location_path)
 		)
 			match_score = (std::string::npos);
@@ -780,11 +780,11 @@ size_t	Response::locationMatch(
 	else
 	{
 		location_path = location.directives.at("location");
-		COUT_DEBUG_INSERTION(
+		COUT_DEBUG_INSERTION(FULL_DEBUG, 
 			"trying prefix match on location |" << location_path << "|"
 			<< " with uri : |" << reqUrl << "|"
 			<< std::endl
-		)
+		);
 		//*		prefix match
 		if (0 == reqUrl.find(location_path))
 			match_score = (location_path.length());
@@ -792,14 +792,14 @@ size_t	Response::locationMatch(
 			match_score = (0);
 	}
 
-	COUT_DEBUG_INSERTION(
+	COUT_DEBUG_INSERTION(FULL_DEBUG, 
 		" match score : " << match_score << std::endl
-	)
+	);
 	return (match_score);
 }
 
 std::string		Response::take_location_root( void )
-{COUT_DEBUG_INSERTION(YELLOW "Response::take_location_root()" RESET << std::endl);
+{COUT_DEBUG_INSERTION(FULL_DEBUG, YELLOW "Response::take_location_root()" RESET << std::endl);
 	std::string											directive;
 	std::string											root;
 	std::map<std::string, std::string>::const_iterator	root_pos;
@@ -823,7 +823,7 @@ std::string		Response::take_location_root( void )
 	else
 		root = "./";
 	
-	COUT_DEBUG_INSERTION(YELLOW "END------Response::take_location_root()" RESET << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, YELLOW "END------Response::take_location_root()" RESET << std::endl);
 	return (root);
 }
 
@@ -860,7 +860,7 @@ std::string		Response::getHeaders(
 	}
 	//*		removing the dot '.'
 	fileType = fileType.substr(1);
-	COUT_DEBUG_INSERTION("fileType : |" << fileType << "|"<< std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, "fileType : |" << fileType << "|"<< std::endl);
 	headersStream
 		<< "HTTP/1.1 " << status << " " << description << "\r\n"
 		<< "Content-Type: " << fileType_prefix << fileType << "\r\n"
@@ -904,7 +904,7 @@ bool	Response::check_body_size()
 		size_t req_body_size = std::atol(this->req.at("Content-Length").c_str());
 		size_t max_body_size = std::atol(this->matching_directives.directives.at("body_size").c_str());
 		
-		COUT_DEBUG_INSERTION(
+		COUT_DEBUG_INSERTION(FULL_DEBUG, 
 			GREEN
 			<< "Content-Length : " << this->req.at("Content-Length") << std::endl
 			<< "body_size : " << this->matching_directives.directives.at("body_size") << std::endl
@@ -928,7 +928,7 @@ bool	Response::check_body_size()
 							//	- Method and body not changed.
 							//	- Reorganization of a website, with non-GET links/operations.
 void	Response::handle_redirection(const std::string & value)
-{ COUT_DEBUG_INSERTION(YELLOW "Response::handle_redirection()" RESET << std::endl);
+{ COUT_DEBUG_INSERTION(FULL_DEBUG, YELLOW "Response::handle_redirection()" RESET << std::endl);
 	// get the redirection information from the matching directives
     std::istringstream	iss(value);
 	std::string			http_status_code;
@@ -946,7 +946,7 @@ void	Response::handle_redirection(const std::string & value)
 
 	strip_trailing_and_leading_spaces(redirection_url);
 	strip_trailing_and_leading_spaces(http_status_code);
-	COUT_DEBUG_INSERTION(
+	COUT_DEBUG_INSERTION(FULL_DEBUG, 
 		GREEN
 		<< "http_status_code : " << http_status_code << std::endl
 		<< "redirection_url : " << redirection_url << std::endl
@@ -979,7 +979,7 @@ void	Response::handle_redirection(const std::string & value)
 std::string		Response::http_req_complete_url_path(
 	const std::string& uri, const std::string& root
 	)
-{COUT_DEBUG_INSERTION(YELLOW "Response::http_req_complete_url_path()" RESET << std::endl);
+{COUT_DEBUG_INSERTION(FULL_DEBUG, YELLOW "Response::http_req_complete_url_path()" RESET << std::endl);
 
 	std::string		path = uri;
 	size_t			path_start;
@@ -1011,7 +1011,7 @@ std::string		Response::http_req_complete_url_path(
 }
 
 std::string		Response::getIndexPage( const std::string& root, std::string path )
-{COUT_DEBUG_INSERTION(YELLOW "Response::getIndexPage()" RESET << std::endl);
+{COUT_DEBUG_INSERTION(FULL_DEBUG, YELLOW "Response::getIndexPage()" RESET << std::endl);
 
 	std::string									indexes;
 	std::stringstream							indexesStream;
@@ -1029,9 +1029,9 @@ std::string		Response::getIndexPage( const std::string& root, std::string path )
 		while (indexesStream.good()) {
 			getline(indexesStream, cur_index, ' ');
 			path_remove_leading_slash(cur_index);
-			COUT_DEBUG_INSERTION("trying index file : "\
+			COUT_DEBUG_INSERTION(FULL_DEBUG, "trying index file : "\
 				 << root + path + cur_index \
-				 << std::endl)
+				 << std::endl);
 			std::ifstream	file(root + path + cur_index);
 			if (file.is_open())
 			{
@@ -1054,13 +1054,13 @@ std::string		Response::getIndexPage( const std::string& root, std::string path )
  */
 void			Response::deleteFile( const std::string filePath )
 {
-	COUT_DEBUG_INSERTION(YELLOW << "Trying to delete FILE : " << filePath << RESET << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, YELLOW << "Trying to delete FILE : " << filePath << RESET << std::endl);
 
 	check_file_deletable(filePath, "", matching_directives);
 // delete the file
 	errno = 0;
     if (unlink(filePath.c_str()) == -1) {
-		COUT_DEBUG_INSERTION(RED "Response::deleteFile() : unlink error" RESET << std::endl);
+		COUT_DEBUG_INSERTION(FULL_DEBUG, RED "Response::deleteFile() : unlink error" RESET << std::endl);
 		/*Server Err*/	throw HttpError(500, matching_directives, location_root);
 	}
 }
@@ -1078,7 +1078,7 @@ void			Response::deleteFile( const std::string filePath )
 //        stream from an error, set errno to zero before calling readdir() and then check the value of errno if NULL is returned.
 void			Response::deleteDirectory(const std::string directoryPath)
 {
-	COUT_DEBUG_INSERTION(YELLOW << "Trying to delete DIRECTORY : " << directoryPath << RESET << std::endl);
+	COUT_DEBUG_INSERTION(FULL_DEBUG, YELLOW << "Trying to delete DIRECTORY : " << directoryPath << RESET << std::endl);
 	const std::string	root = location_root;
 
 	check_directory_deletable(directoryPath, "", matching_directives);
@@ -1098,7 +1098,7 @@ void			Response::deleteDirectory(const std::string directoryPath)
             	if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
 					continue;
 
-				COUT_DEBUG_INSERTION(
+				COUT_DEBUG_INSERTION(FULL_DEBUG, 
 					CYAN 
 					<< "| dir: " << directoryPath 
 					<< "| entry : " << entry->d_name 
@@ -1128,7 +1128,7 @@ void			Response::deleteDirectory(const std::string directoryPath)
 			/*Server Err*/	throw HttpError(500, matching_directives, root);
     }
     else {
-		COUT_DEBUG_INSERTION(RED "Response::deleteDirectory() : could not open dir error" RESET << std::endl);
+		COUT_DEBUG_INSERTION(FULL_DEBUG, RED "Response::deleteDirectory() : could not open dir error" RESET << std::endl);
 		/*Server Err*/	throw HttpError(500, matching_directives, root, strerror(errno));
 	}
 }
@@ -1138,15 +1138,19 @@ void			Response::deleteDirectory(const std::string directoryPath)
 //*		Minor utils
 void	Response::print_resp( void )
 {
-	std::cout	<< BOLDCYAN "\nNew Response ----------------- " << RESET 
-				<< CYAN " | cli_socket: " << this->sock_fd << RESET
-				<< " | lenght: " << response.size() 
-				<< std::endl ;
+	if (DEBUG)
+	{
+		std::cout	<< BOLDCYAN "\nNew Response ----------------- " << RESET 
+					<< CYAN " | cli_socket: " << this->sock_fd << RESET
+					<< " | lenght: " << response.size() 
+					<< std::endl ;
 
-	std::cout << CYAN "|" RESET;
-	std::cout.write(response.data(), response.size());
-	std::cout << CYAN "|" RESET;
-	std::cout << std::endl;
-	
-	std::cout << CYAN "END Response -----------------" RESET << std::endl;
+		std::cout << CYAN "|" RESET;
+		std::cout.write(response.data(), response.size());
+		std::cout << CYAN "|" RESET;
+		std::cout << std::endl;
+		
+		std::cout << CYAN "END Response -----------------" RESET << std::endl;		
+	}
+
 }

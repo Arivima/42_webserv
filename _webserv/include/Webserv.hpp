@@ -6,19 +6,27 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/05 15:27:54 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/13 17:14:01 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/17 13:58:18 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef WEBSERV_HPP
 # define WEBSERV_HPP
 
-# ifdef DEBUG
-#  define COUT_DEBUG_INSERTION(x) std::cout << x;
-# else
-#  define COUT_DEBUG_INSERTION(x)
+# define COUT_DEBUG_INSERTION(ON, x) \
+    do { \
+        if (ON) \
+            std::cout << x; \
+    } while (false)
+
+# ifndef DEBUG
 #  define DEBUG 0
 # endif
+
+# ifndef FULL_DEBUG
+#  define FULL_DEBUG 0
+# endif
+
 
 # include "Colors.hpp"
 # include "Types.hpp"
