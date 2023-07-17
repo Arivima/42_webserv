@@ -64,7 +64,6 @@ private:
 	const t_epoll_data&							edata;
 	std::vector<char>							response;
 	bool										redirect;
-	// bool										iscgi;
 	CGI* 										cgi;
 
 	//*	POST data

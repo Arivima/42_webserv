@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 15:41:58 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/13 17:28:46 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/17 21:29:42 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,6 +48,7 @@ private:
 	std::vector<char>						payload;					//*	request body
 	struct timespec							timestamp_start;
 	bool									timed_out;
+	long long&								cur_memory_usage;			//*	cur memory usage of the whole webserv
 
 	char									rcv_buf[RCV_BUF_SIZE + 1];	//*	buffer upon which we recv()
 	std::vector<char>						sock_stream;				//*	vector on which we dump the request incoming data for a more convenient handling
@@ -63,7 +64,8 @@ public:
 	//*		main Constructors and Destructors
 												Request(
 													const int sock_fd,
-													const t_epoll_data& edata
+													const t_epoll_data& edata,
+													long long& cur_memory_usage
 												);
 												~Request( void );
 	//*		main functionalities

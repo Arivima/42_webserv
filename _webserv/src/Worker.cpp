@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/06 21:15:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/17 16:19:05 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/17 21:00:05 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,7 @@ Worker::Worker(const t_conf_block& root_block) : servers(), edata()
 	std::vector<t_conf_block>::const_iterator	server;
 	std::string									debug_server_name;
 
+	cur_memory_usage = 0;
 	for (
 		server = http_block.sub_blocks.begin();
 		server != http_block.sub_blocks.end();
@@ -134,12 +135,20 @@ void	Worker::_handle_new_connectionS() {
 			if ( eevent && eevent->events & EPOLLIN)
 			{
 				cli_socket = _create_ConnectionSocket((*serv_it), client_IP, server_IP);
-				_epoll_register_ConnectionSocket(cli_socket);
-
-				//*		adding to list of open connections
-				(*serv_it).open_connections.push_back(
-					new ConnectionSocket(cli_socket, client_IP, server_IP, *serv_it, edata)
-				);
+				if (cur_memory_usage < MAX_MEMORY_USAGE)
+				{
+					std::cout << "cur memory usage is : " << cur_memory_usage << std::endl;
+					std::cout.flush();
+					
+					_epoll_register_ConnectionSocket(cli_socket);
+					
+					//*		adding to list of open connections
+					(*serv_it).open_connections.push_back(
+						new ConnectionSocket(cli_socket, client_IP, server_IP, *serv_it, edata, cur_memory_usage)
+					);
+				}
+				else
+					close(cli_socket);
 			}
 		}
 	}

@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 17:56:31 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/10 20:38:08 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/17 20:24:08 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,6 +45,7 @@ private:
 	const t_epoll_data&						edata;						//*	epoll data reference
 	Response*								response;					//*	response data of current request
 	Request*								request;					//*	request data of current request
+	long long&								cur_memory_usage;			//*cur memory usage of the whole webserv
 
 //*		Public member functions _____________________________________
 public:
@@ -54,7 +55,8 @@ public:
 								const std::string&			client_IP,
 								const std::string&			server_IP,
 								const t_server&				assigned_server,
-								const t_epoll_data&			edata
+								const t_epoll_data&			edata,
+								long long&					cur_memory_usage
 						);
 						~ConnectionSocket();
 	//*	main functionalities

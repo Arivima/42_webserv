@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/05 15:27:54 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/17 13:58:18 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/17 21:01:12 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,10 @@
 # include "Colors.hpp"
 # include "Types.hpp"
 # include "Exceptions.hpp"
+
+//*	in bytes
+# define MAX_MEMORY_USAGE	(1024 * 1024 * 1024 * 1.5f)
+//* 4GB
 
 # define DEFAULT_PORT_NUM 8080
 

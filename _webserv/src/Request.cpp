@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 17:19:26 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/17 16:54:00 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/17 21:30:24 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,10 +24,12 @@
 
 Request::Request(
 	const int sock_fd,
-	const t_epoll_data& edata
+	const t_epoll_data& edata,
+	long long& cur_memory_usage
 	) :
 	sock_fd(sock_fd),
-	edata(edata)
+	edata(edata),
+	cur_memory_usage(cur_memory_usage)
 {
 	parser_status = e_READING_HEADS;
 	cur_body_size = 0;
@@ -44,11 +46,21 @@ Request::Request(
 	timed_out = false;
 }
 
-Request::~Request( void ) {
+Request::~Request( void )
+{
+	for (std::map<std::string, std::string>::iterator it = req.begin(); it != req.end(); it++)
+		cur_memory_usage -= ((*it).first.length() + (*it).second.length());
 	req.clear();
+
+	cur_memory_usage -= payload.size();
 	payload.clear();
+
 	memset(rcv_buf, '\0', RCV_BUF_SIZE + 1);
+	
+	cur_memory_usage -= sock_stream.size();
 	sock_stream.clear();
+	
+	cur_memory_usage -= cur_line.size();
 	cur_line.clear();
 }
 
@@ -180,7 +192,7 @@ void	Request::read_line( void )
 	{
 		memset(rcv_buf, '\0', RCV_BUF_SIZE + 1);
 		bytes_read = recv(sock_fd, rcv_buf, RCV_BUF_SIZE, 0);
-		if (bytes_read <= 0)
+		if (bytes_read <= 0 || cur_memory_usage >= MAX_MEMORY_USAGE)
 			throw (SockEof());
 		
 		//*	Dumping into dynamic entity for character handling (stream)
@@ -189,6 +201,8 @@ void	Request::read_line( void )
 			rcv_buf,
 			rcv_buf + bytes_read
 		);
+
+		cur_memory_usage += bytes_read;
 	}
 
 	//*	Read characters from dynamic entity for character handling (stream)

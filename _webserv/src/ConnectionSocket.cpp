@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 18:07:39 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/17 14:17:40 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/17 20:33:10 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,16 +22,18 @@ ConnectionSocket::ConnectionSocket(
 								const std::string&			client_IP,
 								const std::string&			server_IP,
 								const t_server&				assigned_server,
-								const t_epoll_data&			edata
+								const t_epoll_data&			edata,
+								long long&					cur_memory_usage
 ) :
 	sock_fd(sock_fd),
 	client_IP(client_IP),
 	server_IP(server_IP),
 	assigned_server(assigned_server),
-	edata(edata)
+	edata(edata),
+	cur_memory_usage(cur_memory_usage)
 {
 	status = e_REQ_MODE;
-	request = new Request(sock_fd, edata);
+	request = new Request(sock_fd, edata, cur_memory_usage);
 	response = NULL;
 }
 
@@ -81,7 +83,7 @@ void	ConnectionSocket::serve_client( void )
 			if (NULL == request)
 			{
 				if (NULL != eevent &&  eevent->events & EPOLLIN)
-					request = new Request(sock_fd, edata);
+					request = new Request(sock_fd, edata, cur_memory_usage);
 				else
 					return ;
 			}

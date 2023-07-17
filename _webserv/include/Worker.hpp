@@ -48,7 +48,8 @@ private:
 	//*	vector holding t_serv (server conf block with virtual servers sub_blocks + server port and sock fd
 	//*	+ vector of open connections) objects.
 	VectorServ				servers;
-	t_epoll_data			edata;		//*	epoll instance fd + epoll current events 
+	t_epoll_data			edata;			//*	epoll instance fd + epoll current events 
+	long long				cur_memory_usage;	//* current memory usage of the whole webserv
 
 //*		Public member functions _____________________________________
 public:

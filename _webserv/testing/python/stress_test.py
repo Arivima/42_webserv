@@ -9,16 +9,18 @@ file_path = "/nfs/homes/mmarinel/Desktop/42Projects/42_webserv/_webserv/testing/
 
 file_content=b''
 def make_post_request():
+	try:
+		session = requests.Session()
+		headers = {
+			"Content-Type": "text/plain"
+		}
+		for _ in range(num_requests):
+			response = session.post(url, data=file_content, headers=headers)
+			print(f"Thread {threading.current_thread().name}: Response Status Code - {response.status_code}")
 
-	session = requests.Session()
-	headers = {
-		"Content-Type": "text/plain"
-	}
-	for _ in range(num_requests):
-		response = session.post(url, data=file_content, headers=headers)
-		print(f"Thread {threading.current_thread().name}: Response Status Code - {response.status_code}")
-
-	session.close()
+		# session.close()
+	except Exception:
+		pass
 
 
 # Get the number of threads from the user
