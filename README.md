@@ -25,6 +25,6 @@ xxx
 The default configuration file is located at `configuration_files/default.conf`.</br>
 The root is always at `var/www`.</br>
 This folder contains all the static files that our webserver can return to the client (html, css, images and even javascript files!).</br>
-The index page is located at `/html/index.html`.</br>
+The index page is located at `/html/landing_page.html`.</br>
 
 ...TBC

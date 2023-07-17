@@ -21,7 +21,6 @@ TODO
 			-	Change req url name to "uri"
 
 	Arielle
-			-	Landing Page carina https://www.one-tab.com/page/UKcL00UVSK-7TQgaizuOaw
 
 	Additional tasks if there is time:
 		- 	fare un log

@@ -6,7 +6,7 @@
 #    By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/07/06 03:50:02 by mmarinel          #+#    #+#              #
-#    Updated: 2023/07/06 19:07:28 by mmarinel         ###   ########.fr        #
+#    Updated: 2023/07/17 19:24:04 by mmarinel         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -98,7 +98,9 @@ sub navigator {
 		print	" 200 OK\r\n";
 		print	"Content-Type: $content_type\r\n";
 		print	"Content-Length: $content_length\r\n";
-		print	"Content-Disposition: attachment; filename=\"$file_name\"\r\n";
+		if ($content_type ne 'text/html') {
+			print	"Content-Disposition: attachment; filename=\"$file_name\"\r\n";
+		}
 		print	"\r\n";
 
 		binmode($file);

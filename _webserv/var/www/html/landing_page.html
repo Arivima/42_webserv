@@ -7,6 +7,8 @@
   <title>Webserv - A 42 Project by the PiouPiou Team</title>
   <style>
     body {
+      width: 100%;
+      height: 100%;
       font-family: Arial, sans-serif;
       text-align: center;
       margin: 0;
@@ -37,23 +39,31 @@
       padding: 20px 0;
       background-color: #f9f9f9;
     }
+	img {
+      max-width: 25%; /* Set the maximum width */
+      max-height: 25%; /* Set the maximum height */
+    }
   </style>
 </head>
 <body>
   <div class="header">
     <h1>Webserv,<br> a 42 project by the PiouPiou team</h1>
     <div class="emoji-line">
-      &#x1F423;&#x1F423;&#x1F423;&#x1F423;&#x1F423;&#x1F423;&#x1F423;&#x1F423;&#x1F423;&#x1F425;
+      &#x1F423;&#x1F423;&#x1F423;&#x1F425;
     </div>
   </div>
 
   <div class="content">
-    <h2>Architecture of the website:</h2>
-    <p>Show dynamic index from "/var/www"</p>
+	<img src="/img/chick.gif" alt="">
+    <h2><a href="/cgi-bin/navigator.pl">Enter the chicken coop</a></h2>
   </div>
 
   <div class="footer">
-    <p>&copy; 2023 Webserv</p>
+    <p>&copy; 2023 Webserv by PiouPiou Team |
+	<a href="https://github.com/Arivima">avilla-m</a>
+	&&
+	<a href="https://github.com/mmarinel">mmarinel</a>
+	</p>
   </div>
 </body>
 </html>
