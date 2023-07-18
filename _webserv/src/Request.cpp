@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/14 17:19:26 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/17 21:30:24 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/18 11:06:28 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -192,8 +192,16 @@ void	Request::read_line( void )
 	{
 		memset(rcv_buf, '\0', RCV_BUF_SIZE + 1);
 		bytes_read = recv(sock_fd, rcv_buf, RCV_BUF_SIZE, 0);
-		if (bytes_read <= 0 || cur_memory_usage >= MAX_MEMORY_USAGE)
+		if (bytes_read <= 0)
 			throw (SockEof());
+		if (cur_memory_usage >= MAX_MEMORY_USAGE)
+		{
+			timed_out = true;
+			req["method"] = "UNKNOWN";
+			req["url"] = "/";
+			req["http_version"] = "HTTP/1.1";
+			throw TaskFulfilled();
+		}
 		
 		//*	Dumping into dynamic entity for character handling (stream)
 		sock_stream.insert(

@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/06 21:15:29 by earendil          #+#    #+#             */
-/*   Updated: 2023/07/17 21:00:05 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/18 11:32:06 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,7 +93,7 @@ Worker::~Worker() {
 void Worker::workerLoop() {
 	std::vector<ConnectionSocket *>::iterator	it;
 	
-	COUT_DEBUG_INSERTION(DEBUG, "\nStarting worker" << RESET << std::endl);
+	std::cout << CYAN << "\nStarting worker" << RESET << std::endl;
 	while (true) {
 		try {
 			_io_multiplexing_using_epoll();
@@ -137,9 +137,6 @@ void	Worker::_handle_new_connectionS() {
 				cli_socket = _create_ConnectionSocket((*serv_it), client_IP, server_IP);
 				if (cur_memory_usage < MAX_MEMORY_USAGE)
 				{
-					std::cout << "cur memory usage is : " << cur_memory_usage << std::endl;
-					std::cout.flush();
-					
 					_epoll_register_ConnectionSocket(cli_socket);
 					
 					//*		adding to list of open connections

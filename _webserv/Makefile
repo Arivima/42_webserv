@@ -6,7 +6,7 @@
 #    By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/05/29 12:15:29 by mmarinel          #+#    #+#              #
-#    Updated: 2023/07/17 18:22:13 by mmarinel         ###   ########.fr        #
+#    Updated: 2023/07/18 11:22:24 by mmarinel         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -39,7 +39,23 @@ all:					$(NAME)
 						
 debug:					
 						@$(MAKE) $(NAME) ADDITIONAL_FLAGS=$(FLAG_DEBUG)
-						
+
+full_debug:					
+						@$(MAKE) $(NAME) ADDITIONAL_FLAGS=$(FLAG_FULLDEBUG)
+
+run:					
+						@$(MAKE) $(NAME)
+						@reset && ./$(NAME)
+
+help:					
+						@echo $(BOLDCYAN)$(NAME)"\tlist of available makefile rules\n" $(RESET)
+						@echo $(CYAN)"run :\t\tcompiles executable & execute with default configuration file" $(RESET)
+						@echo $(CYAN)"debug :\t\tprints request/response info" $(RESET)
+						@echo $(CYAN)"full_debug :\tprints full details" $(RESET)
+						@echo $(CYAN)"clean :\t\tcleans objects and testing material" $(RESET)
+						@echo $(CYAN)"fclean :\tcleans executable" $(RESET)
+
+
 $(NAME):				$(OBJS)
 						@$(MAKE) --silent .SET_UP_TESTING
 						@echo $(CYAN)$(NAME)"\tMaking executable" $(RESET)

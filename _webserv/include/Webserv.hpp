@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/05 15:27:54 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/17 21:01:12 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/18 11:28:59 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,11 @@
     } while (false)
 
 # ifndef DEBUG
-#  define DEBUG 0
+#  ifdef FULL_DEBUG
+#   define DEBUG 1
+#  else
+#   define DEBUG 0
+#  endif
 # endif
 
 # ifndef FULL_DEBUG
