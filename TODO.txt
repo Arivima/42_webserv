@@ -1,29 +1,19 @@
-	Additional tasks in an ideal world (not done before pushing)
-		-	(Content-Length)
-			Location Match before Request END ---right after parsing req line + found Host (so, after empty line most of the times)
-			- do it because for huge request we want to exit as soon as received data > Content-Length
-		- 	fare un log
-		- 	cookie ?
-		-	favicon
-		-	Change req url name to "uri"
-		-	check for every member that should be a reference
-		-	cazzatine (prettify, make it more coherent style-wise and also functionalities-wise) && refactoring && clean
-	Before pushing : 
-		-	take out correction sheet
-		-	update headers
-	after pushing :
-		- 	update webserv.doc
-		-	create project flowchart
-		-	update documentation, dictionnary etc
+Additional tasks in an ideal world (not done before pushing)
+	-	(Content-Length)
+		Location Match before Request END ---right after parsing req line + found Host (so, after empty line most of the times)
+		- do it because for huge request we want to exit as soon as received data > Content-Length
+	- 	fare un log
+	- 	cookie ?
+	-	favicon
+	-	Change req url name to "uri"
+	-	check for every member that should be a reference
+	-	cazzatine (prettify, make it more coherent style-wise and also functionalities-wise) && refactoring && clean
 
-# **************************************************************************** #
-#                                                                              #
-#    header                                               :::      ::::::::    #
-#    By: team_PiouPiou                                  :+:      :+:    :+:    #
-#        avilla-m <avilla-m@student.42.fr>            +:+ +:+         +:+      #
-#        mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2023/05/29 12:15:29 by mmarinel          #+#    #+#              #
-#    Updated: 2023/07/14 14:20:20 by mmarinel         ###   ########.fr        #
-#                                                                              #
-# **************************************************************************** #
+Before pushing : 
+	-	take out correction sheet
+	-	update headers
+
+after pushing :
+	-	update documentation, readme.md, dictionnary etc
+	- 	update webserv.doc
+	-	create project flowchart
