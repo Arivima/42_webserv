@@ -1,0 +1,28 @@
+Notes for the correction
+
+max_body_size check:
+	(use default.conf, set body_size 4)
+	curl --location "http://localhost:8080/test_post" -X POST -H "Content-Type: plain/text" --data "CIAONE" --fail
+
+multiple_hostnames:
+	(use multiple_hostnames.conf)
+	curl --resolve example.com:8080:127.0.0.1 http://example.com:8080/ 
+
+SIEGE 
+	siege -b "http://localhost:8080/html/landing_page.html"
+	leaks : top 
+	hanging connections :  http://localhost:8080/html/landing_page.html
+	
+stress test :
+	prepatation
+		cd ./testing 
+		python3 huge_file_generator.py
+		values : 1000 threads, total size 1024MB
+	execution
+		cd ./testing 
+		python3 stress_test.py
+		values : 1000/500/100/50 threads, n_request 1/2/5/10
+
+Testing methods and redirections -> Postman
+	Postman exports are available here:
+	./testing/Postman

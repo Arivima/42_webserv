@@ -24,8 +24,6 @@
 #include <fcntl.h>          // fcntl
 #include <limits.h>			// MAX INT
 
-#include <sys/select.h>     // select, FT_ISSET, FT_CLR, etc
-
 #include <map>
 #include <vector>
 

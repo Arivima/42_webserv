@@ -6,7 +6,7 @@
 #    By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/05/29 12:15:29 by mmarinel          #+#    #+#              #
-#    Updated: 2023/07/18 11:22:24 by mmarinel         ###   ########.fr        #
+#    Updated: 2023/07/18 14:06:44 by mmarinel         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -69,8 +69,10 @@ $(OBJS_DIR)/%.o: 		$(SRCS_DIR)/%.cpp $(INCLUDES)
 .SET_UP_TESTING:		
 						@echo $(CYAN)$(NAME)"\tSetting-up the testing material" $(RESET)
 						-cp -r $(TESTING_BACKUP)/* $(TESTING_ROOT) 2>/dev/null
+						-chmod a-rwx	"$(TESTING_ROOT)/test_delete/not-authorized-file.txt" 2>/dev/null
 						-chmod a-rwx	"$(TESTING_ROOT)/test_delete/1_subdir_nok/2/3_not_authorized" 2>/dev/null
 						-chmod a-rwx	"$(TESTING_ROOT)/test_delete/1_subfile_nok/2/not-authorized-file.txt" 2>/dev/null
+						-chmod a-rwx	"$(TESTING_ROOT)/test_delete_redirection/not-authorized-file.txt" 2>/dev/null
 						-chmod a-rwx	"$(TESTING_ROOT)/test_delete_redirection/1_subdir_nok/2/3_not_authorized" 2>/dev/null
 						-chmod a-rwx	"$(TESTING_ROOT)/test_delete_redirection/1_subfile_nok/2/not-authorized-file.txt" 2>/dev/null
 						-chmod a-rwx	"$(TESTING_ROOT)/test_get/not-authorized-file.txt" 2>/dev/null
@@ -80,8 +82,10 @@ $(OBJS_DIR)/%.o: 		$(SRCS_DIR)/%.cpp $(INCLUDES)
 
 .CLEAN_UP_TESTING:
 						@echo $(CYAN)$(NAME)"\tCleaning up the testing material" $(RESET)
+						-chmod a+rwx	"$(TESTING_ROOT)/test_delete/not-authorized-file.txt" 2>/dev/null
 						-chmod a+rwx	"$(TESTING_ROOT)/test_delete/1_subdir_nok/2/3_not_authorized" 2>/dev/null
 						-chmod a+rwx	"$(TESTING_ROOT)/test_delete/1_subfile_nok/2/not-authorized-file.txt" 2>/dev/null
+						-chmod a+rwx	"$(TESTING_ROOT)/test_delete_redirection/not-authorized-file.txt" 2>/dev/null
 						-chmod a+rwx	"$(TESTING_ROOT)/test_delete_redirection/1_subdir_nok/2/3_not_authorized" 2>/dev/null
 						-chmod a+rwx	"$(TESTING_ROOT)/test_delete_redirection/1_subfile_nok/2/not-authorized-file.txt" 2>/dev/null
 						-chmod a+rwx	"$(TESTING_ROOT)/test_get/not-authorized-file.txt" 2>/dev/null

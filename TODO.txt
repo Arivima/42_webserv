@@ -1,33 +1,15 @@
-
-
-TODO 
-		1. Testing
-			-	Throughout testing, record tests -> add to config and postman
-			-	Subject
-			-	Correction sheet
-			-	Postman
-			-	Leaks
-			-	SIEGE
-			-	Subject + correction sheet
-				- 	reread the correction sheet and implement everything and test
-				-	controllare i ritorni di ogni read/write/send/recv (removere il client)		
-	Matteo
-		Prioritario
-			-	script stress test con POST
-			- massimo numero di bytes
-		meno importante
-			-	cazzatine (prettify, make it more coherent style-wise and also functionalities-wise) && refactoring && clean
-			-	check for every member that should be a reference
-			-	Change req url name to "uri"
-
-	Arielle
-
-	Additional tasks if there is time:
+	Additional tasks in an ideal world (not done before pushing)
+		-	(Content-Length)
+			Location Match before Request END ---right after parsing req line + found Host (so, after empty line most of the times)
+			- do it because for huge request we want to exit as soon as received data > Content-Length
 		- 	fare un log
 		- 	cookie ?
+		-	favicon
+		-	Change req url name to "uri"
+		-	check for every member that should be a reference
+		-	cazzatine (prettify, make it more coherent style-wise and also functionalities-wise) && refactoring && clean
 	Before pushing : 
 		-	take out correction sheet
-		-	clean todo
 		-	update headers
 	after pushing :
 		- 	update webserv.doc
@@ -45,94 +27,3 @@ TODO
 #    Updated: 2023/07/14 14:20:20 by mmarinel         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////
-
-Matteo
-	13	valutare se contollare la presenza di location block ripetuti
-
-To assign
-	1.	implementare redirections in GET
-	9.	Check compatibility with Chrome/Firefox (set right headers)
-
-Meno Prioritario
-	1	refactoring HttpError ----> usare vector of char
-		-forse, in HttpError chiudere la connessione dopo aver ritornato un errore
-
-
-Config file:
-	1. host directive
-	2. client body_size
-	3. routes
-		3.1 accepted methods
-		3.2 redirection
-		3.3 autoindex
-		3.4	directive for uploading files
-		3.4 CGI
-
-
-ARCHIVES not yet done but useless (maybe) !
-	3.util : fare funzione che, presa una stringa, rimuove tutti i caratteri a partire da uno dato,
-		se esiste nella stringa.
-
-
-to short
-//TODO Request.hpp
-//TODO	1.	Write Request.cpp...continue refactoring (making of Request class)
-//TODO	2.	change req map as being object not ref inside Response
-//TODO	3.	write switch_state function in ConnectionSocket (pay attention first creating the new
-//TODO		and then deleting the old one as the new may need results from the old)
-//TODO	4. use exceptions in types.h (remove SockEof and other exceptions inside classes
-//TODO	ConnectionSocket, Request and Response )
-//TODO	5. handle SockEof exception inside Worker serve_clientS loop. (Not inside ConnectionSocket!)
-//TODO	6. Refactor ConenctionSocket.
-//TODO
-//TODO
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////
-
-TroubleShooting
-
-Ideas
-
-Matteo
-Idea per handling binary data in body of request
-	1.	Splitta body e request
-		1.1	request resta una mappa
-		1.2	body diventa un vector<char>
-	2.	Request
-		2.1	Sostituisci gli stream con vector di char
-			2.1.1	recv_buf resta un array
-			2.1.2	vector<char> sostituisce lo stream e ci dumpiamo il contenuto letto dal buffer
-				2.1.2.1	possiamo usare le funzioni find(), erase(), etc. di vector per sostuire getline
-			2.1.3	passiamo il body e la richiesta alle varie classi come due variabili diverse
-			2.1.4	per scrivere il body in un file, apriamo il file con ofstream e open_mode std::ios_binary
-					e usiamo basic_ostream& write( const char_type* s, std::streamsize count )
-					con body.data() come const char*
-					e body.size() come count

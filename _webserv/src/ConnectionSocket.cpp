@@ -6,7 +6,7 @@
 /*   By: mmarinel <mmarinel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/29 18:07:39 by mmarinel          #+#    #+#             */
-/*   Updated: 2023/07/17 20:33:10 by mmarinel         ###   ########.fr       */
+/*   Updated: 2023/07/18 15:35:57 by mmarinel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -99,7 +99,6 @@ void	ConnectionSocket::serve_client( void )
 	}
 	catch (const TaskFulfilled& e) {
 		this->status_switch();
-		this->serve_client();
 	}
 }
 
