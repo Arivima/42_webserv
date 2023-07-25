@@ -8,11 +8,6 @@ Additional tasks in an ideal world (not done before pushing)
 	-	Change req url name to "uri"
 	-	check for every member that should be a reference
 	-	cazzatine (prettify, make it more coherent style-wise and also functionalities-wise) && refactoring && clean
-
-Before pushing : 
-	-	take out correction sheet
-	-	update headers
-
 after pushing :
 	-	update documentation, readme.md, dictionnary etc
 	- 	update webserv.doc
