@@ -34,7 +34,7 @@
 import sys
 import os
 
-GALLERY_PATH = "/nfs/homes/mmarinel/Desktop/42Projects/42_webserv/_webserv/var/www/gallery/"
+GALLERY_PATH = "/nfs/homes/mmarinel/Desktop/42Projects/42_webserv/var/www/gallery/"
 
 class ContentTooLarge(Exception):
 	pass

@@ -5,7 +5,7 @@ import requests
 import time
 
 url = "http://localhost:8080/test_post/Huge_file"
-file_path = "/nfs/homes/mmarinel/Desktop/42Projects/42_webserv/_webserv/testing/python/output.txt"
+file_path = "/nfs/homes/mmarinel/Desktop/42Projects/42_webserv/testing/python/output.txt"
 
 file_content=b''
 def make_post_request():

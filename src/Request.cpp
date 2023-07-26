@@ -75,16 +75,14 @@ std::vector<char>		Request::getIncomingData( void )
 	std::stringstream				s_hex_s;
 
 	COUT_DEBUG_INSERTION(FULL_DEBUG, "BEFORE\n");
-	printVectorChar(payload, "payload");
 	parse_line();
 	if(payload.empty())
 		throw (ChunkNotComplete());
 	COUT_DEBUG_INSERTION(FULL_DEBUG, "AFTER\n");
-	printVectorChar(payload, "payload");
 	if (false == next_chunk_arrived)
 	{
 		if (hasHttpHeaderDelimiter(payload))
-		{
+		{	
 			cr_pos = std::find(payload.begin(), payload.end(), '\r');
 			//*	inserting size line line into 'line'
 			line.insert(
@@ -123,7 +121,6 @@ std::vector<char>		Request::getIncomingData( void )
 			payload.begin() + cur_chunk_size + 2
 		);
 		next_chunk_arrived = false;
-		printVectorChar(incomingData, "Chunk bytes");
 
 		return (incomingData);
 	}
@@ -363,7 +360,6 @@ void	Request::print_req( void ) {
 		std::cout << CYAN "| END BODY ________________________" RESET << std::endl ;
 		std::cout << CYAN "END REQUEST -----------------\n" RESET << std::endl ;		
 	}
-
 }
 
 void	Request::printVectorChar(std::vector<char>& v, std::string name)

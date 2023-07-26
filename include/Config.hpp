@@ -23,7 +23,7 @@
 
 # include "Webserv.hpp"
 
-# define 	DEFAULT_PATHNAME   				"../_webserv/configuration_files/default.conf"
+# define 	DEFAULT_PATHNAME   				"./configuration_files/default.conf"
 # define	DEFAULT_CLIENT_MAX_BODY_SIZE	"1000000"			// 1M 1e+6 bytes
 # define	LIMIT_CLIENT_MAX_BODY_SIZE		1000000000		// 1G 1e+9 bytes
 

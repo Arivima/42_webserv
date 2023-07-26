@@ -5,7 +5,7 @@ import os
 import shutil
 
 # Set the path to the directory where the uploaded photos will be stored
-UPLOAD_DIR = "/nfs/homes/mmarinel/Desktop/42Projects/42_webserv/_webserv/var/www/gallery"
+UPLOAD_DIR = "/nfs/homes/mmarinel/Desktop/42Projects/42_webserv/var/www/gallery"
 GALLERY_DIR="/gallery/"
 
 # In the configuration file, set up the appropriate authorization

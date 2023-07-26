@@ -1138,15 +1138,31 @@ void			Response::deleteDirectory(const std::string directoryPath)
 //*		Minor utils
 void	Response::print_resp( void )
 {
+	char	non_print_placeholder = '?';
+
 	if (DEBUG)
 	{
 		std::cout	<< BOLDCYAN "\nNew Response ----------------- " << RESET 
 					<< CYAN " | cli_socket: " << this->sock_fd << RESET
 					<< " | lenght: " << response.size() 
 					<< std::endl ;
-
+		std::cout << YELLOW
+			"non-printable characters showed as "
+			<< non_print_placeholder
+			<< RESET
+			<< std::endl;
 		std::cout << CYAN "|" RESET;
-		std::cout.write(response.data(), response.size());
+		for (size_t i = 0; i < response.size(); i++)
+		{
+			if ('\r' == response[i])
+				std::cout << RED "r" RESET;
+			else if ('\n' == response[i])
+				std::cout << RED "n" RESET << std::endl;
+			else if (std::isprint(response[i]))
+				std::cout << response[i];
+			else
+				std::cout << YELLOW << non_print_placeholder << RESET;
+		}
 		std::cout << CYAN "|" RESET;
 		std::cout << std::endl;
 		
