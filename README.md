@@ -1,6 +1,14 @@
-Disclaimer! On this github only the project is final, project research, documentation and othr supporting documents are work in progress. 
 
+```diff
+- Disclaimer!
++ On this github only the project is final
+! Project research, documentation and other supporting documents are work in progress. 
+```
+</br>
+</br>
+</br>
 # 42_webserv
+
 <i>Simple HTTP server made from scratch</i>
 description of project
 
