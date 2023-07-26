@@ -1,14 +1,14 @@
-# **************************************************************************** #
-#                                                                              #
-#                                                         :::      ::::::::    #
-#    Makefile                                           :+:      :+:    :+:    #
-#    By: team_PiouPiou                                +:+ +:+         +:+      #
-#        avilla-m <avilla-m@student.42.fr>          +#+  +:+       +#+         #
-#        mmarinel <mmarinel@student.42.fr>        +#+#+#+#+#+   +#+            #
-#                                                      #+#    #+#              #
-#                                                     ###   ########.fr        #
-#                                                                              #
-# **************************************************************************** #
+# ************************************************************************** #
+#                                                                            #
+#                                                        :::      ::::::::   #
+#   ConnectionSocket.cpp                               :+:      :+:    :+:   #
+#   By: team_PiouPiou                                +:+ +:+         +:+     #
+#       avilla-m <avilla-m@student.42.fr>          +#+  +:+       +#+        #
+#       mmarinel <mmarinel@student.42.fr>        +#+#+#+#+#+   +#+           #
+#                                                     #+#    #+#             #
+#                                                    ###   ########.fr       #
+#                                                                            #
+# ************************************************************************** #
 
 # Makefile
 # 	create executable "Webserv"
@@ -32,7 +32,7 @@ FLAG_DEBUG				:= -DDEBUG=1
 FLAG_FULLDEBUG			:= -DFULL_DEBUG=1
 # Testing material
 TESTING_ROOT			:= ./var/www/
-TESTING_BACKUP			:= ./back-up_postman_folders
+TESTING_BACKUP			:= ./testing/Postman/folders_testing
 
 # Rules
 all:					$(NAME)
