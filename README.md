@@ -2,7 +2,8 @@
 ```diff
 - Disclaimer!
 + On this github only the project is final
-! Project research, documentation and other supporting documents are work in progress (readme.md and dir _readme_files). 
+! Project research, documentation and other supporting documents are work in progress 
+! -> readme.md and dir _readme_files 
 ```
 </br>
 </br>
